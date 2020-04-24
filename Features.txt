@@ -1,0 +1,101 @@
+CenTaxi (Used as the central of all communications):
+	- Only one instance allowed
+	- Used by admin
+	- Reads map from text file and manages the respective map
+	- Knows every taxi, their position and state
+	- Knows every passenger
+	- Is informed of everything by "ConPass" and "ConTaxi" applications
+	- Provides information about passengers and taxis
+	- Flow of action (assigning passenger to taxi):
+		1 - Receives taxis that are interested in a passenger
+		2 - Pick one randomly
+		3 - Assigns passenger to chosen taxi
+	- Informs passenger if no taxi is interested
+	- Max number of passengers are set at the start of the application
+		- Overflowing passengers will be ignored
+	- Receives updates from taxis (starting and ending of shifts)
+	- Receives localizations from taxis
+	- Max number of taxis are set at the start of the application
+		- Overflowing taxis will be added on a queue
+	- Receives updates about pickup and dropouts of passengers
+	- Receives commands:
+		- Close system
+		- Pause/Continue acceptance of taxis
+		- Kick taxis (only if they do not have passengers)
+		- List taxis
+		- Set awaiting time for new passengers
+	- Provides map to taxis and the MapInfo application
+	- CMD UI:
+		- Receives messages as plain text
+		- At any time, the admin can input commands
+
+ConPass (Used as main communication for passengers):
+	- Only one instance allowed
+	- Each user must have some ID (maybe a username?)
+		- This ID will be used to identify each user in system messages
+	- Flow of action (per passenger):
+		1 - Passengers ask for a taxi
+		2 - Central informs the passenger of which taxi is set to the passenger
+		3 - Central informs the passenger of when the taxi has picked him up
+		4 - Central informs the passenger of when the taxi has arrived its destiny
+	- When the flow ends, the passenger is removed and "forgotten"
+	- Receives commands:
+		- TBD
+	- CMD UI:
+		- Receives messages as plain text
+		- Receives messages related to passengers
+		- At any time, the user can input commands
+
+ConTaxi (Used as main communication for taxis):
+	- Only one instance per taxi
+	- Flow of action (at beginning):
+		1 - Taxi starts at a set position
+		2 - Inform the central that he will start his service from said position
+		3 - Inform the central about his taxi license plate (no duplicates)
+	- Taxi can be either moving or stopped
+	- Taxi informs (periodically) central about his position
+	- Taxi informs central if the taxi is interested in a certain passenger, setting both to the service
+	- Taxi informs central about his state (Waiting, IncPassenger, IncDestiny, Completed)
+	- Taxi moving and operating functionality will be controlled from this application
+	- Flow of action (new passenger):
+		1 - Central informs all taxis that a new passenger is available
+		2 - Taxi will inspect information about available passengers
+		3 - Taxi can accept service within respective time
+		4 - When time ends, central with gather all taxis that accepted the service and pick one (Rand)
+		5 - Central informs the selected taxi about this action
+	- Flow of action (transport passenger):
+		1 - Taxi moves to the passenger position
+		2 - Taxi picks up passenger
+		3 - Taxi moves to the passenger destination
+		4 - Taxi drops passenger
+		5 - Taxi closes service (?)
+	- Taxi moves automatically:
+		- One cell per second
+		- Without passenger, the taxi will go straight and choose a random cell when he is at a crossroad
+		- With passenger, the taxi will find the shortest path to the destination
+		- Every time he moves, he will inform the central about his new position
+	- Taxi automatically informs central that he is interested in passenger if its CN (Cell distance Number) is less than the defined number (default: 10)
+	- User can input movement commands:
+		- Speed up/down (0.5 cells per second)
+		- Define CN
+		- Turn on/off automatic interest response to new passenger
+		- Set interest to a passenger
+		- To end the application
+		- Maybe extra commands (TBD)
+	- CMD UI:
+		- Receives messages as plain text
+		- At any time, the user can input commands
+		- Receives messages related to the taxi, such as:
+			- New Passenger
+			- Sent interest to passenger
+			- Confirmation received
+			- Started passenger pickup
+			- Passenger pickup
+			- Passenger delivered
+			- Some other...
+
+MapInfo (Used as a map to every type of user):
+	- Can run more than one instance
+	- Can be accessed by any type of user
+	- Displays a live map of taxis and passengers
+	- This map must be permanently visible and always updated

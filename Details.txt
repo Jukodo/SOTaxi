@@ -1,0 +1,53 @@
+Communication:
+	- ConTaxi -> CenTaxi: shared memory
+	- CenTaxi -> ConTaxi (new passenger): shared memory
+	- CenTaxi -> ConTaxi (assigned passenger): named pipes
+	- CenTaxi -> ConTaxi (central shutdown): named pipes (?)
+	- CenTaxi <-> ConTaxi: named pipes
+	- CenTaxi <-> MapInfo: shared memory
+	- Create a diagram that shows all communications (for report)
+
+Open details:
+	- Commands names
+	- GUI details
+	- Communication messages formats
+	- Map structure details
+	- Sync behaviours, which and where are necessary
+	- Maybe other details
+
+Requirements:
+	- ConTaxi DLL which contains functionality to communicate with CenTaxi
+	- Shared memory (ConTaxi -> CenTaxi (Check new passengers)) must follow the provider/consumer pattern, with a buffer of 5 positions
+	- MapInfo must be clean, without stuttering (use double buffering)
+	- MapInfo must have the following behaviour:
+		- Mouse over a taxi: shows additional information, such as, license plate and passenger destination (if assigned)
+		- Mouse click on a passenger: shows additional information, such as, destination and assigned taxi license plate (if assigned)
+		- Menu and a dialog box to configure a theme, allowing the user to use images/icons for: free taxi, busy taxi, unassigned passenger, assigned passenger (this will be saved in Registry)
+	- Do not do:
+		- Global variables
+		- Non use of Unicode
+		- Bad structure of code
+		- Bad use of header files
+
+Provided DLL:
+	- Must be used explicitly
+	- Must register all sync and communication mechanisms
+	- Must log in certain cases:
+		- Taxi moves: log all details of the taxi
+		- Communication between processes: log origin and destination, mechanism used, and the information passed
+		- Taxi/Passenger is added/removed: log what has changed
+
+Extra steps:
+	- Taxi smart movement AI (10% of final grade)
+	- Passenger awaiting time estimate (5% of final grade)
+
+Attention:
+	- Do not use pointers on shared memory
+	- Plan data structures carefully
+	- If using GIT, make sure it is private
+	- All code must be known and ready to be vocally explained
+
+Step 1:
+	- All of CenTaxi/ConTaxi, except named pipes and communication of MapInfo
+	- Deliver brief report about crucial points, data structures, all mechanisms used that weren't defined by the professor and a diagram with the sync and communication mechanisms... The report must also include a table listing every requirement (not) implemented
+	- The CenTaxi/ConTaxi applications, must be provided in a way that they can be tested
