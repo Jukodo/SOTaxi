@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{1FFA3044-4EDD-473A-BB35-E9DF5771B8A0}</ProjectGuid>
-    <RootNamespace>CenTaxi</RootNamespace>
+    <ProjectGuid>{BC4570C4-DF28-419C-A3D1-412A9B05E721}</ProjectGuid>
+    <RootNamespace>ConTaxi</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

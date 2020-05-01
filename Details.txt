@@ -3,7 +3,7 @@ Communication:
 	- CenTaxi -> ConTaxi (new passenger): shared memory
 	- CenTaxi -> ConTaxi (assigned passenger): named pipes
 	- CenTaxi -> ConTaxi (central shutdown): named pipes (?)
-	- CenTaxi <-> ConTaxi: named pipes
+	- CenTaxi <-> ConPass: named pipes
 	- CenTaxi <-> MapInfo: shared memory
 	- Create a diagram that shows all communications (for report)
 
