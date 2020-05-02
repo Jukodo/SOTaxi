@@ -152,6 +152,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CenDLL.h" />
+    <ClInclude Include="Communication.h" />
+    <ClInclude Include="Map.h" />
     <ClInclude Include="Taxi.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>

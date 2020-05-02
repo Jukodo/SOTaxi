@@ -5,6 +5,5 @@ typedef struct Taxi{
 	bool deleted;
 	int LicensePlate;
 	int IdPassenger;
+	XYObject object;
 }Taxi;
-
-CENDLL_API int TAXI_A();

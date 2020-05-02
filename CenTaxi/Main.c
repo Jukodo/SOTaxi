@@ -7,9 +7,6 @@ void WINAPI Thread_Main(){
 }
 
 int _tmain(int argc, LPTSTR argv[]) {
-	_tprintf(TEXT("%d"), MAIN_A());
-	_tprintf(TEXT("%d"), TAXI_A());
-
 	HANDLE hMapObj = CreateFileMapping(
 		INVALID_HANDLE_VALUE,
 		NULL,
@@ -35,12 +32,17 @@ int _tmain(int argc, LPTSTR argv[]) {
 		_tprintf(TEXT("ERROR: lpSharedMem = NULL"));
 		return FALSE;
 	}
-	TAXI_A();
 	TCHAR ssString[STRING_MEDIUM];
 
 	HANDLE hTestingEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("TESTING"));
 	if(hTestingEvent == NULL){
 		_tprintf(TEXT("ERROR: hTestingEvent = NULL"));
+		return FALSE;
+	}
+	
+	HANDLE hMutex_SendRequests = CreateMutex(NULL, TRUE, NAME_MUTEX_RequestsTaxiToCentral);
+	if(hMutex_SendRequests == NULL){
+		_tprintf(TEXT("ERROR: hMutex_SendRequests = NULL"));
 		return FALSE;
 	}
 	//int idThreadMain;
@@ -52,12 +54,17 @@ int _tmain(int argc, LPTSTR argv[]) {
 	//	0,						//Flags de criaçao
 	//	&idThreadMain //idThread
 	//);
+
+	_tprintf(TEXT("Press a key to activate sendRequests mutex..."));
+	getchar();
+	ReleaseMutex(hMutex_SendRequests);
+
 	ZeroMemory(ssString, STRING_MEDIUM);
 	while(/*_tcscmp(ssString, TEXT("exit")) != 0*/Utils_StringIsEmpty(ssString)){
 		_tprintf(TEXT("\n\nInsert a number (1 - %d):"), _countof(ssString));
 		_tprintf(TEXT("\n\t-> "));
 		
-		wscanf_s(TEXT(" %[^\n]"), ssString, _countof(ssString));
+		_tscanf_s(TEXT(" %[^\n]"), ssString, _countof(ssString));
 
 		int c;
 		while((c = fgetc(stdin)) != '\n' && c != EOF); /* Flush stdin */
