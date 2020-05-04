@@ -24,7 +24,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	int maxPassenger = _wtoi(argv[2]);
 	Application app;
 
-	if(!Setup_Application(&app)){
+	if(!Setup_Application(&app, maxTaxi, maxPassenger)){
 		_tprintf(TEXT("Error trying to set up central..."));
 		getchar();
 		return false;

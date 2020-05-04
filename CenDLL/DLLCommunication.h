@@ -2,8 +2,6 @@
 #include "CenDLL.h"
 
 //Responses
-typedef struct LoginResponse LoginResponse;
-typedef struct AssignResponse AssignResponse;
 typedef struct Response Response;
 
 //Requests
@@ -13,16 +11,8 @@ typedef struct LARequest LARequest;
 
 //Enums
 typedef enum RequestType RequestType;
-
-struct LoginResponse{
-	TCHAR licensePlate[STRING_SMALL];
-	int coordX;
-	int coordY;
-};
-
-struct AssignResponse{
-	int idPassenger;
-};
+typedef enum LoginResponse LoginResponse;
+typedef enum AssignResponse AssignResponse;
 
 struct Response{
 	union{
@@ -53,4 +43,6 @@ struct LARequest{
 	};
 };
 
-enum RequestType { LOGIN, ASSIGN };
+enum RequestType{ LOGIN, ASSIGN };
+enum LoginResponse{ LR_SUCCESS, LR_INVALID_UNDEFINED, LR_INVALID_FULL, LR_INVALID_POSITION };
+enum AssignResponse{ AR_SUCCESS, AR_INVALID_UNDEFINED };

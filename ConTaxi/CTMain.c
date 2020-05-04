@@ -91,9 +91,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 			_tprintf(TEXT("%sLog in failed... Please try again!"), Utils_NewSubLine());
 	} while(flagLoginFailed);
 
-	_tprintf(TEXT("%sYou are now logged in!"), Utils_NewSubLine());
+	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine());
 	getchar();
-
 	#pragma endregion
 
 	#pragma region Closing

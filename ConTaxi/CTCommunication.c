@@ -3,20 +3,34 @@
 
 DWORD WINAPI Thread_SendLARequests(LPVOID request){
 	TParam_LARequest* req = (TParam_LARequest*) request;
+	LARequest* shm = req->app->shmHandles.lpSHM_LARequest;
 
-	_tprintf(TEXT("%sCT is starting the process"), Utils_NewSubLine());
-	Sleep(1 * 1000);
 	WaitForSingleObject(req->app->syncHandles.hEvent_LARequest, INFINITE);
 	WaitForSingleObject(req->app->syncHandles.hEvent_LARequest_Write, INFINITE);
 	switch(req->request.requestType){
 		case LOGIN:
-			//CopyMemory((LPVOID) req->app->shmHandles.lpSHM_LARequest, &req->request, sizeof(LARequest));
-			_tprintf(TEXT("%sCT is writting into the shared memory"), Utils_NewSubLine());
-			Sleep(1 * 1000);
+			CopyMemory(shm, &req->request, sizeof(LARequest));
 			SetEvent(req->app->syncHandles.hEvent_LARequest_Read);
+
 			WaitForSingleObject(req->app->syncHandles.hEvent_LARequest_Write, INFINITE);
-			_tprintf(TEXT("%sCT has received the response and is going to finish the process"), Utils_NewSubLine());
-			Sleep(1 * 1000);
+			
+			switch(shm->loginResponse){
+			case LR_SUCCESS:
+				req->app->loggedInTaxi.empty = false;
+				_tcscpy_s(req->app->loggedInTaxi.LicensePlate, STRING_SMALL, req->request.loginRequest.licensePlate);
+				req->app->loggedInTaxi.object.coordX = req->request.loginRequest.coordX;
+				req->app->loggedInTaxi.object.coordY = req->request.loginRequest.coordY;
+				
+				return 1;
+				break;
+			case LR_INVALID_UNDEFINED:
+				break;
+			case LR_INVALID_FULL:
+					break;
+			case LR_INVALID_POSITION:
+					break;
+			}
+
 			SetEvent(req->app->syncHandles.hEvent_LARequest_Write);
 			break;
 
@@ -27,8 +41,6 @@ DWORD WINAPI Thread_SendLARequests(LPVOID request){
 
 	SetEvent(req->app->syncHandles.hEvent_LARequest);
 	SetEvent(req->app->syncHandles.hEvent_LARequest_Write);
-	_tprintf(TEXT("%sCT has finished"), Utils_NewSubLine());
-	Sleep(1 * 1000);
 	free(req);
 	return 1;
 }

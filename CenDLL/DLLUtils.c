@@ -14,9 +14,7 @@ bool Utils_StringIsNumber(TCHAR* str){
 }
 
 bool Utils_StringIsEmpty(TCHAR* str){
-	if(str[0] == '\0')
-		return true;
-	if(_tcslen(str) == 0)
+	if(str == NULL || str[0] == '\0' || str[0] == '\n' || _tcslen(str) == 0)
 		return true;
 
 	return false;
