@@ -1,4 +1,4 @@
-#include "Utils.h"
+#include "DLLUtils.h"
 
 void Utils_CleanString(TCHAR* str){
 	if(str[_tcslen(str) - 1] == '\n')

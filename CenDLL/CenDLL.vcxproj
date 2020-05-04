@@ -152,16 +152,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CenDLL.h" />
-    <ClInclude Include="Communication.h" />
-    <ClInclude Include="Map.h" />
-    <ClInclude Include="Taxi.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="DLLCommunication.h" />
+    <ClInclude Include="DLLMap.h" />
+    <ClInclude Include="DLLPassenger.h" />
+    <ClInclude Include="DLLTaxi.h" />
+    <ClInclude Include="DLLUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CenDLL.c" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Taxi.c" />
-    <ClCompile Include="Utils.c" />
+    <ClCompile Include="DLLTaxi.c" />
+    <ClCompile Include="DLLUtils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

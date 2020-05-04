@@ -144,11 +144,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c" />
-    <ClCompile Include="Service.c" />
+    <ClCompile Include="CenCommunication.c" />
+    <ClCompile Include="CenMain.c" />
+    <ClCompile Include="CenService.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Service.h" />
+    <ClInclude Include="CenCommunication.h" />
+    <ClInclude Include="CenService.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

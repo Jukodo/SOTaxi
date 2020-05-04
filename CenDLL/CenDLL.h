@@ -12,8 +12,11 @@
 #define STRING_XXL 255
 
 #define SHM_Testing TEXT("justTestingKek")
+#define NAME_ SHM_SendRequest TEXT("JUSO2TAXI_SR")
 
-#define NAME_MUTEX_RequestsTaxiToCentral TEXT("JUSO2TAXI_RT2C")
+#define NAME_EVENT_LARequest TEXT("JUSO2TAXI_LAR")
+#define NAME_EVENT_LARequest_Read TEXT("JUSO2TAXI_LARW")
+#define NAME_EVENT_LARequest_Write TEXT("JUSO2TAXI_LARR")
 
 //Main
 #include <stdio.h>
@@ -24,7 +27,8 @@
 #include <tchar.h>
 #include <fcntl.h>
 //Data
-#include "Map.h"
-#include "Taxi.h"
-#include "Utils.h"
-#include "Communication.h"
+#include "DLLMap.h"
+#include "DLLTaxi.h"
+#include "DLLUtils.h"
+#include "DLLCommunication.h"
+#include "DLLPassenger.h"

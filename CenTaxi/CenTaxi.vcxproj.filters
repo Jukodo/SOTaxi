@@ -15,15 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c">
+    <ClCompile Include="CenMain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Service.c">
+    <ClCompile Include="CenService.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CenCommunication.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Service.h">
+    <ClInclude Include="CenService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CenCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

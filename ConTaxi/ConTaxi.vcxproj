@@ -144,13 +144,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Communication.c" />
-    <ClCompile Include="Main.c" />
-    <ClCompile Include="Service.c" />
+    <ClCompile Include="CTCommunication.c" />
+    <ClCompile Include="CTMain.c" />
+    <ClCompile Include="CTService.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Communication.h" />
-    <ClInclude Include="Service.h" />
+    <ClInclude Include="CTCommunication.h" />
+    <ClInclude Include="CTService.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

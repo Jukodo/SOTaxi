@@ -15,19 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Taxi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CenDLL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="DLLCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Map.h">
+    <ClInclude Include="DLLMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Communication.h">
+    <ClInclude Include="DLLTaxi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DLLUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DLLPassenger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,13 +38,13 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Taxi.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CenDLL.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.c">
+    <ClCompile Include="DLLTaxi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DLLUtils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

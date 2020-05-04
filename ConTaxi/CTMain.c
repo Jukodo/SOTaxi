@@ -1,16 +1,26 @@
 #include "CenDLL.h"
-#include "Service.h"
-#include "Communication.h"
+#include "CTService.h"
+#include "CTCommunication.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
 	#pragma region Initialization
 	Application app;
-	if(!Setup_Application(&app)){
-		_tprintf(TEXT("Central is offline..."));
-		return false;
-	} else{
-		_tprintf(TEXT("Connection to central successful!"));
-	}
+	TCHAR retryOpt[2];
+	bool flagOfflineCentral = true;
+	do{
+		ZeroMemory(retryOpt, 2);
+		flagOfflineCentral = !Setup_Application(&app);
+		if(flagOfflineCentral){
+			_tprintf(TEXT("%sCentral is offline... Do you want to try again? (Y/n)"), Utils_NewLine());
+			_tprintf(TEXT("%s-> "), Utils_NewSubLine());
+			_tscanf_s(TEXT(" %[^\n]"), retryOpt, _countof(retryOpt));
+
+			if(_tolower(retryOpt[0]) == 'n' || retryOpt[0] == 'n'){
+				return false;
+			}
+		}
+	} while(flagOfflineCentral);
+	_tprintf(TEXT("%sConnection to central successful!"), Utils_NewLine());
 	#pragma endregion
 
 	_tprintf(TEXT("%sPress any key to start the application..."), Utils_NewLine());
@@ -18,10 +28,11 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	#pragma region Login
 	//wprintf(TEXT("%d"), ((Taxi*) app.shmHandles.lpTestMem)->IdPassenger);
-	TCHAR sLicensePlate[STRING_SMALL];
-	TCHAR sCoordinates_X[STRING_SMALL];
-	TCHAR sCoordinates_Y[STRING_SMALL];
+	TCHAR sLicensePlate[STRING_SMALL] = TEXT("aa-aa-aa");
+	TCHAR sCoordinates_X[STRING_SMALL] = TEXT("11");
+	TCHAR sCoordinates_Y[STRING_SMALL] = TEXT("22");
 	TCHAR opt[2];
+	bool flagLoginFailed = true;
 	do{
 		ZeroMemory(opt, 2);
 		_tprintf(TEXT("%sLogin"), Utils_NewLine());
@@ -70,36 +81,23 @@ int _tmain(int argc, LPTSTR argv[]) {
 			ZeroMemory(sCoordinates_X, sizeof(sCoordinates_X));
 			ZeroMemory(sCoordinates_Y, sizeof(sCoordinates_Y));
 			continue;
-		} else
-			break;
-	} while(_tolower(opt[0]) == 'n' || opt[0] == 'n');
+		} else {
+			Service_Login(&app, sLicensePlate, sCoordinates_X, sCoordinates_Y);
+			_tprintf(TEXT("%sTrying to log in. Please wait..."), Utils_NewSubLine());
+			WaitForSingleObject(app.threadHandles.hLARequests, INFINITE);
+		}
+		flagLoginFailed = !isLoggedIn(&app);
+		if(flagLoginFailed)
+			_tprintf(TEXT("%sLog in failed... Please try again!"), Utils_NewSubLine());
+	} while(flagLoginFailed);
 
-	_tprintf(TEXT("\n%d"), &app.syncHandles.mutex_SendRequest);
-	SendRequest request;
-	LoginRequest loginRequest;
-	_tcscpy_s(loginRequest.licensePlate, STRING_SMALL, sLicensePlate);
-	loginRequest.coordX = _wtoi(sCoordinates_X);
-	loginRequest.coordY = _wtoi(sCoordinates_Y);
-	request.app = &app;
-	request.loginRequest = loginRequest;
-	request.requestType = LOGIN;
-
-	app.threadHandles.hSendRequests = CreateThread(
-		NULL,
-		0,
-		Thread_SendRequests,				//Function
-		(LPVOID) &request,					//Param
-		0,									//Creation Flag
-		&app.threadHandles.dwIdSendRequests //idThread
-	);
-	_tprintf(TEXT("%sTrying to log in. Please wait..."), Utils_NewSubLine());
-	WaitForSingleObject(app.threadHandles.hSendRequests, INFINITE);
+	_tprintf(TEXT("%sYou are now logged in!"), Utils_NewSubLine());
 	getchar();
 
 	#pragma endregion
 
 	#pragma region Closing
-	//Setup_CloseAllHandles(&app);
+	Setup_CloseAllHandles(&app);
 	#pragma endregion
 
 	_tprintf(TEXT("%sPress any key to close the application..."), Utils_NewLine());
