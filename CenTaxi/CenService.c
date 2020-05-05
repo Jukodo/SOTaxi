@@ -198,7 +198,7 @@ LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 
 	Taxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
 	anchorTaxi->empty = false;
-	_tcscpy_s(anchorTaxi->LicensePlate, sizeof(anchorTaxi->LicensePlate), loginRequest->licensePlate);
+	_tcscpy_s(anchorTaxi->LicensePlate, _countof(anchorTaxi->LicensePlate), loginRequest->licensePlate);
 	anchorTaxi->object.coordX = loginRequest->coordX;
 	anchorTaxi->object.coordY = loginRequest->coordY;
 	

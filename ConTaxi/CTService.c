@@ -97,7 +97,7 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 	TParam_LARequest* request = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
 	
 	LoginRequest loginRequest;
-	_tcscpy_s(loginRequest.licensePlate, STRING_SMALL, sLicensePlate);
+	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
 	loginRequest.coordX = _wtoi(sCoordinates_X);
 	loginRequest.coordY = _wtoi(sCoordinates_Y);
 

@@ -28,9 +28,9 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	#pragma region Login
 	//wprintf(TEXT("%d"), ((Taxi*) app.shmHandles.lpTestMem)->IdPassenger);
-	TCHAR sLicensePlate[STRING_SMALL] = TEXT("aa-aa-aa");
-	TCHAR sCoordinates_X[STRING_SMALL] = TEXT("11");
-	TCHAR sCoordinates_Y[STRING_SMALL] = TEXT("22");
+	TCHAR sLicensePlate[9] = TEXT("aa-aa-aa");
+	TCHAR sCoordinates_X[3] = TEXT("11");
+	TCHAR sCoordinates_Y[3] = TEXT("22");
 	TCHAR opt[2];
 	bool flagLoginFailed = true;
 	do{

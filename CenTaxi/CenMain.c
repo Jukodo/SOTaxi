@@ -2,6 +2,16 @@
 #include "CenService.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
+	#pragma region OneInstanceLock
+	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_ONEINSTANCE_CEN);
+	if(GetLastError() == ERROR_ALREADY_EXISTS){
+		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
+		getchar();
+		return 0;
+	}
+	#pragma endregion
+
+	#pragma region ArgumentsSetup
 	//argv[0] - Executable file path (default)
 	//argv[1] - Max Taxis
 	//argv[2] - Max Passengers
@@ -22,13 +32,19 @@ int _tmain(int argc, LPTSTR argv[]) {
 	}
 	int maxTaxi = _wtoi(argv[1]);
 	int maxPassenger = _wtoi(argv[2]);
+	#pragma endregion
+
+	#pragma region ApplicationSetup
 	Application app;
 
 	if(!Setup_Application(&app, maxTaxi, maxPassenger)){
-		_tprintf(TEXT("Error trying to set up central..."));
+		_tprintf(TEXT("%sError trying to set up central..."), Utils_NewLine());
 		getchar();
 		return false;
 	}
+
+	_tprintf(TEXT("%sThe central is ready to be used! Waiting for commands..."), Utils_NewLine());
+	#pragma endregion
 
 	getchar();
 	return 0;
