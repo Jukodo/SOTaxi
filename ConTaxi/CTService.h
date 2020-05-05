@@ -7,14 +7,17 @@ typedef struct ThreadHandles{
 }ThreadHandles;
 
 typedef struct SyncHandles{
-	HANDLE hEvent_LARequest;
+	HANDLE hMutex_LARequest;
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
+	HANDLE hEvent_PassengerList_CanRead;
 }SyncHandles;
 
 typedef struct ShmHandles{
 	HANDLE hSHM_LARequest;
 	LPVOID lpSHM_LARequest;
+	HANDLE hSHM_PassengerList;
+	LPVOID lpSHM_PassengerList;
 }ShmHandles;
 
 typedef struct Application{
@@ -37,3 +40,11 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
+TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
+void Service_RequestPass(Application* app, TCHAR* idPassenger);
+bool Service_DefineCDN(Application* app, TCHAR* value);
+
+void Command_ListPassengers(Application* app);
+void Command_Speed(Application* app, bool speedUp);
+void Command_AutoResp(Application* app, bool autoResp);
+void Command_CloseApp(Application* app);

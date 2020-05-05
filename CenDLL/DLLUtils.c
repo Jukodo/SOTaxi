@@ -6,6 +6,9 @@ void Utils_CleanString(TCHAR* str){
 }
 
 bool Utils_StringIsNumber(TCHAR* str){
+	if(Utils_StringIsEmpty(str))
+		return false;
+
 	for(unsigned int i = 0; i < _tcslen(str); i++){
 		if(!iswdigit(str[i]))
 			return false;
@@ -20,10 +23,15 @@ bool Utils_StringIsEmpty(TCHAR* str){
 	return false;
 }
 
-CENDLL_API TCHAR* Utils_NewLine(){
+TCHAR* Utils_NewLine(){
 	return TEXT("\n\n\t");
 }
 
-CENDLL_API TCHAR* Utils_NewSubLine(){
+TCHAR* Utils_NewSubLine(){
 	return TEXT("\n\t\t");
+}
+
+void Utils_CleanStdin(){
+	int c;
+	while((c = fgetc(stdin)) != '\n' && c != EOF); /* Flush stdin */
 }

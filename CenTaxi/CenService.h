@@ -9,11 +9,14 @@ typedef struct ThreadHandles{
 typedef struct SyncHandles{
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
+	HANDLE hEvent_PassengerList_CanRead;
 }SyncHandles;
 
 typedef struct ShmHandles{
 	HANDLE hSHM_LARequest;
 	LPVOID lpSHM_LARequest;
+	HANDLE hSHM_PassengerList;
+	LPVOID lpSHM_PassengerList;
 }ShmHandles;
 
 typedef struct Application{
@@ -45,6 +48,7 @@ int Get_QuantLoggedInTaxis(Application* app);
 int Get_FreeIndexTaxiList(Application* app);
 Passenger* Get_Passenger(Application* app, TCHAR* Id);
 
-bool isValid_ObjectPosition(Application* app, int coordX, int coordY);
+bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
+AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest);

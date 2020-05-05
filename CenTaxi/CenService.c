@@ -40,8 +40,8 @@ bool Setup_OpenThreadHandles(Application* app){
 
 	param->app = app;
 	app->threadHandles.hLARequests = CreateThread(
-			NULL,
-			0,
+			NULL,								//Security Attributes
+			0,									//Stack Size (0 = default)
 			Thread_ReceiveLARequests,			//Function
 			(LPVOID) param,						//Param
 			0,									//Creation flags
@@ -60,26 +60,29 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 }
 
 bool Setup_OpenSmhHandles(ShmHandles* shmHandles){
-	shmHandles->hSHM_LARequest = CreateFileMapping
-	(INVALID_HANDLE_VALUE,
-		NULL,
-		PAGE_READWRITE,
-		0,
-		sizeof(LARequest),
-		SHM_Testing);
-
+	#pragma region LARequest
+	shmHandles->hSHM_LARequest = CreateFileMapping(
+		INVALID_HANDLE_VALUE,	//File handle
+		NULL,					//Security Attributes
+		PAGE_READWRITE,			//Protection flags
+		0,						//DWORD high-order max size
+		sizeof(LARequest),		//DWORD low-order max size
+		NAME_SHM_LAREQUESTS		//File mapping object name
+	);
 	if(shmHandles->hSHM_LARequest == NULL)
 		return false;
 
 	shmHandles->lpSHM_LARequest = MapViewOfFile(
-		shmHandles->hSHM_LARequest,
-		FILE_MAP_ALL_ACCESS,
-		0,
-		0,
-		sizeof(LARequest));
-
+		shmHandles->hSHM_LARequest, //File mapping object handle
+		FILE_MAP_ALL_ACCESS,		//Desired access flag
+		0,							//DWORD high-order of the file offset where the view begins
+		0,							//DWORD low-order of the file offset where the view begins
+		sizeof(LARequest)			//Number of bytes to map
+	);
 	if(shmHandles->lpSHM_LARequest == NULL)
 		return false;
+	#pragma endregion
+
 	return true;
 }
 
@@ -100,6 +103,10 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 #pragma endregion
 }
 
+bool isTaxiListFull(Application* app){
+	return Get_QuantLoggedInTaxis(app) >= app->maxTaxis;
+}
+
 int Get_QuantLoggedInTaxis(Application* app){
 	int quantLoggedInTaxis = 0;
 
@@ -109,10 +116,6 @@ int Get_QuantLoggedInTaxis(Application* app){
 	}
 
 	return quantLoggedInTaxis;
-}
-
-bool isTaxiListFull(Application* app){
-	return Get_QuantLoggedInTaxis(app) >= app->maxTaxis;
 }
 
 int Get_FreeIndexTaxiList(Application* app){
@@ -178,7 +181,7 @@ Passenger* Get_Passenger(Application* app, TCHAR* Id){
 	return NULL;
 }
 
-bool isValid_ObjectPosition(Application* app, int coordX, int coordY){
+bool isValid_ObjectPosition(Application* app, float coordX, float coordY){
 	//ToDo
 
 	return true;
@@ -203,4 +206,8 @@ LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	anchorTaxi->object.coordY = loginRequest->coordY;
 	
 	return LR_SUCCESS;
+}
+
+AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest){
+	return AR_SUCCESS;
 }

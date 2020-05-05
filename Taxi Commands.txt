@@ -1,0 +1,9 @@
+Funcionality:
+	- AvailablePass: Shows a list of passenger waiting to be transported
+	- SpeedUp: Speeds the taxi up by 0.5cells per second
+	- SpeedDown: Speeds the taxi down by 0.5cells per second
+	- DefineCDN {value}: Define new CDN value
+	- AutoRespOn: Turn on automatic response to new passenger
+	- AutoRespOff: Turn off automatic response to new passenger
+	- RequestPass {passId}: Send a request to be assigned to a respective passenger (from the list available)
+	- CloseApp: Closes the application

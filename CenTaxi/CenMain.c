@@ -46,6 +46,15 @@ int _tmain(int argc, LPTSTR argv[]) {
 	_tprintf(TEXT("%sThe central is ready to be used! Waiting for commands..."), Utils_NewLine());
 	#pragma endregion
 
+	#pragma region FakePassengerList
+	for(int i = 0; i < app.maxPassengers; i++){
+		app.passengerList[i].empty = false;
+		_tprintf(TEXT("%s"), app.passengerList[i].Id);
+		app.passengerList[i].object.coordX = i;
+		app.passengerList[i].object.coordY = i;
+	}
+	#pragma endregion
+
 	getchar();
 	return 0;
 }

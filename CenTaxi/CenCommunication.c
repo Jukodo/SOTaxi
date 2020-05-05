@@ -9,10 +9,13 @@ DWORD WINAPI Thread_ReceiveLARequests(LPVOID request){
 		LARequest* shm = req->app->shmHandles.lpSHM_LARequest;
 
 		switch(shm->requestType){
-			case LOGIN:
+			case RT_LOGIN:
 				shm->loginResponse = Service_LoginTaxi(req->app, &shm->loginRequest);
 				break;
-			case ASSIGN:
+			case RT_ASSIGN:
+				shm->assignResponse = Service_RequestPassenger(req->app, &shm->assignRequest);
+				break;
+			case RT_CDN:
 				break;
 		}
 

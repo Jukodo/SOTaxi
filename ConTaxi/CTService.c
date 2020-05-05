@@ -46,11 +46,11 @@ bool Setup_Application(Application* app){
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hEvent_LARequest = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest);
+	syncHandles->hMutex_LARequest = CreateMutex(NULL, FALSE, NAME_MUTEX_LARequest);
 	syncHandles->hEvent_LARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_LARequest_Read);
 	syncHandles->hEvent_LARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest_Write);
 
-	return !(syncHandles->hEvent_LARequest == NULL ||
+	return !(syncHandles->hMutex_LARequest == NULL ||
 		syncHandles->hEvent_LARequest_Read == NULL ||
 		syncHandles->hEvent_LARequest_Write == NULL);
 }
@@ -58,7 +58,7 @@ bool Setup_OpenSmhHandles(ShmHandles* shmHandles){
 	shmHandles->hSHM_LARequest = OpenFileMapping(
 		FILE_MAP_ALL_ACCESS,
 		FALSE,
-		SHM_Testing);
+		NAME_SHM_LAREQUESTS);
 
 	if(shmHandles->hSHM_LARequest == NULL)
 		return false;
@@ -81,7 +81,7 @@ void Setup_CloseAllHandles(Application* app){
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
-	CloseHandle(syncHandles->hEvent_LARequest);
+	CloseHandle(syncHandles->hMutex_LARequest);
 	CloseHandle(syncHandles->hEvent_LARequest_Read);
 	CloseHandle(syncHandles->hEvent_LARequest_Write);
 }
@@ -98,12 +98,12 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 	
 	LoginRequest loginRequest;
 	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
-	loginRequest.coordX = _wtoi(sCoordinates_X);
-	loginRequest.coordY = _wtoi(sCoordinates_Y);
+	loginRequest.coordX = (float) _tstof(sCoordinates_X);
+	loginRequest.coordY = (float) _tstof(sCoordinates_Y);
 
 	request->app = app;
 	request->request.loginRequest = loginRequest;
-	request->request.requestType = LOGIN;
+	request->request.requestType = RT_LOGIN;
 
 	app->threadHandles.hLARequests = CreateThread(
 		NULL,								//Security Attributes
@@ -113,4 +113,79 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 		0,									//Creation Flag
 		&app->threadHandles.dwIdLARequests  //Thread ID
 	);
+}
+
+TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
+	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)
+		return TC_HELP;
+	} else if(_tcscmp(command, CMD_SPEED_UP) == 0){
+		Command_Speed(app, true);
+		return TC_SPEED_UP;
+	} else if(_tcscmp(command, CMD_SPEED_DOWN) == 0){
+		Command_Speed(app, false);
+		return TC_SPEED_DOWN;
+	} else if(_tcscmp(command, CMD_AUTORESP_ON) == 0){
+		Command_AutoResp(app, true);
+		return TC_AUTORESP_ON;
+	} else if(_tcscmp(command, CMD_AUTORESP_OFF) == 0){
+		Command_AutoResp(app, false);
+		return TC_AUTORESP_OFF;
+	} else if(_tcscmp(command, CMD_LISTPASS) == 0){
+		Command_ListPassengers(app);
+		return TC_LISTPASS;
+	} else if(_tcscmp(command, CMD_DEFINE_CDN) == 0){ //Continues on Main (asking for value argument)
+		return TC_DEFINE_CDN;
+	} else if(_tcscmp(command, CMD_REQUEST_PASS) == 0){ //Continues on Main (asking for value argument)
+		return TC_REQUEST_PASS;
+	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
+		Command_CloseApp(app);
+		return TC_CLOSEAPP;
+	}
+
+	return TC_UNDEFINED;
+}
+
+void Service_RequestPass(Application* app, TCHAR* idPassenger){
+	TParam_LARequest* request = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+
+	AssignRequest assignRequest;
+	_tcscpy_s(assignRequest.idPassenger, _countof(assignRequest.idPassenger), idPassenger);
+
+	request->app = app;
+	request->request.assignRequest = assignRequest;
+	request->request.requestType = RT_ASSIGN;
+
+	app->threadHandles.hLARequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_SendLARequests,				//Function
+		(LPVOID) request,					//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdLARequests  //Thread ID
+	);
+}
+
+bool Service_DefineCDN(Application* app, TCHAR* value){
+	if(!Utils_StringIsNumber(value))
+		return false;
+
+	int cdnValue = _ttoi(value);
+	//ToDo
+	return true;
+}
+
+void Command_ListPassengers(Application* app){
+	//ToDo
+}
+
+void Command_Speed(Application* app, bool speedUp){
+	//ToDo
+}
+
+void Command_AutoResp(Application* app, bool autoResp){
+	//ToDo
+}
+
+void Command_CloseApp(Application* app){
+	//ToDo
 }
