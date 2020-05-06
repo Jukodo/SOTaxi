@@ -24,6 +24,7 @@
 #define NAME_EVENT_LARequest_Read TEXT("JUSO2TAXI_LARW")
 #define NAME_EVENT_LARequest_Write TEXT("JUSO2TAXI_LARR")
 #define NAME_EVENT_PassengerList_Access TEXT("JUSO2TAXI_PASSLIST_ACCESS")
+#define NAME_EVENT_Notify_T_NP TEXT("JUSO2TAXI_Notify_T_NP")
 
 //Main
 #include <stdio.h>

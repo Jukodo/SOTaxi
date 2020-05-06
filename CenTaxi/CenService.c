@@ -56,11 +56,14 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	syncHandles->hEvent_LARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_LARequest_Read);
 	syncHandles->hEvent_LARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest_Write);
 
-	syncHandles->hEvent_PassengerList_Access = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_PassengerList_Access);
+	syncHandles->hEvent_PassengerList_Access = CreateEvent(NULL, TRUE, TRUE, NAME_EVENT_PassengerList_Access);
+
+	syncHandles->hEvent_Notify_T_NP = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_Notify_T_NP);
 
 	return !(syncHandles->hEvent_LARequest_Read == NULL ||
 		syncHandles->hEvent_LARequest_Write == NULL ||
-		syncHandles->hEvent_PassengerList_Access == NULL);
+		syncHandles->hEvent_PassengerList_Access == NULL ||
+		syncHandles->hEvent_Notify_T_NP == NULL);
 }
 
 bool Setup_OpenSmhHandles(Application* app){
@@ -261,4 +264,14 @@ bool Service_NewPassenger(Application* app, Passenger pass){
 
 AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest){
 	return AR_SUCCESS;
+}
+
+void Service_NotifyTaxisNewPassenger(Application* app){
+	//Manual reset event
+	/*SetEvent(app->syncHandles.hEvent_Notify_T_NP); 
+	ResetEvent(app->syncHandles.hEvent_Notify_T_NP);*/
+	//OR
+	//Auto reset event (tested, and no flaws found)
+	for(int i = 0; i < Get_QuantLoggedInTaxis(app); i++)
+		SetEvent(app->syncHandles.hEvent_Notify_T_NP);
 }

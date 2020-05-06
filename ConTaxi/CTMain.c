@@ -94,6 +94,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	} while(flagLoginFailed);
 
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
+	ResumeThread(app.threadHandles.hNotificationReceiver_NP);
 	#pragma endregion
 
 	#pragma region Commands

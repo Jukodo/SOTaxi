@@ -72,7 +72,7 @@ DWORD WINAPI Thread_SendLARequests(LPVOID _param){
 }
 
 DWORD WINAPI Thread_ListPassenger(LPVOID _param){
-	TParam_LARequest* param = (TParam_LARequest*) _param;
+	TParam_ListPassengers* param = (TParam_ListPassengers*) _param;
 	Passenger* passengerList = param->app->shmHandles.lpSHM_PassengerList;
 
 	if(passengerList == NULL)
@@ -88,4 +88,14 @@ DWORD WINAPI Thread_ListPassenger(LPVOID _param){
 	SetEvent(param->app->syncHandles.hEvent_PassengerList_Access);
 	free(param);
 	return 1;
+}
+
+DWORD WINAPI Thread_NotificationReceiver_NP(LPVOID _param){
+	Application* app = (Application*) _param;
+
+	while(true){
+		WaitForSingleObject(app->syncHandles.hEvent_Notify_T_NP, INFINITE);
+		app->quant++;
+		_tprintf(TEXT("%sI got notified %d times"), Utils_NewLine(), app->quant);
+	}
 }

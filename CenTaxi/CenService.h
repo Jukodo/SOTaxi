@@ -10,6 +10,7 @@ typedef struct SyncHandles{
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
 	HANDLE hEvent_PassengerList_Access;
+	HANDLE hEvent_Notify_T_NP;
 }SyncHandles;
 
 typedef struct ShmHandles{
@@ -53,3 +54,4 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest);
+void Service_NotifyTaxisNewPassenger(Application* app);

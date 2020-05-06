@@ -58,6 +58,12 @@ int _tmain(int argc, LPTSTR argv[]) {
 	}
 	#pragma endregion
 
+	while(1){
+		_tprintf(TEXT("%sEnter to notify all taxis"), Utils_NewSubLine());
+		getchar();
+		Service_NotifyTaxisNewPassenger(&app);
+	}
+
 	getchar();
 	return 0;
 }
