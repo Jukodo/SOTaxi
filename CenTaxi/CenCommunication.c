@@ -17,6 +17,10 @@ DWORD WINAPI Thread_ReceiveLARequests(LPVOID request){
 				break;
 			case RT_CDN:
 				break;
+			case RT_VAR:
+				shm->varResponse.maxTaxis = req->app->maxTaxis;
+				shm->varResponse.maxPassengers = req->app->maxPassengers;
+				break;
 		}
 
 		SetEvent(req->app->syncHandles.hEvent_LARequest_Write);

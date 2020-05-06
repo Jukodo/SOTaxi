@@ -47,11 +47,14 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma endregion
 
 	#pragma region FakePassengerList
+	Passenger newPass;
 	for(int i = 0; i < app.maxPassengers; i++){
-		app.passengerList[i].empty = false;
-		_tprintf(TEXT("%s"), app.passengerList[i].Id);
-		app.passengerList[i].object.coordX = i;
-		app.passengerList[i].object.coordY = i;
+		newPass.empty = false;
+		_stprintf_s(newPass.Id, _countof(newPass.Id), TEXT("Pass%d"), i);
+		newPass.object.coordX = (float) i;
+		newPass.object.coordY = (float) i;
+
+		Service_NewPassenger(&app, newPass);
 	}
 	#pragma endregion
 

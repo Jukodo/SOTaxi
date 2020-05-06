@@ -1,25 +1,27 @@
 #pragma once
 #include "CTCommunication.h"
 
-DWORD WINAPI Thread_SendLARequests(LPVOID request){
-	TParam_LARequest* req = (TParam_LARequest*) request;
-	LARequest* shm = req->app->shmHandles.lpSHM_LARequest;
+DWORD WINAPI Thread_SendLARequests(LPVOID _param){
+	TParam_LARequest* param = (TParam_LARequest*) _param;
+	LARequest* shm = param->app->shmHandles.lpSHM_LARequest;
 
-	WaitForSingleObject(req->app->syncHandles.hMutex_LARequest, INFINITE);
-	WaitForSingleObject(req->app->syncHandles.hEvent_LARequest_Write, INFINITE);
-	switch(req->request.requestType){
+	WaitForSingleObject(param->app->syncHandles.hMutex_LARequest, INFINITE);
+	WaitForSingleObject(param->app->syncHandles.hEvent_LARequest_Write, INFINITE);
+
+	CopyMemory(shm, &param->request, sizeof(LARequest));
+	SetEvent(param->app->syncHandles.hEvent_LARequest_Read);
+
+	WaitForSingleObject(param->app->syncHandles.hEvent_LARequest_Write, INFINITE);
+
+	switch(param->request.requestType){
 		case RT_LOGIN:
-			CopyMemory(shm, &req->request, sizeof(LARequest));
-			SetEvent(req->app->syncHandles.hEvent_LARequest_Read);
-
-			WaitForSingleObject(req->app->syncHandles.hEvent_LARequest_Write, INFINITE);
 			
 			switch(shm->loginResponse){
 				case LR_SUCCESS:
-					req->app->loggedInTaxi.empty = false;
-					_tcscpy_s(req->app->loggedInTaxi.LicensePlate, _countof(req->app->loggedInTaxi.LicensePlate), req->request.loginRequest.licensePlate);
-					req->app->loggedInTaxi.object.coordX = req->request.loginRequest.coordX;
-					req->app->loggedInTaxi.object.coordY = req->request.loginRequest.coordY;
+					param->app->loggedInTaxi.empty = false;
+					_tcscpy_s(param->app->loggedInTaxi.LicensePlate, _countof(param->app->loggedInTaxi.LicensePlate), param->request.loginRequest.licensePlate);
+					param->app->loggedInTaxi.object.coordX = param->request.loginRequest.coordX;
+					param->app->loggedInTaxi.object.coordY = param->request.loginRequest.coordY;
 					break;
 				case LR_INVALID_UNDEFINED:
 					_tprintf(TEXT("%sError! Please try again..."), Utils_NewSubLine());
@@ -35,10 +37,6 @@ DWORD WINAPI Thread_SendLARequests(LPVOID request){
 			break;
 
 		case RT_ASSIGN:
-			CopyMemory(shm, &req->request, sizeof(LARequest));
-			SetEvent(req->app->syncHandles.hEvent_LARequest_Read);
-
-			WaitForSingleObject(req->app->syncHandles.hEvent_LARequest_Write, INFINITE);
 
 			switch(shm->assignResponse){
 				case AR_SUCCESS:
@@ -53,10 +51,41 @@ DWORD WINAPI Thread_SendLARequests(LPVOID request){
 			}
 
 			break;
+
+		case RT_VAR:
+			if(shm->varResponse.maxTaxis <= 0 || shm->varResponse.maxTaxis > TOPMAX_TAXI)
+				shm->varResponse.maxTaxis = -1;
+
+			if(shm->varResponse.maxPassengers <= 0 || shm->varResponse.maxPassengers > TOPMAX_PASSENGERS)
+				shm->varResponse.maxPassengers = -1;
+
+			param->app->maxTaxis = shm->varResponse.maxTaxis;
+			param->app->maxPassengers = shm->varResponse.maxPassengers;
+
+			break;
 	}
 
-	ReleaseMutex(req->app->syncHandles.hMutex_LARequest);
-	SetEvent(req->app->syncHandles.hEvent_LARequest_Write);
-	free(req);
+	ReleaseMutex(param->app->syncHandles.hMutex_LARequest);
+	SetEvent(param->app->syncHandles.hEvent_LARequest_Write);
+	free(param);
+	return 1;
+}
+
+DWORD WINAPI Thread_ListPassenger(LPVOID _param){
+	TParam_LARequest* param = (TParam_LARequest*) _param;
+	Passenger* passengerList = param->app->shmHandles.lpSHM_PassengerList;
+
+	if(passengerList == NULL)
+		return 0;
+
+	WaitForSingleObject(param->app->syncHandles.hEvent_PassengerList_Access, INFINITE);
+
+	for(int i = 0; i < param->app->maxPassengers; i++){
+		if(!passengerList[i].empty)
+			_tprintf(TEXT("%s%s X=%.2f Y=%.2f"), Utils_NewSubLine(), passengerList[i].Id, passengerList[i].object.coordX, passengerList[i].object.coordY);
+	}
+
+	SetEvent(param->app->syncHandles.hEvent_PassengerList_Access);
+	free(param);
 	return 1;
 }

@@ -9,7 +9,7 @@ typedef struct ThreadHandles{
 typedef struct SyncHandles{
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
-	HANDLE hEvent_PassengerList_CanRead;
+	HANDLE hEvent_PassengerList_Access;
 }SyncHandles;
 
 typedef struct ShmHandles{
@@ -32,7 +32,7 @@ typedef struct Application{
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
 bool Setup_OpenThreadHandles(Application* app);
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles);
-bool Setup_OpenSmhHandles(ShmHandles* shmHandles);
+bool Setup_OpenSmhHandles(Application* app);
 
 void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);
@@ -51,4 +51,5 @@ Passenger* Get_Passenger(Application* app, TCHAR* Id);
 bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
+bool Service_NewPassenger(Application* app, Passenger pass);
 AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest);

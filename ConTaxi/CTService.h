@@ -10,7 +10,7 @@ typedef struct SyncHandles{
 	HANDLE hMutex_LARequest;
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
-	HANDLE hEvent_PassengerList_CanRead;
+	HANDLE hEvent_PassengerList_Access;
 }SyncHandles;
 
 typedef struct ShmHandles{
@@ -25,6 +25,8 @@ typedef struct Application{
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
 	ShmHandles shmHandles;
+	int maxTaxis;
+	int maxPassengers;
 }Application;
 
 bool isLoggedIn(Application* app);
@@ -33,12 +35,13 @@ bool isValid_Coordinates(TCHAR* sCoordinates);
 
 bool Setup_Application(Application* app);
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles);
-bool Setup_OpenSmhHandles(ShmHandles* shmHandles);
+bool Setup_OpenSmhHandles(Application* app);
 
 void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 
+void Service_RequestVars(Application* app);
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
 void Service_RequestPass(Application* app, TCHAR* idPassenger);

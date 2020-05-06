@@ -74,10 +74,10 @@ ConTaxi (Used as main communication for taxis):
 		- Without passenger, the taxi will go straight and choose a random cell when he is at a crossroad
 		- With passenger, the taxi will find the shortest path to the destination
 		- Every time he moves, he will inform the central about his new position
-	- Taxi automatically informs central that he is interested in passenger if its CN (Cell distance Number) is less than the defined number (default: 10)
+	- Taxi automatically informs central that he is interested in passenger if its CDN (Cell Distance Number) is less than the defined number (default: 10)
 	- User can input movement commands:
 		- Speed up/down (0.5 cells per second)
-		- Define CN
+		- Define CDN
 		- Turn on/off automatic interest response to new passenger
 		- Set interest to a passenger
 		- To end the application

@@ -5,32 +5,33 @@
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ZeroMemory(app, sizeof(Application));
 
-	app->taxiList = malloc(maxTaxis * sizeof(Taxi));
-	app->passengerList = malloc(maxPassengers * sizeof(Passenger));
-
 	app->maxTaxis = maxTaxis;
 	app->maxPassengers = maxPassengers;
 
-	int i;
-	if(app->taxiList != NULL){
+	bool ret = true;
+	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
+	ret = ret && Setup_OpenSmhHandles(app);
+	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
+
+	app->taxiList = malloc(maxTaxis * sizeof(Taxi));
+	//Set SHM pointer into the application struct (in order to access taxiList and passengerList in the same place)
+	app->passengerList = app->shmHandles.lpSHM_PassengerList;
+	
+	ret = ret && (app->passengerList != NULL);
+	ret = ret && (app->taxiList != NULL);
+
+	if(ret){
+		int i;
 		for(i = 0; i < maxTaxis; i++){
 			ZeroMemory(&app->taxiList[i], sizeof(Taxi));
 			app->taxiList[i].empty = true;
 		}
-	}
-	if(app->passengerList != NULL){
-		for(i = 0; i < maxTaxis; i++){
+
+		for(int i = 0; i < maxTaxis; i++){
 			ZeroMemory(&app->passengerList[i], sizeof(Passenger));
 			app->passengerList[i].empty = true;
 		}
 	}
-
-	bool ret = true;
-	ret = ret && (app->taxiList != NULL);
-	ret = ret && (app->passengerList != NULL);
-	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
-	ret = ret && Setup_OpenSmhHandles(&app->shmHandles);
-	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
 
 	return ret;
 }
@@ -55,13 +56,17 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	syncHandles->hEvent_LARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_LARequest_Read);
 	syncHandles->hEvent_LARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest_Write);
 
+	syncHandles->hEvent_PassengerList_Access = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_PassengerList_Access);
+
 	return !(syncHandles->hEvent_LARequest_Read == NULL ||
-		syncHandles->hEvent_LARequest_Write == NULL);
+		syncHandles->hEvent_LARequest_Write == NULL ||
+		syncHandles->hEvent_PassengerList_Access == NULL);
 }
 
-bool Setup_OpenSmhHandles(ShmHandles* shmHandles){
+bool Setup_OpenSmhHandles(Application* app){
+
 	#pragma region LARequest
-	shmHandles->hSHM_LARequest = CreateFileMapping(
+	app->shmHandles.hSHM_LARequest = CreateFileMapping(
 		INVALID_HANDLE_VALUE,	//File handle
 		NULL,					//Security Attributes
 		PAGE_READWRITE,			//Protection flags
@@ -69,17 +74,43 @@ bool Setup_OpenSmhHandles(ShmHandles* shmHandles){
 		sizeof(LARequest),		//DWORD low-order max size
 		NAME_SHM_LAREQUESTS		//File mapping object name
 	);
-	if(shmHandles->hSHM_LARequest == NULL)
+	if(app->shmHandles.hSHM_LARequest == NULL)
 		return false;
 
-	shmHandles->lpSHM_LARequest = MapViewOfFile(
-		shmHandles->hSHM_LARequest, //File mapping object handle
+	app->shmHandles.lpSHM_LARequest = MapViewOfFile(
+		app->shmHandles.hSHM_LARequest, //File mapping object handle
 		FILE_MAP_ALL_ACCESS,		//Desired access flag
 		0,							//DWORD high-order of the file offset where the view begins
 		0,							//DWORD low-order of the file offset where the view begins
 		sizeof(LARequest)			//Number of bytes to map
 	);
-	if(shmHandles->lpSHM_LARequest == NULL)
+	if(app->shmHandles.lpSHM_LARequest == NULL)
+		return false;
+	#pragma endregion
+
+	if(app->maxPassengers <= 0 || app->maxPassengers > TOPMAX_PASSENGERS)
+		return false;
+
+	#pragma region PassengerList
+	app->shmHandles.hSHM_PassengerList = CreateFileMapping(
+		INVALID_HANDLE_VALUE,					//File handle
+		NULL,									//Security Attributes
+		PAGE_READWRITE,							//Protection flags
+		0,										//DWORD high-order max size
+		sizeof(Passenger) * app->maxPassengers,	//DWORD low-order max size
+		NAME_SHM_PASSLIST						//File mapping object name
+	);
+	if(app->shmHandles.hSHM_PassengerList == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_PassengerList = MapViewOfFile(
+		app->shmHandles.hSHM_PassengerList,		//File mapping object handle
+		FILE_MAP_ALL_ACCESS,					//Desired access flag
+		0,										//DWORD high-order of the file offset where the view begins
+		0,										//DWORD low-order of the file offset where the view begins
+		sizeof(Passenger) * app->maxPassengers	//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_PassengerList == NULL)
 		return false;
 	#pragma endregion
 
@@ -94,13 +125,18 @@ void Setup_CloseAllHandles(Application* app){
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hEvent_LARequest_Read);
 	CloseHandle(syncHandles->hEvent_LARequest_Write);
+	CloseHandle(syncHandles->hEvent_PassengerList_Access);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
-#pragma region SendRequest
+	#pragma region SendRequest
 	UnmapViewOfFile(shmHandles->lpSHM_LARequest);
 	CloseHandle(shmHandles->hSHM_LARequest);
-#pragma endregion
+	#pragma endregion
+	#pragma region PassengerList
+	UnmapViewOfFile(shmHandles->lpSHM_PassengerList);
+	CloseHandle(shmHandles->hSHM_PassengerList);
+	#pragma endregion
 }
 
 bool isTaxiListFull(Application* app){
@@ -145,8 +181,8 @@ Taxi* Get_Taxi(Application* app, TCHAR* licensePlate){
 int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].empty)
+	for(int i = 0; i < app->maxPassengers; i++){
+		if(!app->passengerList[i].empty)
 			quantLoggedInPassengers++;
 	}
 
@@ -154,7 +190,7 @@ int Get_QuantLoggedInPassengers(Application* app){
 }
 
 bool isPassengerListFull(Application* app){
-	return Get_QuantLoggedInPassengers(app) >= app->maxTaxis;
+	return Get_QuantLoggedInPassengers(app) >= app->maxPassengers;
 }
 
 int Get_FreeIndexPassengerList(Application* app){
@@ -170,7 +206,7 @@ int Get_FreeIndexPassengerList(Application* app){
 }
 
 Passenger* Get_Passenger(Application* app, TCHAR* Id){
-	if(app->taxiList == NULL)
+	if(app->passengerList == NULL)
 		return NULL;
 
 	for(int i = 0; i < app->maxPassengers; i++){
@@ -186,7 +222,6 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY){
 
 	return true;
 }
-
 
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	if(loginRequest == NULL || Utils_StringIsEmpty(loginRequest->licensePlate))
@@ -206,6 +241,22 @@ LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	anchorTaxi->object.coordY = loginRequest->coordY;
 	
 	return LR_SUCCESS;
+}
+
+bool Service_NewPassenger(Application* app, Passenger pass){
+	if(isPassengerListFull(app))
+		return false;
+
+	WaitForSingleObject(app->syncHandles.hEvent_PassengerList_Access, INFINITE);
+
+	int freeIndex = Get_FreeIndexPassengerList(app);
+	if(freeIndex == -1)
+		return false;
+
+	app->passengerList[freeIndex] = pass;
+
+	SetEvent(app->syncHandles.hEvent_PassengerList_Access);
+	return true;
 }
 
 AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest){

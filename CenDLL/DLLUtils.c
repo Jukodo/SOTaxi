@@ -33,5 +33,5 @@ TCHAR* Utils_NewSubLine(){
 
 void Utils_CleanStdin(){
 	int c;
-	while((c = fgetc(stdin)) != '\n' && c != EOF); /* Flush stdin */
+	while((c = fgetc(stdin)) != '\n' && c != EOF);
 }

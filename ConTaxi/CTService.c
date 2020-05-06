@@ -42,36 +42,85 @@ bool Setup_Application(Application* app){
 	app->loggedInTaxi.empty = true;
 
 	return (Setup_OpenSyncHandles(&app->syncHandles) &&
-		Setup_OpenSmhHandles(&app->shmHandles));
+		Setup_OpenSmhHandles(app));
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hMutex_LARequest = CreateMutex(NULL, FALSE, NAME_MUTEX_LARequest);
-	syncHandles->hEvent_LARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_LARequest_Read);
-	syncHandles->hEvent_LARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest_Write);
+	syncHandles->hMutex_LARequest = CreateMutex(//This mutex is only created on and for ConTaxi
+		NULL,					//Security attributes
+		FALSE,					//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_LARequest	//Mutex name
+	);
+	syncHandles->hEvent_LARequest_Read = OpenEvent(//This event is already created with CenTaxi
+		EVENT_ALL_ACCESS,			//Desired access flag
+		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_LARequest_Read	//Event name
+	);
+	syncHandles->hEvent_LARequest_Write = OpenEvent(//This event is already created with CenTaxi
+		EVENT_ALL_ACCESS,			//Desired access flag
+		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_LARequest_Write	//Event name
+	);
+	
+	syncHandles->hEvent_PassengerList_Access = OpenEvent(//This event is already created with CenTaxi
+		EVENT_ALL_ACCESS,				//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_PassengerList_Access	//Event name
+	);
 
 	return !(syncHandles->hMutex_LARequest == NULL ||
 		syncHandles->hEvent_LARequest_Read == NULL ||
-		syncHandles->hEvent_LARequest_Write == NULL);
+		syncHandles->hEvent_LARequest_Write == NULL ||
+		syncHandles->hEvent_PassengerList_Access == NULL);
 }
-bool Setup_OpenSmhHandles(ShmHandles* shmHandles){
-	shmHandles->hSHM_LARequest = OpenFileMapping(
-		FILE_MAP_ALL_ACCESS,
-		FALSE,
-		NAME_SHM_LAREQUESTS);
-
-	if(shmHandles->hSHM_LARequest == NULL)
+bool Setup_OpenSmhHandles(Application* app){
+	#pragma region LARequest
+	app->shmHandles.hSHM_LARequest = OpenFileMapping(
+		FILE_MAP_ALL_ACCESS,	//Desired access flag
+		FALSE,					//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SHM_LAREQUESTS		//File mapping object name
+	);
+	if(app->shmHandles.hSHM_LARequest == NULL)
 		return false;
 
-	shmHandles->lpSHM_LARequest = MapViewOfFile(
-		shmHandles->hSHM_LARequest,
-		FILE_MAP_ALL_ACCESS,
-		0,
-		0,
-		sizeof(LARequest));
-
-	if(shmHandles->lpSHM_LARequest == NULL)
+	app->shmHandles.lpSHM_LARequest = MapViewOfFile(
+		app->shmHandles.hSHM_LARequest,	//File mapping object handle
+		FILE_MAP_ALL_ACCESS,			//Desired access flag
+		0,								//DWORD high-order of the file offset where the view begins
+		0,								//DWORD low-order of the file offset where the view begins
+		sizeof(LARequest)				//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_LARequest == NULL)
 		return false;
+	#pragma endregion
+
+	Service_RequestVars(app);
+	WaitForSingleObject(app->threadHandles.hLARequests, INFINITE);
+
+	if(app->maxTaxis <= 0 || app->maxTaxis > TOPMAX_TAXI ||
+		app->maxPassengers <= 0 || app->maxPassengers > TOPMAX_PASSENGERS)
+		return false;
+
+	#pragma region PassengerList
+	app->shmHandles.hSHM_PassengerList = OpenFileMapping(
+		FILE_MAP_READ,			//Desired access flag
+		FALSE,					//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SHM_PASSLIST		//File mapping object name
+	);
+	if(app->shmHandles.hSHM_PassengerList == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_PassengerList = MapViewOfFile(
+		app->shmHandles.hSHM_PassengerList,		//File mapping object handle
+		FILE_MAP_READ,							//Desired access flag
+		0,										//DWORD high-order of the file offset where the view begins
+		0,										//DWORD low-order of the file offset where the view begins
+		sizeof(Passenger) * app->maxPassengers	//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_PassengerList == NULL)
+		return false;
+	#pragma endregion
+
 	return true;
 }
 
@@ -84,13 +133,35 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hMutex_LARequest);
 	CloseHandle(syncHandles->hEvent_LARequest_Read);
 	CloseHandle(syncHandles->hEvent_LARequest_Write);
+
+	CloseHandle(syncHandles->hEvent_PassengerList_Access);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
-#pragma region SendRequest
+	#pragma region SendRequest
 	UnmapViewOfFile(shmHandles->lpSHM_LARequest);
 	CloseHandle(shmHandles->hSHM_LARequest);
-#pragma endregion
+	#pragma endregion
+	#pragma region PassengerList
+	UnmapViewOfFile(shmHandles->lpSHM_PassengerList);
+	CloseHandle(shmHandles->hSHM_PassengerList);
+	#pragma endregion
+}
+
+void Service_RequestVars(Application* app){
+	TParam_LARequest* request = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+
+	request->app = app;
+	request->request.requestType = RT_VAR;
+
+	app->threadHandles.hLARequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_SendLARequests,				//Function
+		(LPVOID) request,					//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdLARequests  //Thread ID
+	);
 }
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
@@ -146,20 +217,20 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 }
 
 void Service_RequestPass(Application* app, TCHAR* idPassenger){
-	TParam_LARequest* request = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+	TParam_LARequest* param = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
 
 	AssignRequest assignRequest;
 	_tcscpy_s(assignRequest.idPassenger, _countof(assignRequest.idPassenger), idPassenger);
 
-	request->app = app;
-	request->request.assignRequest = assignRequest;
-	request->request.requestType = RT_ASSIGN;
+	param->app = app;
+	param->request.assignRequest = assignRequest;
+	param->request.requestType = RT_ASSIGN;
 
 	app->threadHandles.hLARequests = CreateThread(
 		NULL,								//Security Attributes
 		0,									//Stack Size (0 = default)
 		Thread_SendLARequests,				//Function
-		(LPVOID) request,					//Param
+		(LPVOID) param,					//Param
 		0,									//Creation Flag
 		&app->threadHandles.dwIdLARequests  //Thread ID
 	);
@@ -175,7 +246,17 @@ bool Service_DefineCDN(Application* app, TCHAR* value){
 }
 
 void Command_ListPassengers(Application* app){
-	//ToDo
+	TParam_ListPassengers* param = (TParam_ListPassengers*) malloc(sizeof(TParam_ListPassengers));
+	param->app = app;
+
+	app->threadHandles.hLARequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_ListPassenger,				//Function
+		(LPVOID) param,					//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdLARequests  //Thread ID
+	);
 }
 
 void Command_Speed(Application* app, bool speedUp){
