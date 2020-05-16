@@ -6,7 +6,6 @@
 #define CMD_SPEED_DOWN TEXT("/speedDown")
 #define CMD_AUTORESP_ON TEXT("/autoRespOn")
 #define CMD_AUTORESP_OFF TEXT("/autoRespOff")
-#define CMD_LISTPASS TEXT("/availablePass")
 #define CMD_DEFINE_CDN TEXT("/defineCDN")
 #define CMD_REQUEST_PASS TEXT("/requestPass")
 #define CMD_CLOSEAPP TEXT("/closeApp")
@@ -116,7 +115,6 @@ enum TaxiCommands{
 	TC_SPEED_DOWN,
 	TC_AUTORESP_ON,
 	TC_AUTORESP_OFF,
-	TC_LISTPASS,
 	TC_DEFINE_CDN,
 	TC_REQUEST_PASS,
 	TC_CLOSEAPP,

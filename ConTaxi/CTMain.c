@@ -1,14 +1,9 @@
+#pragma once
 #include "CenDLL.h"
 #include "CTDLL.h"
 #include "CTService.h"
-#include "CTCommunication.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
-
-	_tprintf(TEXT("%d"), CTDLL_getInt());
-	getchar();
-
-
 	#pragma region ApplicationSetup
 	Application app;
 	TCHAR retryOpt[2];
@@ -125,7 +120,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 			_tprintf(TEXT("%s/speedDown:\tSpeeds the taxi down by 0.5cells per second"), Utils_NewSubLine());
 			_tprintf(TEXT("%s/autoRespOn:\tTurn on automatic response to new passenger"), Utils_NewSubLine());
 			_tprintf(TEXT("%s/autoRespOff:\tTurn off automatic response to new passenger"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/availablePass:\tShows a list of passenger waiting to be transported"), Utils_NewSubLine());
 			_tprintf(TEXT("%s/defineCDN:\tDefine new CDN value"), Utils_NewSubLine());
 			_tprintf(TEXT("%s/requestPass:\tSend a request to be assigned to a respective passenger"), Utils_NewSubLine());
 			_tprintf(TEXT("%s/closeApp:\tCloses the application"), Utils_NewSubLine());

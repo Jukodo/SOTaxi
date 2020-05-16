@@ -90,7 +90,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;CTDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>"F:\Documents\ISEC\SO2\Pratica\Trabalho\SOTaxi\CenDLL";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Documents\ISEC\SO2\Pratica\Trabalho\SOTaxi\CenDLL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,7 +125,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;CTDLL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>"F:\Documents\ISEC\SO2\Pratica\Trabalho\SOTaxi\CenDLL";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>F:\Documents\ISEC\SO2\Pratica\Trabalho\SOTaxi\CenDLL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,11 +159,13 @@
   <ItemGroup>
     <ClCompile Include="CTDLLCommunication.c" />
     <ClCompile Include="CTDLL.c" />
+    <ClCompile Include="CTDLLService.c" />
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CTDLLCommunication.h" />
     <ClInclude Include="CTDLL.h" />
+    <ClInclude Include="CTDLLService.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
