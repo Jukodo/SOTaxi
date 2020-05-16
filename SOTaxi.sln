@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConTaxi", "ConTaxi\ConTaxi.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CenDLL", "CenDLL\CenDLL.vcxproj", "{141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTDLL", "CTDLL\CTDLL.vcxproj", "{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA}.Release|x64.Build.0 = Release|x64
 		{141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA}.Release|x86.ActiveCfg = Release|Win32
 		{141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA}.Release|x86.Build.0 = Release|Win32
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Debug|x64.ActiveCfg = Debug|x64
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Debug|x64.Build.0 = Debug|x64
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Debug|x86.ActiveCfg = Debug|Win32
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Debug|x86.Build.0 = Debug|Win32
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Release|x64.ActiveCfg = Release|x64
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Release|x64.Build.0 = Release|x64
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Release|x86.ActiveCfg = Release|Win32
+		{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

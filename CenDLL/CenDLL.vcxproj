@@ -160,7 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CenDLL.c" />
-    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="dllmain.c" />
     <ClCompile Include="DLLTaxi.c" />
     <ClCompile Include="DLLUtils.c" />
   </ItemGroup>

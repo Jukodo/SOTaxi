@@ -1,0 +1,3 @@
+Funcionality:
+	
+	- CloseApp: Closes the application and notifies all its users

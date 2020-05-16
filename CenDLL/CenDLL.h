@@ -40,3 +40,5 @@
 #include "DLLUtils.h"
 #include "DLLCommunication.h"
 #include "DLLPassenger.h"
+
+CENDLL_API int CenDLL_getInt();

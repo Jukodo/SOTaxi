@@ -1,0 +1,1 @@
+taxi login queue - use event "canLogin" when new spots are available (?)

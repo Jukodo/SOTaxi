@@ -1,8 +1,14 @@
 #include "CenDLL.h"
+#include "CTDLL.h"
 #include "CTService.h"
 #include "CTCommunication.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
+
+	_tprintf(TEXT("%d"), CTDLL_getInt());
+	getchar();
+
+
 	#pragma region ApplicationSetup
 	Application app;
 	TCHAR retryOpt[2];
