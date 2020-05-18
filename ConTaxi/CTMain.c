@@ -26,7 +26,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma endregion
 
 	#pragma region Login
-	//wprintf(TEXT("%d"), ((Taxi*) app.shmHandles.lpTestMem)->IdPassenger);
+	//REMOVE PRE INSERTED INFO LATER (TAG_REMOVELATER)
 	TCHAR sLicensePlate[9] = TEXT("aa-aa-aa");
 	TCHAR sCoordinates_X[3] = TEXT("11");
 	TCHAR sCoordinates_Y[3] = TEXT("22");
@@ -95,12 +95,12 @@ int _tmain(int argc, LPTSTR argv[]) {
 	} while(flagLoginFailed);
 
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
-	app.NTBuffer_Tail = ((NewTransportBuffer*) app.shmHandles.lpSHM_NTBuffer)->head;
-	ResumeThread(app.threadHandles.hNotificationReceiver_NP);
+	app.NTBuffer_Tail = ((NewTransportBuffer*) app.shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
+	ResumeThread(app.threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notification to start popping up
 	#pragma endregion
 
 	#pragma region Commands
-	_tprintf(TEXT("%sThe application is ready to accept commands...%s\"/help\" to display all of the commands!"), Utils_NewLine(), Utils_NewSubLine());
+	_tprintf(TEXT("%sThe application is ready to accept commands...%s\"%s\" to display all of the commands!"), Utils_NewLine(), Utils_NewSubLine(), CMD_HELP);
 
 	TCHAR sCommand[STRING_MEDIUM];
 	TCHAR sArgument[STRING_SMALL];
@@ -116,14 +116,14 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 		command = Service_UseCommand(&app, sCommand);
 		if(command == TC_HELP){
-			_tprintf(TEXT("%s/help:\t\tShows a list of available commands"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/speedUp:\tSpeeds the taxi up by 0.5cells per second"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/speedDown:\tSpeeds the taxi down by 0.5cells per second"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/autoRespOn:\tTurn on automatic response to new passenger"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/autoRespOff:\tTurn off automatic response to new passenger"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/defineCDN:\tDefine new CDN value"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/requestPass:\tSend a request to be assigned to a respective passenger"), Utils_NewSubLine());
-			_tprintf(TEXT("%s/closeApp:\tCloses the application"), Utils_NewSubLine());
+			_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
+			_tprintf(TEXT("%s%s:\tSpeeds the taxi up by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_UP);
+			_tprintf(TEXT("%s%s:\tSpeeds the taxi down by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_DOWN);
+			_tprintf(TEXT("%s%s:\tTurn on automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_ON);
+			_tprintf(TEXT("%s%s:\tTurn off automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_OFF);
+			_tprintf(TEXT("%s%s:\tDefine new CDN value"), Utils_NewSubLine(), CMD_DEFINE_CDN);
+			_tprintf(TEXT("%s%s:\tSend a request to be assigned to a respective passenger"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
+			_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 		}
 
 		switch(command){
@@ -146,7 +146,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 					_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				}
 				break;
-			case TC_REQUEST_PASS:
+			case TC_REQUEST_INTEREST:
 				_tprintf(TEXT("%sInsert passenger ID:"), Utils_NewSubLine());
 				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 				_tscanf_s(TEXT(" %[^\n]"), sArgument, _countof(sArgument));
@@ -159,13 +159,10 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma endregion
 
 	#pragma region Closing
-	_tprintf(TEXT("%sThe application is closing! Press any enter to continue..."), Utils_NewLine());
+	_tprintf(TEXT("%sThe application is closing! Press enter to continue..."), Utils_NewLine());
 	getchar();
 	Setup_CloseAllHandles(&app);
 	#pragma endregion
-
-	_tprintf(TEXT("%sPress any key to close the application..."), Utils_NewLine());
-	getchar();
 
 	return 0;
 }

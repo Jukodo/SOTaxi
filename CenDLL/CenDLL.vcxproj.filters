@@ -38,9 +38,6 @@
     <ClCompile Include="CenDLL.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DLLTaxi.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DLLUtils.c">
       <Filter>Source Files</Filter>
     </ClCompile>

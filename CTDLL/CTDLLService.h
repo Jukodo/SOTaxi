@@ -9,8 +9,8 @@ typedef struct ShmHandles ShmHandles;
 struct ThreadHandles{
 	HANDLE hQnARequests;
 	DWORD dwIdQnARequests;
-	HANDLE hNotificationReceiver_NP;
-	DWORD dwIdNotificationReceiver_NP;
+	HANDLE hNotificationReceiver_NewTransport;
+	DWORD dwIdNotificationReceiver_NewTransport;
 };
 
 struct SyncHandles{

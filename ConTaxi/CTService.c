@@ -54,7 +54,7 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 		Thread_SendQnARequests,				//Function
 		(LPVOID) request,					//Param
 		0,									//Creation Flag
-		&app->threadHandles.dwIdQnARequests  //Thread ID
+		&app->threadHandles.dwIdQnARequests //Thread ID
 	);
 }
 
@@ -75,8 +75,8 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 		return TC_AUTORESP_OFF;
 	} else if(_tcscmp(command, CMD_DEFINE_CDN) == 0){ //Continues on Main (asking for value argument)
 		return TC_DEFINE_CDN;
-	} else if(_tcscmp(command, CMD_REQUEST_PASS) == 0){ //Continues on Main (asking for value argument)
-		return TC_REQUEST_PASS;
+	} else if(_tcscmp(command, CMD_REQUEST_INTEREST) == 0){ //Continues on Main (asking for value argument)
+		return TC_REQUEST_INTEREST;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Command_CloseApp(app);
 		return TC_CLOSEAPP;
@@ -88,12 +88,12 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 void Service_RequestPass(Application* app, TCHAR* idPassenger){
 	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
-	AssignRequest assignRequest;
-	_tcscpy_s(assignRequest.idPassenger, _countof(assignRequest.idPassenger), idPassenger);
+	NTInterestRequest ntIntRequest;
+	_tcscpy_s(ntIntRequest.idPassenger, _countof(ntIntRequest.idPassenger), idPassenger);
 
 	param->app = app;
-	param->request.assignRequest = assignRequest;
-	param->request.requestType = RT_ASSIGN;
+	param->request.ntIntRequest = ntIntRequest;
+	param->request.requestType = RT_NT_INTEREST;
 
 	app->threadHandles.hQnARequests = CreateThread(
 		NULL,								//Security Attributes
@@ -101,7 +101,7 @@ void Service_RequestPass(Application* app, TCHAR* idPassenger){
 		Thread_SendQnARequests,				//Function
 		(LPVOID) param,						//Param
 		0,									//Creation Flag
-		&app->threadHandles.dwIdQnARequests  //Thread ID
+		&app->threadHandles.dwIdQnARequests //Thread ID
 	);
 }
 

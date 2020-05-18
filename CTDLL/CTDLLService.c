@@ -58,7 +58,7 @@ bool Setup_OpenSmhHandles(Application* app){
 	);
 	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
-#pragma endregion
+	#pragma endregion
 
 	#pragma region NewTransportBuffer
 	app->shmHandles.hSHM_NTBuffer = OpenFileMapping(
@@ -78,22 +78,25 @@ bool Setup_OpenSmhHandles(Application* app){
 	);
 	if(app->shmHandles.lpSHM_NTBuffer == NULL)
 		return false;
-#pragma endregion
+	#pragma endregion
 
 	return true;
 }
 
 bool Setup_OpenThreadHandles(Application* app){
-	app->threadHandles.hNotificationReceiver_NP = CreateThread(
-		NULL,								//Security Attributes
-		0,									//Stack Size (0 = default)
-		Thread_NotificationReceiver_NP,		//Function
-		(LPVOID) app,						//Param
-		CREATE_SUSPENDED,					//Creation Flag
-		&app->threadHandles.dwIdQnARequests  //Thread ID
+	TParam_NotificationReceiver_NT* param = (TParam_NotificationReceiver_NT*) malloc(sizeof(TParam_NotificationReceiver_NT));
+	param->app = app;
+
+	app->threadHandles.hNotificationReceiver_NewTransport = CreateThread(
+		NULL,														//Security Attributes
+		0,															//Stack Size (0 = default)
+		Thread_NotificationReceiver_NewTransport,					//Function
+		(LPVOID) param,												//Param
+		CREATE_SUSPENDED,											//Creation Flag
+		&app->threadHandles.dwIdNotificationReceiver_NewTransport	//Thread ID
 	);
 
-	if(app->threadHandles.hNotificationReceiver_NP == NULL)
+	if(app->threadHandles.hNotificationReceiver_NewTransport == NULL)
 		return false;
 
 	return true;
@@ -125,5 +128,5 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 
 void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
 	CloseHandle(threadHandles->hQnARequests);
-	CloseHandle(threadHandles->hNotificationReceiver_NP);
+	CloseHandle(threadHandles->hNotificationReceiver_NewTransport);
 }

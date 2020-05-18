@@ -57,6 +57,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 		Service_NewPassenger(&app, newPass);
 	}*/
 	#pragma endregion
+
+	#pragma region NewTransportRequestSimulation
 	Passenger tempP;
 	tempP.empty = false;
 	tempP.object.coordX = 1;
@@ -68,6 +70,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 		if(!Service_NewPassenger(&app, tempP))
 			_tprintf(TEXT("%sPassenger limit has been reached... This passenger will be ignored!"), Utils_NewSubLine());
 	}
+	#pragma endregion
 
 	getchar();
 	return 0;

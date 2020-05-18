@@ -42,17 +42,32 @@ bool Setup_OpenThreadHandles(Application* app){
 			Thread_ReceiveQnARequests,			//Function
 			(LPVOID) param,						//Param
 			0,									//Creation flags
-			&app->threadHandles.dwIdQnARequests  //Thread Id
+			&app->threadHandles.dwIdQnARequests //Thread Id
 	);
 	
 	return !(app->threadHandles.hQnARequests == NULL);
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hEvent_QnARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_QnARequest_Read);
-	syncHandles->hEvent_QnARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_QnARequest_Write);
+	syncHandles->hEvent_QnARequest_Read = CreateEvent(
+		NULL,						//Security Attributes
+		FALSE,						//Manual Reset
+		FALSE,						//Initial State
+		NAME_EVENT_QnARequest_Read	//Event Name
+	);
+	syncHandles->hEvent_QnARequest_Write = CreateEvent(
+		NULL,						//Security Attributes
+		FALSE,						//Manual Reset
+		TRUE,						//Initial State
+		NAME_EVENT_QnARequest_Write	//Event Name
+	);
 
-	syncHandles->hEvent_Notify_T_NewTranspReq = CreateEvent(NULL, TRUE, FALSE, NAME_EVENT_NewTransportRequest);
+	syncHandles->hEvent_Notify_T_NewTranspReq = CreateEvent(
+		NULL,							//Security Attributes
+		TRUE,							//Manual Reset
+		FALSE,							//Initial State
+		NAME_EVENT_NewTransportRequest	//Event Name
+	);
 
 	return !(syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
@@ -67,12 +82,12 @@ bool Setup_OpenSmhHandles(Application* app){
 		PAGE_READWRITE,			//Protection flags
 		0,						//DWORD high-order max size
 		sizeof(QnARequest),		//DWORD low-order max size
-		NAME_SHM_QnARequest	//File mapping object name
+		NAME_SHM_QnARequest		//File mapping object name
 	);
 	if(app->shmHandles.hSHM_QnARequest == NULL)
 		return false;
 	app->shmHandles.lpSHM_QnARequest = MapViewOfFile(
-		app->shmHandles.hSHM_QnARequest, //File mapping object handle
+		app->shmHandles.hSHM_QnARequest,//File mapping object handle
 		FILE_MAP_ALL_ACCESS,			//Desired access flag
 		0,								//DWORD high-order of the file offset where the view begins
 		0,								//DWORD low-order of the file offset where the view begins
@@ -80,7 +95,6 @@ bool Setup_OpenSmhHandles(Application* app){
 	);
 	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
-	_tprintf(TEXT("lpSHM_QnARequest is not null"));
 	#pragma endregion
 
 	#pragma region NewTransportBuffer
@@ -123,7 +137,7 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
-	#pragma region SendRequest
+	#pragma region QnARequest
 	UnmapViewOfFile(shmHandles->lpSHM_QnARequest);
 	CloseHandle(shmHandles->hSHM_QnARequest);
 	#pragma endregion
@@ -256,7 +270,7 @@ bool Service_NewPassenger(Application* app, Passenger pass){
 	return true;
 }
 
-AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest){
+NTInterestResponse Service_RequestPassenger(Application* app, NTInterestRequest* assignRequest){
 	return AR_SUCCESS;
 }
 

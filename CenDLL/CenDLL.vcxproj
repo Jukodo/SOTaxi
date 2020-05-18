@@ -161,7 +161,6 @@
   <ItemGroup>
     <ClCompile Include="CenDLL.c" />
     <ClCompile Include="dllmain.c" />
-    <ClCompile Include="DLLTaxi.c" />
     <ClCompile Include="DLLUtils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

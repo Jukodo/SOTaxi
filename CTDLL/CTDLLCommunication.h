@@ -4,16 +4,16 @@
 
 typedef struct Application Application;
 typedef struct TParam_QnARequest TParam_QnARequest;
-typedef struct TParam_NotificationReceiver_NP TParam_NotificationReceiver_NP;
+typedef struct TParam_NotificationReceiver_NT TParam_NotificationReceiver_NT;
 
 struct TParam_QnARequest{
 	Application* app;
 	QnARequest request;
 };
 
-struct TParam_NotificationReceiver_NP{
+struct TParam_NotificationReceiver_NT{
 	Application* app;
 };
 
 CTDLL_API DWORD WINAPI Thread_SendQnARequests(LPVOID _param);
-CTDLL_API DWORD WINAPI Thread_NotificationReceiver_NP(LPVOID _param);
+CTDLL_API DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param);

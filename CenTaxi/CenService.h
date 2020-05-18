@@ -57,5 +57,5 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
-AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest);
+NTInterestResponse Service_RequestPassenger(Application* app, NTInterestRequest* assignRequest);
 void Service_NotifyTaxisNewTransport(Application* app);
