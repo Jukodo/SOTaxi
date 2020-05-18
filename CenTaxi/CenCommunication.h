@@ -7,4 +7,4 @@ struct TParam_LARequest{
 	Application* app;
 };
 
-DWORD WINAPI Thread_ReceiveLARequests(LPVOID request);
+DWORD WINAPI Thread_ReceiveQnARequests(LPVOID request);

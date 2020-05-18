@@ -11,20 +11,20 @@ bool Setup_Application(Application* app){
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hMutex_LARequest = CreateMutex(//This mutex is only created on and for ConTaxi
+	syncHandles->hMutex_QnARequest = CreateMutex(//This mutex is only created on and for ConTaxi
 		NULL,					//Security attributes
 		FALSE,					//Initial owner (TRUE = Locked from the creation)
-		NAME_MUTEX_LARequest	//Mutex name
+		NAME_MUTEX_QnARequest	//Mutex name
 	);
-	syncHandles->hEvent_LARequest_Read = OpenEvent(//This event is already created with CenTaxi
+	syncHandles->hEvent_QnARequest_Read = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,			//Desired access flag
 		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
-		NAME_EVENT_LARequest_Read	//Event name
+		NAME_EVENT_QnARequest_Read	//Event name
 	);
-	syncHandles->hEvent_LARequest_Write = OpenEvent(//This event is already created with CenTaxi
+	syncHandles->hEvent_QnARequest_Write = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,			//Desired access flag
 		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
-		NAME_EVENT_LARequest_Write	//Event name
+		NAME_EVENT_QnARequest_Write	//Event name
 	);
 
 	syncHandles->hEvent_Notify_T_NewTranspReq = OpenEvent(//This event is already created with CenTaxi
@@ -33,30 +33,30 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_NewTransportRequest	//Event name
 	);
 
-	return !(syncHandles->hMutex_LARequest == NULL ||
-		syncHandles->hEvent_LARequest_Read == NULL ||
-		syncHandles->hEvent_LARequest_Write == NULL ||
+	return !(syncHandles->hMutex_QnARequest == NULL ||
+		syncHandles->hEvent_QnARequest_Read == NULL ||
+		syncHandles->hEvent_QnARequest_Write == NULL ||
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
 }
 
 bool Setup_OpenSmhHandles(Application* app){
-	#pragma region LARequest
-	app->shmHandles.hSHM_LARequest = OpenFileMapping(
+	#pragma region QnARequest
+	app->shmHandles.hSHM_QnARequest = OpenFileMapping(
 		FILE_MAP_ALL_ACCESS,	//Desired access flag
 		FALSE,					//Inherit handle (child processes can inherit the handle)(?)
-		NAME_SHM_LARequests		//File mapping object name
+		NAME_SHM_QnARequest	//File mapping object name
 	);
-	if(app->shmHandles.hSHM_LARequest == NULL)
+	if(app->shmHandles.hSHM_QnARequest == NULL)
 		return false;
 
-	app->shmHandles.lpSHM_LARequest = MapViewOfFile(
-		app->shmHandles.hSHM_LARequest,	//File mapping object handle
+	app->shmHandles.lpSHM_QnARequest = MapViewOfFile(
+		app->shmHandles.hSHM_QnARequest,	//File mapping object handle
 		FILE_MAP_ALL_ACCESS,			//Desired access flag
 		0,								//DWORD high-order of the file offset where the view begins
 		0,								//DWORD low-order of the file offset where the view begins
-		sizeof(LARequest)				//Number of bytes to map
+		sizeof(QnARequest)				//Number of bytes to map
 	);
-	if(app->shmHandles.lpSHM_LARequest == NULL)
+	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
 #pragma endregion
 
@@ -90,7 +90,7 @@ bool Setup_OpenThreadHandles(Application* app){
 		Thread_NotificationReceiver_NP,		//Function
 		(LPVOID) app,						//Param
 		CREATE_SUSPENDED,					//Creation Flag
-		&app->threadHandles.dwIdLARequests  //Thread ID
+		&app->threadHandles.dwIdQnARequests  //Thread ID
 	);
 
 	if(app->threadHandles.hNotificationReceiver_NP == NULL)
@@ -106,16 +106,16 @@ void Setup_CloseAllHandles(Application* app){
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
-	CloseHandle(syncHandles->hMutex_LARequest);
-	CloseHandle(syncHandles->hEvent_LARequest_Read);
-	CloseHandle(syncHandles->hEvent_LARequest_Write);
+	CloseHandle(syncHandles->hMutex_QnARequest);
+	CloseHandle(syncHandles->hEvent_QnARequest_Read);
+	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 #pragma region SendRequest
-	UnmapViewOfFile(shmHandles->lpSHM_LARequest);
-	CloseHandle(shmHandles->hSHM_LARequest);
+	UnmapViewOfFile(shmHandles->lpSHM_QnARequest);
+	CloseHandle(shmHandles->hSHM_QnARequest);
 #pragma endregion
 #pragma region NewTransportBuffer
 	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);
@@ -124,6 +124,6 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 }
 
 void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
-	CloseHandle(threadHandles->hLARequests);
+	CloseHandle(threadHandles->hQnARequests);
 	CloseHandle(threadHandles->hNotificationReceiver_NP);
 }

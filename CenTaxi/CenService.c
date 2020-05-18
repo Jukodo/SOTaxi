@@ -36,51 +36,51 @@ bool Setup_OpenThreadHandles(Application* app){
 	TParam_LARequest* param = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
 
 	param->app = app;
-	app->threadHandles.hLARequests = CreateThread(
+	app->threadHandles.hQnARequests = CreateThread(
 			NULL,								//Security Attributes
 			0,									//Stack Size (0 = default)
-			Thread_ReceiveLARequests,			//Function
+			Thread_ReceiveQnARequests,			//Function
 			(LPVOID) param,						//Param
 			0,									//Creation flags
-			&app->threadHandles.dwIdLARequests  //Thread Id
+			&app->threadHandles.dwIdQnARequests  //Thread Id
 	);
 	
-	return !(app->threadHandles.hLARequests == NULL);
+	return !(app->threadHandles.hQnARequests == NULL);
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hEvent_LARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_LARequest_Read);
-	syncHandles->hEvent_LARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_LARequest_Write);
+	syncHandles->hEvent_QnARequest_Read = CreateEvent(NULL, FALSE, FALSE, NAME_EVENT_QnARequest_Read);
+	syncHandles->hEvent_QnARequest_Write = CreateEvent(NULL, FALSE, TRUE, NAME_EVENT_QnARequest_Write);
 
 	syncHandles->hEvent_Notify_T_NewTranspReq = CreateEvent(NULL, TRUE, FALSE, NAME_EVENT_NewTransportRequest);
 
-	return !(syncHandles->hEvent_LARequest_Read == NULL ||
-		syncHandles->hEvent_LARequest_Write == NULL ||
+	return !(syncHandles->hEvent_QnARequest_Read == NULL ||
+		syncHandles->hEvent_QnARequest_Write == NULL ||
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
 }
 
 bool Setup_OpenSmhHandles(Application* app){
 	#pragma region LARequest
-	app->shmHandles.hSHM_LARequest = CreateFileMapping(
+	app->shmHandles.hSHM_QnARequest = CreateFileMapping(
 		INVALID_HANDLE_VALUE,	//File handle
 		NULL,					//Security Attributes
 		PAGE_READWRITE,			//Protection flags
 		0,						//DWORD high-order max size
-		sizeof(LARequest),		//DWORD low-order max size
-		NAME_SHM_LARequests		//File mapping object name
+		sizeof(QnARequest),		//DWORD low-order max size
+		NAME_SHM_QnARequest	//File mapping object name
 	);
-	if(app->shmHandles.hSHM_LARequest == NULL)
+	if(app->shmHandles.hSHM_QnARequest == NULL)
 		return false;
-
-	app->shmHandles.lpSHM_LARequest = MapViewOfFile(
-		app->shmHandles.hSHM_LARequest, //File mapping object handle
+	app->shmHandles.lpSHM_QnARequest = MapViewOfFile(
+		app->shmHandles.hSHM_QnARequest, //File mapping object handle
 		FILE_MAP_ALL_ACCESS,			//Desired access flag
 		0,								//DWORD high-order of the file offset where the view begins
 		0,								//DWORD low-order of the file offset where the view begins
-		sizeof(LARequest)				//Number of bytes to map
+		sizeof(QnARequest)				//Number of bytes to map
 	);
-	if(app->shmHandles.lpSHM_LARequest == NULL)
+	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
+	_tprintf(TEXT("lpSHM_QnARequest is not null"));
 	#pragma endregion
 
 	#pragma region NewTransportBuffer
@@ -117,15 +117,15 @@ void Setup_CloseAllHandles(Application* app){
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
-	CloseHandle(syncHandles->hEvent_LARequest_Read);
-	CloseHandle(syncHandles->hEvent_LARequest_Write);
+	CloseHandle(syncHandles->hEvent_QnARequest_Read);
+	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 	#pragma region SendRequest
-	UnmapViewOfFile(shmHandles->lpSHM_LARequest);
-	CloseHandle(shmHandles->hSHM_LARequest);
+	UnmapViewOfFile(shmHandles->lpSHM_QnARequest);
+	CloseHandle(shmHandles->hSHM_QnARequest);
 	#pragma endregion
 	#pragma region NewTransportBuffer
 	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);

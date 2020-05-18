@@ -87,7 +87,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 		} else {
 			Service_Login(&app, sLicensePlate, sCoordinates_X, sCoordinates_Y);
 			_tprintf(TEXT("%sTrying to log in. Please wait..."), Utils_NewSubLine());
-			WaitForSingleObject(app.threadHandles.hLARequests, INFINITE);
+			WaitForSingleObject(app.threadHandles.hQnARequests, INFINITE);
 		}
 		flagLoginFailed = !isLoggedIn(&app);
 		if(flagLoginFailed)

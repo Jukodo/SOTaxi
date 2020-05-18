@@ -11,7 +11,7 @@
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 //Requests
-typedef struct LARequest LARequest;
+typedef struct QnARequest QnARequest;
 typedef struct NewTransportBuffer NewTransportBuffer;
 typedef struct LoginRequest LoginRequest;
 typedef struct AssignRequest AssignRequest;
@@ -26,7 +26,7 @@ typedef enum CDNResponse CDNResponse;
 typedef struct VarResponse VarResponse;
 typedef enum CommandResponse CommandResponse;
 
-//Enums
+//Other Enums
 typedef enum RequestType RequestType;
 typedef enum TaxiCommands TaxiCommands;
 
@@ -90,7 +90,7 @@ struct VarResponse{
 	int maxPassengers;
 };
 
-struct LARequest{
+struct QnARequest{
 	union{
 		LoginRequest loginRequest;
 		AssignRequest assignRequest;

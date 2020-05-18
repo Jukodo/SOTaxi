@@ -37,7 +37,7 @@ bool isValid_Coordinates(TCHAR* sCoordinates){
 }
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
-	TParam_LARequest* request = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+	TParam_QnARequest* request = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 	
 	LoginRequest loginRequest;
 	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
@@ -48,13 +48,13 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 	request->request.loginRequest = loginRequest;
 	request->request.requestType = RT_LOGIN;
 
-	app->threadHandles.hLARequests = CreateThread(
+	app->threadHandles.hQnARequests = CreateThread(
 		NULL,								//Security Attributes
 		0,									//Stack Size (0 = default)
-		Thread_SendLARequests,				//Function
+		Thread_SendQnARequests,				//Function
 		(LPVOID) request,					//Param
 		0,									//Creation Flag
-		&app->threadHandles.dwIdLARequests  //Thread ID
+		&app->threadHandles.dwIdQnARequests  //Thread ID
 	);
 }
 
@@ -86,7 +86,7 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 }
 
 void Service_RequestPass(Application* app, TCHAR* idPassenger){
-	TParam_LARequest* param = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
 	AssignRequest assignRequest;
 	_tcscpy_s(assignRequest.idPassenger, _countof(assignRequest.idPassenger), idPassenger);
@@ -95,13 +95,13 @@ void Service_RequestPass(Application* app, TCHAR* idPassenger){
 	param->request.assignRequest = assignRequest;
 	param->request.requestType = RT_ASSIGN;
 
-	app->threadHandles.hLARequests = CreateThread(
+	app->threadHandles.hQnARequests = CreateThread(
 		NULL,								//Security Attributes
 		0,									//Stack Size (0 = default)
-		Thread_SendLARequests,				//Function
+		Thread_SendQnARequests,				//Function
 		(LPVOID) param,						//Param
 		0,									//Creation Flag
-		&app->threadHandles.dwIdLARequests  //Thread ID
+		&app->threadHandles.dwIdQnARequests  //Thread ID
 	);
 }
 

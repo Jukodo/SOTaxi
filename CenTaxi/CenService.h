@@ -7,19 +7,19 @@ typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
 
 struct ThreadHandles{
-	HANDLE hLARequests;
-	DWORD dwIdLARequests;
+	HANDLE hQnARequests;
+	DWORD dwIdQnARequests;
 };
 
 struct SyncHandles{
-	HANDLE hEvent_LARequest_Read;
-	HANDLE hEvent_LARequest_Write;
+	HANDLE hEvent_QnARequest_Read;
+	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
 };
 
 struct ShmHandles{
-	HANDLE hSHM_LARequest;
-	LPVOID lpSHM_LARequest;
+	HANDLE hSHM_QnARequest;
+	LPVOID lpSHM_QnARequest;
 	HANDLE hSHM_NTBuffer;
 	LPVOID lpSHM_NTBuffer;
 };

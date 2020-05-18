@@ -1,17 +1,17 @@
 #pragma once
 #include "CTDLLCommunication.h"
 
-DWORD WINAPI Thread_SendLARequests(LPVOID _param){
-	TParam_LARequest* param = (TParam_LARequest*) _param;
-	LARequest* shm = param->app->shmHandles.lpSHM_LARequest;
+DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
+	TParam_QnARequest* param = (TParam_QnARequest*) _param;
+	QnARequest* shm = param->app->shmHandles.lpSHM_QnARequest;
 
-	WaitForSingleObject(param->app->syncHandles.hMutex_LARequest, INFINITE);
-	WaitForSingleObject(param->app->syncHandles.hEvent_LARequest_Write, INFINITE);
+	WaitForSingleObject(param->app->syncHandles.hMutex_QnARequest, INFINITE);
+	WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Write, INFINITE);
 
-	CopyMemory(shm, &param->request, sizeof(LARequest));
-	SetEvent(param->app->syncHandles.hEvent_LARequest_Read);
+	CopyMemory(shm, &param->request, sizeof(QnARequest));
+	SetEvent(param->app->syncHandles.hEvent_QnARequest_Read);
 
-	WaitForSingleObject(param->app->syncHandles.hEvent_LARequest_Write, INFINITE);
+	WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Write, INFINITE);
 
 	switch(param->request.requestType){
 	case RT_LOGIN:
@@ -65,8 +65,8 @@ DWORD WINAPI Thread_SendLARequests(LPVOID _param){
 		break;
 	}
 
-	ReleaseMutex(param->app->syncHandles.hMutex_LARequest);
-	SetEvent(param->app->syncHandles.hEvent_LARequest_Write);
+	ReleaseMutex(param->app->syncHandles.hMutex_QnARequest);
+	SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
 	free(param);
 	return 1;
 }
