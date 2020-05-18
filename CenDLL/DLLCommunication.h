@@ -12,6 +12,7 @@
 
 //Requests
 typedef struct LARequest LARequest;
+typedef struct NewTransportBuffer NewTransportBuffer;
 typedef struct LoginRequest LoginRequest;
 typedef struct AssignRequest AssignRequest;
 typedef struct CDNRequest CDNRequest;
@@ -41,6 +42,11 @@ struct AssignRequest{
 
 struct CDNRequest{
 	int value;
+};
+
+struct NewTransportBuffer{
+	Passenger transportRequests[NTBUFFER_MAX];
+	int head;
 };
 
 enum CommandRequest{

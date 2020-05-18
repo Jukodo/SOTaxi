@@ -73,10 +73,25 @@ DWORD WINAPI Thread_SendLARequests(LPVOID _param){
 
 DWORD WINAPI Thread_NotificationReceiver_NP(LPVOID _param){
 	Application* app = (Application*) _param;
+	NewTransportBuffer* buffer;
 
 	while(true){
-		WaitForSingleObject(app->syncHandles.hEvent_Notify_T_NP, INFINITE);
-		app->quant++;
-		_tprintf(TEXT("%sI got notified %d times"), Utils_NewLine(), app->quant);
+		WaitForSingleObject(app->syncHandles.hEvent_Notify_T_NewTranspReq, INFINITE);
+		buffer = (NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer;
+
+		while(buffer->head != app->NTBuffer_Tail){
+			buffer->transportRequests[app->NTBuffer_Tail];
+
+			_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2f, %.2f) for a taxi!%sPlease use \"/requestPass\" if you are interested!%s"), 
+				Utils_NewSubLine(), 
+				Utils_NewSubLine(),
+				buffer->transportRequests[app->NTBuffer_Tail].Id,
+				buffer->transportRequests[app->NTBuffer_Tail].object.coordX,
+				buffer->transportRequests[app->NTBuffer_Tail].object.coordY,
+				Utils_NewSubLine(),
+				Utils_NewSubLine());
+
+			app->NTBuffer_Tail = (app->NTBuffer_Tail + 1) % NTBUFFER_MAX;
+		}
 	}
 }

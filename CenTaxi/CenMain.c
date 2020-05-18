@@ -3,7 +3,7 @@
 
 int _tmain(int argc, LPTSTR argv[]) {
 	#pragma region OneInstanceLock
-	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_ONEINSTANCE_CEN);
+	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_OneInstance_CEN);
 	if(GetLastError() == ERROR_ALREADY_EXISTS){
 		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
 		getchar();
@@ -47,7 +47,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma endregion
 
 	#pragma region FakePassengerList
-	Passenger newPass;
+	/*Passenger newPass;
 	for(int i = 0; i < app.maxPassengers; i++){
 		newPass.empty = false;
 		_stprintf_s(newPass.Id, _countof(newPass.Id), TEXT("Pass%d"), i);
@@ -55,13 +55,18 @@ int _tmain(int argc, LPTSTR argv[]) {
 		newPass.object.coordY = (float) i;
 
 		Service_NewPassenger(&app, newPass);
-	}
+	}*/
 	#pragma endregion
-
+	Passenger tempP;
+	tempP.empty = false;
+	tempP.object.coordX = 1;
+	tempP.object.coordY = 1;
 	while(1){
 		_tprintf(TEXT("%sEnter to notify all taxis"), Utils_NewSubLine());
 		getchar();
-		Service_NotifyTaxisNewPassenger(&app);
+		_stprintf_s(tempP.Id, _countof(tempP.Id), TEXT("Pass%d"), rand() % 50 + 10);
+		if(!Service_NewPassenger(&app, tempP))
+			_tprintf(TEXT("%sPassenger limit has been reached... This passenger will be ignored!"), Utils_NewSubLine());
 	}
 
 	getchar();

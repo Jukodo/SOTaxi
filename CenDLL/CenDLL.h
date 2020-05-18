@@ -6,6 +6,7 @@
 #define CENDLL_API __declspec(dllimport)
 #endif
 
+#define NTBUFFER_MAX 5
 #define TOPMAX_TAXI 50
 #define TOPMAX_PASSENGERS 50
 
@@ -14,17 +15,16 @@
 #define STRING_LARGE 50
 #define STRING_XXL 255
 
-#define NAME_SHM_LAREQUESTS TEXT("JUSO2TAXI_LA")
-#define NAME_SHM_PASSLIST TEXT("JUSO2TAXI_PASSLIST")
+#define NAME_SHM_LARequests TEXT("JUSO2TAXI_LA")
+#define NAME_SHM_TransportRequestBuffer TEXT("JUSO2TAXI_CPBUFFER")
 
-#define NAME_MUTEX_ONEINSTANCE_CEN TEXT("JUSO2TAXI_ONEINSTANCE_CEN")
-#define NAME_MUTEX_ONEINSTANCE_CP TEXT("JUSO2TAXI_ONEINSTANCE_CP")
-
+#define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_ONEINSTANCE_CEN")
+#define NAME_MUTEX_OneInstance_CP TEXT("JUSO2TAXI_ONEINSTANCE_CP")
 #define NAME_MUTEX_LARequest TEXT("JUSO2TAXI_LAR")
+
 #define NAME_EVENT_LARequest_Read TEXT("JUSO2TAXI_LARW")
 #define NAME_EVENT_LARequest_Write TEXT("JUSO2TAXI_LARR")
-#define NAME_EVENT_PassengerList_Access TEXT("JUSO2TAXI_PASSLIST_ACCESS")
-#define NAME_EVENT_Notify_T_NP TEXT("JUSO2TAXI_Notify_T_NP")
+#define NAME_EVENT_NewTransportRequest TEXT("JUSO2TAXI_NEWTPR")
 
 //Main
 #include <stdio.h>
@@ -38,7 +38,5 @@
 #include "DLLMap.h"
 #include "DLLTaxi.h"
 #include "DLLUtils.h"
-#include "DLLCommunication.h"
 #include "DLLPassenger.h"
-
-CENDLL_API int CenDLL_getInt();
+#include "DLLCommunication.h"

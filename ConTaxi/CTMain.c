@@ -95,6 +95,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	} while(flagLoginFailed);
 
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
+	app.NTBuffer_Tail = ((NewTransportBuffer*) app.shmHandles.lpSHM_NTBuffer)->head;
 	ResumeThread(app.threadHandles.hNotificationReceiver_NP);
 	#pragma endregion
 

@@ -1,26 +1,30 @@
 #pragma once
 #include "CenDLL.h"
 
-typedef struct ThreadHandles{
+typedef struct Application Application;
+typedef struct ThreadHandles ThreadHandles;
+typedef struct SyncHandles SyncHandles;
+typedef struct ShmHandles ShmHandles;
+
+struct ThreadHandles{
 	HANDLE hLARequests;
 	DWORD dwIdLARequests;
-}ThreadHandles;
+};
 
-typedef struct SyncHandles{
+struct SyncHandles{
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
-	HANDLE hEvent_PassengerList_Access;
-	HANDLE hEvent_Notify_T_NP;
-}SyncHandles;
+	HANDLE hEvent_Notify_T_NewTranspReq;
+};
 
-typedef struct ShmHandles{
+struct ShmHandles{
 	HANDLE hSHM_LARequest;
 	LPVOID lpSHM_LARequest;
-	HANDLE hSHM_PassengerList;
-	LPVOID lpSHM_PassengerList;
-}ShmHandles;
+	HANDLE hSHM_NTBuffer;
+	LPVOID lpSHM_NTBuffer;
+};
 
-typedef struct Application{
+struct Application{
 	Taxi* taxiList;
 	Passenger* passengerList;
 	ThreadHandles threadHandles;
@@ -28,7 +32,7 @@ typedef struct Application{
 	ShmHandles shmHandles;
 	int maxTaxis;
 	int maxPassengers;
-}Application;
+};
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
 bool Setup_OpenThreadHandles(Application* app);
@@ -54,4 +58,4 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 AssignResponse Service_RequestPassenger(Application* app, AssignRequest* assignRequest);
-void Service_NotifyTaxisNewPassenger(Application* app);
+void Service_NotifyTaxisNewTransport(Application* app);

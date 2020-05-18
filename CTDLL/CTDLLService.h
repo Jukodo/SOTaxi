@@ -1,10 +1,10 @@
 #pragma once
 #include "CTDLL.h"
 
+typedef struct Application Application;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
-typedef struct Application Application;
 
 struct ThreadHandles{
 	HANDLE hLARequests;
@@ -17,12 +17,14 @@ struct SyncHandles{
 	HANDLE hMutex_LARequest;
 	HANDLE hEvent_LARequest_Read;
 	HANDLE hEvent_LARequest_Write;
-	HANDLE hEvent_Notify_T_NP;
+	HANDLE hEvent_Notify_T_NewTranspReq;
 };
 
 struct ShmHandles{
 	HANDLE hSHM_LARequest;
 	LPVOID lpSHM_LARequest;
+	HANDLE hSHM_NTBuffer;
+	LPVOID lpSHM_NTBuffer;
 };
 
 struct Application{
@@ -32,9 +34,8 @@ struct Application{
 	ShmHandles shmHandles;
 	int maxTaxis;
 	int maxPassengers;
-	int quant;
+	int NTBuffer_Tail; //Used as a tail for the new transport request buffer (each taxi has a tail)
 };
-
 
 CTDLL_API bool Setup_Application(Application* app);
 CTDLL_API bool Setup_OpenSyncHandles(SyncHandles* syncHandles);

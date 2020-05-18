@@ -4,7 +4,6 @@
 bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
 	app->loggedInTaxi.empty = true;
-	app->quant = 0;
 
 	return (Setup_OpenSyncHandles(&app->syncHandles) &&
 		Setup_OpenSmhHandles(app) &&
@@ -28,24 +27,24 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_LARequest_Write	//Event name
 	);
 
-	syncHandles->hEvent_Notify_T_NP = OpenEvent(//This event is already created with CenTaxi
+	syncHandles->hEvent_Notify_T_NewTranspReq = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
-		NAME_EVENT_Notify_T_NP			//Event name
+		NAME_EVENT_NewTransportRequest	//Event name
 	);
 
 	return !(syncHandles->hMutex_LARequest == NULL ||
 		syncHandles->hEvent_LARequest_Read == NULL ||
 		syncHandles->hEvent_LARequest_Write == NULL ||
-		syncHandles->hEvent_Notify_T_NP == NULL);
+		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
 }
 
 bool Setup_OpenSmhHandles(Application* app){
-#pragma region LARequest
+	#pragma region LARequest
 	app->shmHandles.hSHM_LARequest = OpenFileMapping(
 		FILE_MAP_ALL_ACCESS,	//Desired access flag
 		FALSE,					//Inherit handle (child processes can inherit the handle)(?)
-		NAME_SHM_LAREQUESTS		//File mapping object name
+		NAME_SHM_LARequests		//File mapping object name
 	);
 	if(app->shmHandles.hSHM_LARequest == NULL)
 		return false;
@@ -58,6 +57,26 @@ bool Setup_OpenSmhHandles(Application* app){
 		sizeof(LARequest)				//Number of bytes to map
 	);
 	if(app->shmHandles.lpSHM_LARequest == NULL)
+		return false;
+#pragma endregion
+
+	#pragma region NewTransportBuffer
+	app->shmHandles.hSHM_NTBuffer = OpenFileMapping(
+		FILE_MAP_READ,					//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SHM_TransportRequestBuffer	//File mapping object name
+	);
+	if(app->shmHandles.hSHM_NTBuffer == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_NTBuffer = MapViewOfFile(
+		app->shmHandles.hSHM_NTBuffer,	//File mapping object handle
+		FILE_MAP_READ,					//Desired access flag
+		0,								//DWORD high-order of the file offset where the view begins
+		0,								//DWORD low-order of the file offset where the view begins
+		sizeof(NewTransportBuffer)		//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_NTBuffer == NULL)
 		return false;
 #pragma endregion
 
@@ -90,12 +109,17 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hMutex_LARequest);
 	CloseHandle(syncHandles->hEvent_LARequest_Read);
 	CloseHandle(syncHandles->hEvent_LARequest_Write);
+	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 #pragma region SendRequest
 	UnmapViewOfFile(shmHandles->lpSHM_LARequest);
 	CloseHandle(shmHandles->hSHM_LARequest);
+#pragma endregion
+#pragma region NewTransportBuffer
+	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);
+	CloseHandle(shmHandles->hSHM_NTBuffer);
 #pragma endregion
 }
 

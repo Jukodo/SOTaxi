@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CTCommunication.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CTMain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -26,9 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CTCommunication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CTService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
