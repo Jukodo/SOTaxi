@@ -12,5 +12,5 @@ struct CPThreadHandles{
 struct CenPassenger{
 	Passenger passengerInfo;
 	CPThreadHandles cpThreadHandles;
-	bool* interestedTaxis;
+	int* interestedTaxis;
 };

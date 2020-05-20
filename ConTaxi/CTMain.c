@@ -139,7 +139,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tscanf_s(TEXT(" %[^\n]"), sArgument, _countof(sArgument));
 				Utils_CleanStdin();
 
-				if(!Utils_StringIsNumber(sArgument) || !Service_DefineCDN(&app, sArgument)){
+				if(!Utils_StringIsNumber(sArgument) || !Command_DefineCDN(&app, sArgument)){
 					_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				}
 				break;

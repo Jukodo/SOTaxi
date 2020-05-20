@@ -24,16 +24,16 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 				param->app->loggedInTaxi.object.coordY = param->request.loginRequest.coordY;
 				break;
 			case LR_INVALID_UNDEFINED:
-				_tprintf(TEXT("%sError! Please try again..."), Utils_NewSubLine());
+				_tprintf(TEXT("%sError... Please try again!"), Utils_NewSubLine());
 				break;
 			case LR_INVALID_FULL:
-				_tprintf(TEXT("%sError! The application doesn't accept more taxis"), Utils_NewSubLine());
+				_tprintf(TEXT("%sError... The application doesn't accept more taxis!"), Utils_NewSubLine());
 				break;
 			case LR_INVALID_POSITION:
-				_tprintf(TEXT("%sError! The position chosen is invalid"), Utils_NewSubLine());
+				_tprintf(TEXT("%sError... The position chosen is invalid!"), Utils_NewSubLine());
 				break;
 			case LR_INVALID_EXISTS:
-				_tprintf(TEXT("%sError! The position chosen is invalid"), Utils_NewSubLine());
+				_tprintf(TEXT("%sError... The license plate chosen is already exists!"), Utils_NewSubLine());
 				break;
 			default:
 				_tprintf(TEXT("%sOh no! This error was unexpected! Error: %d"), Utils_NewSubLine(), GetLastError());
@@ -95,4 +95,6 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 			param->app->NTBuffer_Tail = (param->app->NTBuffer_Tail + 1) % NTBUFFER_MAX;
 		}
 	}
+
+	return 1;
 }

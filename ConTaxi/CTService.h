@@ -8,8 +8,8 @@ bool isValid_Coordinates(TCHAR* sCoordinates);
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
 void Service_RegisterInterest(Application* app, TCHAR* idPassenger);
-bool Service_DefineCDN(Application* app, TCHAR* value);
+void Service_CloseApp(Application* app);
 
-void Command_Speed(Application* app, bool speedUp);
+bool Command_DefineCDN(Application* app, TCHAR* value);
+bool Command_Speed(Application* app, bool speedUp);
 void Command_AutoResp(Application* app, bool autoResp);
-void Command_CloseApp(Application* app);

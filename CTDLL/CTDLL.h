@@ -9,5 +9,6 @@
 //GenericDLL
 #include "CenDLL.h"
 //Data
+#include "CTDLLSettings.h"
 #include "CTDLLService.h"
 #include "CTDLLCommunication.h"

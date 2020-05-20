@@ -38,7 +38,7 @@ bool isValid_Coordinates(TCHAR* sCoordinates){
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
 	TParam_QnARequest* request = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
-	
+
 	LoginRequest loginRequest;
 	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
 	loginRequest.coordX = (float) _tstof(sCoordinates_X);
@@ -78,7 +78,7 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_REQUEST_INTEREST) == 0){ //Continues on Main (asking for value argument)
 		return TC_REQUEST_INTEREST;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
-		Command_CloseApp(app);
+		Service_CloseApp(app);
 		return TC_CLOSEAPP;
 	}
 
@@ -106,23 +106,55 @@ void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 	);
 }
 
-bool Service_DefineCDN(Application* app, TCHAR* value){
+void Service_CloseApp(Application* app){
+	/*ToDo (TAG_TODO)
+	**Notify central about this shutdown, in order to logout taxi from central
+	*/
+}
+
+bool Command_DefineCDN(Application* app, TCHAR* value){
 	if(!Utils_StringIsNumber(value))
 		return false;
 
 	int cdnValue = _ttoi(value);
-	//ToDo
+	if(cdnValue <= 0 || cdnValue > TOPMAX_CDN){
+		_tprintf(TEXT("%sCDN value has to be between 0 and %d! Hence, it remained the same (%d)..."), Utils_NewSubLine(), TOPMAX_CDN, app->settings.CDN);
+		return true;
+	}
+
+	app->settings.CDN = cdnValue;
+	_tprintf(TEXT("%sCDN value has been changed to %d!"), Utils_NewSubLine(), app->settings.CDN);
 	return true;
 }
 
-void Command_Speed(Application* app, bool speedUp){
-	//ToDo
+bool Command_Speed(Application* app, bool speedUp){
+	if(speedUp){
+
+		if(app->loggedInTaxi.object.speedMultiplier == TOPMAX_SPEED){
+			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any higher!"), Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+			return false;
+		}
+
+		app->loggedInTaxi.object.speedMultiplier += SPEED_CHANGEBY;
+		_tprintf(TEXT("%sYour speed has been increased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+	} else{
+		if(app->loggedInTaxi.object.speedMultiplier == TOPMIN_SPEED){
+			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any lower!"), Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+			return false;
+		}
+
+		app->loggedInTaxi.object.speedMultiplier -= SPEED_CHANGEBY;
+		_tprintf(TEXT("%sYour speed has been decreased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+	}
+
+	return true;
 }
 
 void Command_AutoResp(Application* app, bool autoResp){
-	//ToDo
-}
-
-void Command_CloseApp(Application* app){
-	//ToDo
+	app->settings.automaticInterest = autoResp;
+	
+	if(app->settings.automaticInterest)
+		_tprintf(TEXT("%sAutomatic interest requests is now ON!"), Utils_NewSubLine());
+	else
+		_tprintf(TEXT("%sAutomatic interest requests is now OFF!"), Utils_NewSubLine());
 }

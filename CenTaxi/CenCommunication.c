@@ -36,7 +36,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		return -1;
 
 	LARGE_INTEGER liTime;
-	liTime.QuadPart = -10000000LL * /*TAG_TODO*/10;
+	liTime.QuadPart = -10000000LL * /*TAG_TODO*/20;
 
 	SetWaitableTimer(
 		hAssignTimeout,
@@ -48,11 +48,26 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	);
 
 	WaitForSingleObject(hAssignTimeout, INFINITE);
-	_tprintf(TEXT("\n%s thread is alive!"), myPassenger->passengerInfo.Id);
+
+	int numIntTaxis = 0;
 	for(int i = 0; i < param->app->maxTaxis; i++){
-		if(myPassenger->interestedTaxis[i])
-			_tprintf(TEXT("\nTaxi %s is interested!"), Get_Taxi(param->app, i)->LicensePlate);
+		if(myPassenger->interestedTaxis[i] != -1){
+			numIntTaxis++;
+		}
 	}
+
+	if(numIntTaxis == 0){//No interested taxis
+		_tprintf(TEXT("%sNo taxi has shown interest towards %s!"), Utils_NewSubLine(), myPassenger->passengerInfo.Id);
+		return 1;
+	}
+
+	_tprintf(TEXT("%sQuantity of interested taxis = %d"), Utils_NewSubLine(), numIntTaxis);
+	int a = (rand() % numIntTaxis);
+	_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), Get_Taxi(param->app, myPassenger->interestedTaxis[a])->LicensePlate);
+	/*TAG_TODO
+	**Notify Taxi that he has been chosen and assigned to respective passenger
+	**Notify Passenger that he has be assigned to respective taxi
+	*/
 
 	free(param);
 	return 1;

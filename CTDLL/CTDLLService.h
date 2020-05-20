@@ -28,6 +28,7 @@ struct ShmHandles{
 };
 
 struct Application{
+	Settings settings;
 	Taxi loggedInTaxi;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;

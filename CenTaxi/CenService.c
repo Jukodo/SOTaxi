@@ -4,6 +4,7 @@
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ZeroMemory(app, sizeof(Application));
+	srand(time(NULL));
 
 	app->maxTaxis = maxTaxis;
 	app->maxPassengers = maxPassengers;
@@ -19,11 +20,12 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 
 	for(i = 0; i < maxPassengers; i++){
 		ZeroMemory(&app->passengerList[i], sizeof(CenPassenger));
-		app->passengerList[i].interestedTaxis = malloc(maxTaxis * sizeof(bool));
-		for(int a = 0; a < maxTaxis; a++){
-			app->passengerList[i].interestedTaxis[a] = false;
-		}
 		app->passengerList[i].passengerInfo.empty = true;
+
+		app->passengerList[i].interestedTaxis = malloc(maxTaxis * sizeof(int));
+		for(int a = 0; a < maxTaxis; a++){
+			app->passengerList[i].interestedTaxis[a] = -1;
+		}
 	}
 
 	bool ret = true;
@@ -183,7 +185,7 @@ int Get_TaxiIndex(Application* app, TCHAR* licensePlate){
 		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(_tcscmp(app->taxiList[i].LicensePlate, licensePlate) == 0)
+		if(_tcscmp(app->taxiList[i].LicensePlate, licensePlate) == 0 && !app->taxiList[i].empty)
 			return i;
 	}
 
@@ -232,7 +234,7 @@ int Get_PassengerIndex(Application* app, TCHAR* Id){
 		return -1;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(_tcscmp(app->passengerList[i].passengerInfo.Id, Id) == 0)
+		if(_tcscmp(app->passengerList[i].passengerInfo.Id, Id) == 0 && !app->passengerList[i].passengerInfo.empty)
 			return i;
 	}
 
@@ -305,7 +307,7 @@ LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	if(!isValid_ObjectPosition(app, loginRequest->coordX, loginRequest->coordY))
 		return LR_INVALID_POSITION;
 
-	if(Get_TaxiIndex(app, loginRequest->licensePlate) == -1)
+	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
 		return LR_INVALID_EXISTS;
 
 	Taxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
@@ -333,6 +335,11 @@ NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest*
 	if(WaitForSingleObject(app->passengerList[passIndex].cpThreadHandles.hTaxiAssignment, 0) == WAIT_OBJECT_0)
 		return NTIR_INVALID_CLOSED;
 	
-	app->passengerList[passIndex].interestedTaxis[taxiIndex] = true;
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(app->passengerList[passIndex].interestedTaxis[i] == -1){
+			app->passengerList[passIndex].interestedTaxis[i] = taxiIndex;
+			break;
+		}
+	}
 	return NTIR_SUCCESS;
 }

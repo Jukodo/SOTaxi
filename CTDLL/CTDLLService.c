@@ -4,6 +4,8 @@
 bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
 	app->loggedInTaxi.empty = true;
+	app->loggedInTaxi.object.speedMultiplier = DEFAULT_SPEED;
+	app->settings.CDN = DEFAULT_CDN;
 
 	return (Setup_OpenSyncHandles(&app->syncHandles) &&
 		Setup_OpenSmhHandles(app) &&
