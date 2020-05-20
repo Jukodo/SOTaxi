@@ -118,7 +118,7 @@ bool Command_DefineCDN(Application* app, TCHAR* value){
 
 	int cdnValue = _ttoi(value);
 	if(cdnValue <= 0 || cdnValue > TOPMAX_CDN){
-		_tprintf(TEXT("%sCDN value has to be between 0 and %d! Hence, it remained the same (%d)..."), Utils_NewSubLine(), TOPMAX_CDN, app->settings.CDN);
+		_tprintf(TEXT("%sCDN value has to be between 1 and %d! Hence, it remained the same (%d)..."), Utils_NewSubLine(), TOPMAX_CDN, app->settings.CDN);
 		return true;
 	}
 

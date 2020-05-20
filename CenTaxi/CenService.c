@@ -5,6 +5,8 @@
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ZeroMemory(app, sizeof(Application));
 	srand(time(NULL));
+	app->settings.secAssignmentTimeout = DEFAULT_ASSIGNMENT_TIMEOUT;
+	app->settings.allowTaxiLogins = DEFAULT_ALLOW_TAXI_LOGINS;
 
 	app->maxTaxis = maxTaxis;
 	app->maxPassengers = maxPassengers;
@@ -297,9 +299,38 @@ void Service_NotifyTaxisNewTransport(Application* app){
 		SetEvent(app->syncHandles.hEvent_Notify_T_NP);*/
 }
 
+CentralCommands Service_UseCommand(Application* app, TCHAR* command){
+	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)
+		return CC_HELP;
+	} else if(_tcscmp(command, CMD_LIST_TAXIS) == 0){ //Continues on Main (listing logged in taxis)
+		return CC_LIST_TAXIS;
+	} else if(_tcscmp(command, CMD_SET_TIMEOUT) == 0){ //Continues on Main (asking for a value)
+		return CC_SET_TIMEOUT;
+	} else if(_tcscmp(command, CMD_TAXI_LOGIN_ON) == 0){
+		Command_AllowTaxiLogins(app, true);
+		return CC_TAXI_LOGIN_ON;
+	} else if(_tcscmp(command, CMD_TAXI_LOGIN_OFF) == 0){
+		Command_AllowTaxiLogins(app, false);
+		return CC_TAXI_LOGIN_OFF;
+	} else if(_tcscmp(command, CMD_KICK_TAXI) == 0){ //Continues on Main (asking for value argument)
+		return CC_KICK_TAXI;
+	} else if(_tcscmp(command, CMD_SIMULATE_NTR) == 0){ //Continues on Main (asking for value argument)
+		Simulate_NewTransport(app);
+		return CC_SIMULATE_NTR;
+	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
+		Service_CloseApp(app);
+		return CC_CLOSEAPP;
+	}
+
+	return CC_UNDEFINED;
+}
+
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	if(loginRequest == NULL || Utils_StringIsEmpty(loginRequest->licensePlate))
 		return LR_INVALID_UNDEFINED;
+
+	if(!app->settings.allowTaxiLogins)
+		return LR_INVALID_CLOSED;
 
 	if(isTaxiListFull(app))
 		return LR_INVALID_FULL;
@@ -342,4 +373,49 @@ NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest*
 		}
 	}
 	return NTIR_SUCCESS;
+}
+
+bool Service_KickTaxi(Application* app, TCHAR* licensePlate){
+	return false;
+}
+
+void Service_CloseApp(Application* app){
+	/*ToDo (TAG_TODO)
+	**Notify taxis and passengers about this shutdown, in order to close everything accordingly
+	*/
+}
+
+bool Command_SetAssignmentTimeout(Application* app, TCHAR* value){
+	if(!Utils_StringIsNumber(value))
+		return false;
+
+	int timeoutValue = _ttoi(value);
+	if(timeoutValue <= 0 || timeoutValue > TOPMAX_ASSIGNMENT_TIMEOUT){
+		_tprintf(TEXT("%sAssignment timeout value has to be between 1 and %d! Hence, it remained the same (%d)..."), Utils_NewSubLine(), TOPMAX_ASSIGNMENT_TIMEOUT, app->settings.secAssignmentTimeout);
+		return true;
+	}
+
+	app->settings.secAssignmentTimeout = timeoutValue;
+	_tprintf(TEXT("%sAssignment timeout value has been changed to %d!"), Utils_NewSubLine(), app->settings.secAssignmentTimeout);
+	return true;
+}
+
+void Command_AllowTaxiLogins(Application* app, bool allow){
+	app->settings.allowTaxiLogins = allow;
+
+	if(app->settings.allowTaxiLogins)
+		_tprintf(TEXT("%sTaxi logins are now allowed!"), Utils_NewSubLine());
+	else
+		_tprintf(TEXT("%sTaxi logins are now being denied!"), Utils_NewSubLine());
+}
+
+void Simulate_NewTransport(Application* app){
+	Passenger tempP;
+	tempP.empty = false;
+	tempP.object.coordX = 1;
+	tempP.object.coordY = 1;
+
+	_stprintf_s(tempP.Id, _countof(tempP.Id), TEXT("Pass%d"), rand() % 50 + 10);
+	if(!Service_NewPassenger(app, tempP))
+		_tprintf(TEXT("%sPassenger limit has been reached... This passenger will be ignored!"), Utils_NewSubLine());
 }

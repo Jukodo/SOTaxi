@@ -26,6 +26,9 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 			case LR_INVALID_UNDEFINED:
 				_tprintf(TEXT("%sError... Please try again!"), Utils_NewSubLine());
 				break;
+			case LR_INVALID_CLOSED:
+				_tprintf(TEXT("%sError... Central is not allowing taxi logins at the moment!"), Utils_NewSubLine());
+				break;
 			case LR_INVALID_FULL:
 				_tprintf(TEXT("%sError... The application doesn't accept more taxis!"), Utils_NewSubLine());
 				break;

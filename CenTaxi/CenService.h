@@ -1,11 +1,13 @@
 #pragma once
 #include "CenDLL.h"
 #include "CenPassenger.h"
+#include "CenSettings.h"
 
 typedef struct Application Application;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
+typedef enum CentralCommands CentralCommands;
 
 struct ThreadHandles{
 	HANDLE hQnARequests;
@@ -26,6 +28,7 @@ struct ShmHandles{
 };
 
 struct Application{
+	Settings settings;
 	Taxi* taxiList;
 	CenPassenger* passengerList;
 	ThreadHandles threadHandles;
@@ -33,6 +36,27 @@ struct Application{
 	ShmHandles shmHandles;
 	int maxTaxis;
 	int maxPassengers;
+};
+
+#define CMD_HELP TEXT("/help")
+#define CMD_LIST_TAXIS TEXT("/listTaxis")
+#define CMD_SET_TIMEOUT TEXT("/setTimeout")
+#define CMD_TAXI_LOGIN_ON TEXT("/taxiLoginOn")
+#define CMD_TAXI_LOGIN_OFF TEXT("/taxiLoginOff")
+#define CMD_KICK_TAXI TEXT("/kickTaxi")
+#define CMD_SIMULATE_NTR TEXT("/simulateNTR")
+#define CMD_CLOSEAPP TEXT("/closeApp")
+
+enum CentralCommands{
+	CC_HELP,
+	CC_LIST_TAXIS,
+	CC_SET_TIMEOUT,
+	CC_TAXI_LOGIN_ON,
+	CC_TAXI_LOGIN_OFF,
+	CC_KICK_TAXI,
+	CC_SIMULATE_NTR,
+	CC_CLOSEAPP,
+	CC_UNDEFINED
 };
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
@@ -58,7 +82,15 @@ CenPassenger* Get_Passenger(Application* app, int index);
 
 bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 
+CentralCommands Service_UseCommand(Application* app, TCHAR* command);
+
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
-void Service_NotifyTaxisNewTransport(Application* app);
+void Service_NotifyTaxisNewTransport(Application* app); 
+bool Service_KickTaxi(Application* app, TCHAR* licensePlate);
+void Service_CloseApp(Application* app);
+
+bool Command_SetAssignmentTimeout(Application* app, TCHAR* value);
+void Command_AllowTaxiLogins(Application* app, bool allow);
+void Simulate_NewTransport(Application* app);

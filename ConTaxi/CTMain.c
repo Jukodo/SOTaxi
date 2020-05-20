@@ -109,7 +109,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	do{
 		ZeroMemory(sCommand, STRING_MEDIUM);
 		ZeroMemory(sArgument, STRING_SMALL);
-		_tprintf(TEXT("%sLogged in as %s%sWaiting for command:"), Utils_NewLine(), app.loggedInTaxi.LicensePlate, Utils_NewSubLine());
+		_tprintf(TEXT("%s[ConTaxi] Logged in as %s!%sWaiting for command:"), Utils_NewLine(), app.loggedInTaxi.LicensePlate, Utils_NewSubLine());
 		_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 		_tscanf_s(TEXT(" %[^\n]"), sCommand, _countof(sCommand));
 		Utils_CleanStdin();
@@ -122,17 +122,11 @@ int _tmain(int argc, LPTSTR argv[]) {
 			_tprintf(TEXT("%s%s:\tTurn on automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_ON);
 			_tprintf(TEXT("%s%s:\tTurn off automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_OFF);
 			_tprintf(TEXT("%s%s:\tDefine new CDN value"), Utils_NewSubLine(), CMD_DEFINE_CDN);
-			_tprintf(TEXT("%s%s:\tSend a request to be assigned to a respective passenger"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
+			_tprintf(TEXT("%s%s:\tSend interest to a new transport request"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
 			_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 		}
 
 		switch(command){
-			case TC_UNDEFINED:
-				_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
-				continue;
-			case TC_CLOSEAPP:
-				flagReadyToLeave = true;
-				break;
 			case TC_DEFINE_CDN:
 				_tprintf(TEXT("%sInsert new CDN value:"), Utils_NewSubLine());
 				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
@@ -150,6 +144,12 @@ int _tmain(int argc, LPTSTR argv[]) {
 				Utils_CleanStdin();
 				Service_RegisterInterest(&app, sArgument);
 				break;
+			case TC_CLOSEAPP:
+				flagReadyToLeave = true;
+				break;
+			case TC_UNDEFINED:
+				_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
+				continue;
 		}
 
 	} while(!flagReadyToLeave);

@@ -36,7 +36,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		return -1;
 
 	LARGE_INTEGER liTime;
-	liTime.QuadPart = -10000000LL * /*TAG_TODO*/20;
+	liTime.QuadPart = -10000000LL * param->app->settings.secAssignmentTimeout;
 
 	SetWaitableTimer(
 		hAssignTimeout,
