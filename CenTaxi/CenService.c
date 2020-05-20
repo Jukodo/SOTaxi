@@ -36,6 +36,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
 	ret = ret && Setup_OpenSmhHandles(app);
 	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
+	ret = ret && Setup_OpenMap(app);
 
 	return ret;
 }
@@ -129,6 +130,84 @@ bool Setup_OpenSmhHandles(Application* app){
 
 	ZeroMemory(app->shmHandles.lpSHM_NTBuffer, sizeof(NewTransportBuffer)); //Makes sure head starts at 0 (unecessary to zero everything)
 	#pragma endregion
+
+	return true;
+}
+
+bool Setup_OpenMap(Application* app){
+	FILE* mapFile;
+	errno_t mapFileFailed;
+	mapFileFailed = fopen_s(&mapFile, "../Maps/map.txt", "r");
+	if(mapFileFailed){
+		_tprintf(TEXT("%sOh no! The map file could not be loaded!"), Utils_NewLine());
+		return false;
+	}
+
+	char currentChar;
+	int columnCount = 0;
+	int lineCount = 0;
+	int biggestColumn = 0;
+	while(currentChar = fgetc(mapFile)){
+		if(feof(mapFile))
+			break;
+
+		if(columnCount > STRING_LARGE){
+			_tprintf(TEXT("%sThe map width is longer than it is allowed! (%d)"), Utils_NewLine, STRING_LARGE);
+		}
+
+		if(currentChar == '\n'){
+			if(biggestColumn == 0)
+				biggestColumn = columnCount;
+			else if(columnCount != biggestColumn){//Different width in diferent lines, map is not square
+				_tprintf(TEXT("%sInvalid map! Needs have the same column width in every lines!"), Utils_NewSubLine);
+				return false;
+			}
+			columnCount = 0;
+			lineCount++;
+			continue;
+		}
+	
+		columnCount++;
+	}
+	lineCount++; //Last line doesn't contain \n, so we have to compensate for the line count
+
+	char** mapArray = (char*) calloc(lineCount, sizeof(char*));
+	if(mapArray == NULL)
+		return false;
+	for(int iLine = 0; iLine < lineCount; iLine++){
+		mapArray[iLine] = (char*) calloc(columnCount, sizeof(char));
+		if(mapArray[iLine] == NULL)
+			return false;
+	}
+
+	fseek(mapFile, 0, SEEK_SET);
+	lineCount = 0;
+	columnCount = 0;
+
+	while(currentChar = fgetc(mapFile)){
+		if(feof(mapFile))
+			break;
+
+		if(currentChar == '\n'){
+			columnCount = 0;
+			lineCount++;
+			continue;
+		}
+
+		mapArray[lineCount][columnCount] = currentChar;
+		columnCount++;
+	}
+
+	for(int iLine = 0; iLine < lineCount; iLine++){
+		for(int iColumn = 0; iColumn < columnCount; iColumn++){
+			_tprintf(TEXT("%c"), mapArray[iLine][iColumn]);
+		}
+		_tprintf(TEXT("\n"));
+	}
+
+	_tprintf(TEXT("%sMap width: %d"), Utils_NewSubLine(), columnCount);
+
+	_tprintf(TEXT("%sMap height: %d"), Utils_NewSubLine(), lineCount);
 
 	return true;
 }

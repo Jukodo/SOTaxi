@@ -42,7 +42,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 		getchar();
 		return false;
 	}
-	#pragma endregion	
+	#pragma endregion
 
 	#pragma region Commands
 	_tprintf(TEXT("%sThe application is ready to accept commands...%s\"%s\" to display all of the commands!"), Utils_NewLine(), Utils_NewSubLine(), CMD_HELP);

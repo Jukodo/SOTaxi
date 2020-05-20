@@ -63,6 +63,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
 bool Setup_OpenThreadHandles(Application* app);
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles);
 bool Setup_OpenSmhHandles(Application* app);
+bool Setup_OpenMap(Application* app);
 
 void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);

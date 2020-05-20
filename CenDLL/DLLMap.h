@@ -1,6 +1,9 @@
 #pragma once
 #include "CenDLL.h"
 
+#define MAP_MIN_WIDTH 50
+#define MAP_MIN_HEIGHT 50
+
 typedef struct XYObject{
 	double coordX;	//Horizontal position
 	double coordY; //Vertical position
