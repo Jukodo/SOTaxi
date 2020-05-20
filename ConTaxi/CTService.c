@@ -85,11 +85,12 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 	return TC_UNDEFINED;
 }
 
-void Service_RequestPass(Application* app, TCHAR* idPassenger){
+void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
 	NTInterestRequest ntIntRequest;
 	_tcscpy_s(ntIntRequest.idPassenger, _countof(ntIntRequest.idPassenger), idPassenger);
+	_tcscpy_s(ntIntRequest.licensePlate, _countof(ntIntRequest.idPassenger), app->loggedInTaxi.LicensePlate);
 
 	param->app = app;
 	param->request.ntIntRequest = ntIntRequest;

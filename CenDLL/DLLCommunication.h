@@ -33,6 +33,7 @@ struct LoginRequest{
 };
 
 struct NTInterestRequest{
+	TCHAR licensePlate[STRING_SMALL];
 	TCHAR idPassenger[STRING_SMALL];
 };
 
@@ -45,12 +46,15 @@ enum LoginResponse{
 	LR_SUCCESS,
 	LR_INVALID_UNDEFINED,
 	LR_INVALID_FULL,
-	LR_INVALID_POSITION
+	LR_INVALID_POSITION,
+	LR_INVALID_EXISTS
 };
 
 enum NTInterestResponse{
-	AR_SUCCESS,
-	AR_INVALID_UNDEFINED
+	NTIR_SUCCESS,
+	NTIR_INVALID_UNDEFINED,
+	NTIR_INVALID_ID,
+	NTIR_INVALID_CLOSED
 };
 
 struct QnARequest{

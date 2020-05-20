@@ -32,5 +32,8 @@
     <ClInclude Include="CenCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CenPassenger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

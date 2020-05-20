@@ -32,6 +32,12 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 			case LR_INVALID_POSITION:
 				_tprintf(TEXT("%sError! The position chosen is invalid"), Utils_NewSubLine());
 				break;
+			case LR_INVALID_EXISTS:
+				_tprintf(TEXT("%sError! The position chosen is invalid"), Utils_NewSubLine());
+				break;
+			default:
+				_tprintf(TEXT("%sOh no! This error was unexpected! Error: %d"), Utils_NewSubLine(), GetLastError());
+				break;
 		}
 
 		break;
@@ -39,14 +45,20 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	case RT_NT_INTEREST:
 
 		switch(shm->ntIntResponse){
-			case AR_SUCCESS:
-				_tprintf(TEXT("%sSuccess! But that ain't done yet..."), Utils_NewSubLine());
+			case NTIR_SUCCESS:
+				_tprintf(TEXT("%sYour interest towards transporting Passenger[%s] has been registered!"), Utils_NewSubLine(), shm->ntIntRequest.idPassenger);
 				break;
-			case AR_INVALID_UNDEFINED:
-				_tprintf(TEXT("%sError! That ain't done yet..."), Utils_NewSubLine());
+			case NTIR_INVALID_UNDEFINED:
+				_tprintf(TEXT("%sError! Please try again..."), Utils_NewSubLine());
+				break;
+			case NTIR_INVALID_CLOSED:
+				_tprintf(TEXT("%sError! This transport has already been closed..."), Utils_NewSubLine());
+				break;
+			case NTIR_INVALID_ID:
+				_tprintf(TEXT("%sError! There is no passenger with ID = %s..."), Utils_NewSubLine(), shm->ntIntRequest.idPassenger);
 				break;
 			default:
-				_tprintf(TEXT("%sOh no! Not expecting this error!"), Utils_NewSubLine());
+				_tprintf(TEXT("%sOh no! This error was unexpected! Error: %d"), Utils_NewSubLine(), GetLastError());
 				break;
 		}
 
@@ -70,13 +82,14 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 		while(buffer->head != param->app->NTBuffer_Tail){
 			buffer->transportRequests[param->app->NTBuffer_Tail];
 
-			_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2f, %.2f) for a taxi!%sPlease use \"/requestPass\" if you are interested!%s"), 
+			_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2f, %.2f) for a taxi!%sPlease use \"%s\" if you are interested!%s"), 
 				Utils_NewSubLine(), 
 				Utils_NewSubLine(),
 				buffer->transportRequests[param->app->NTBuffer_Tail].Id,
 				buffer->transportRequests[param->app->NTBuffer_Tail].object.coordX,
 				buffer->transportRequests[param->app->NTBuffer_Tail].object.coordY,
 				Utils_NewSubLine(),
+				CMD_REQUEST_INTEREST,
 				Utils_NewSubLine());
 
 			param->app->NTBuffer_Tail = (param->app->NTBuffer_Tail + 1) % NTBUFFER_MAX;

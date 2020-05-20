@@ -96,7 +96,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
 	app.NTBuffer_Tail = ((NewTransportBuffer*) app.shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
-	ResumeThread(app.threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notification to start popping up
+	ResumeThread(app.threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
 	#pragma endregion
 
 	#pragma region Commands
@@ -139,10 +139,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tscanf_s(TEXT(" %[^\n]"), sArgument, _countof(sArgument));
 				Utils_CleanStdin();
 
-				if(!Utils_StringIsNumber(sArgument)){
-					_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
-				}
-				if(!Service_DefineCDN(&app, sArgument)){
+				if(!Utils_StringIsNumber(sArgument) || !Service_DefineCDN(&app, sArgument)){
 					_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				}
 				break;
@@ -151,7 +148,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 				_tscanf_s(TEXT(" %[^\n]"), sArgument, _countof(sArgument));
 				Utils_CleanStdin();
-				Service_RequestPass(&app, sArgument);
+				Service_RegisterInterest(&app, sArgument);
 				break;
 		}
 

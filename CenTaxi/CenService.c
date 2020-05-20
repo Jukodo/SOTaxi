@@ -9,7 +9,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	app->maxPassengers = maxPassengers;
 
 	app->taxiList = malloc(maxTaxis * sizeof(Taxi));
-	app->passengerList = malloc(maxPassengers * sizeof(Passenger));
+	app->passengerList = malloc(maxPassengers * sizeof(CenPassenger));
 	
 	int i;
 	for(i = 0; i < maxTaxis; i++){
@@ -18,13 +18,17 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	}
 
 	for(i = 0; i < maxPassengers; i++){
-		ZeroMemory(&app->passengerList[i], sizeof(Passenger));
-		app->passengerList[i].empty = true;
+		ZeroMemory(&app->passengerList[i], sizeof(CenPassenger));
+		app->passengerList[i].interestedTaxis = malloc(maxTaxis * sizeof(bool));
+		for(int a = 0; a < maxTaxis; a++){
+			app->passengerList[i].interestedTaxis[a] = false;
+		}
+		app->passengerList[i].passengerInfo.empty = true;
 	}
 
 	bool ret = true;
 	ret = ret && (app->passengerList != NULL);
-	ret = ret && (app->taxiList != NULL);
+	ret = ret && (app->taxiList != NULL); 
 	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
 	ret = ret && Setup_OpenSmhHandles(app);
 	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
@@ -33,7 +37,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 }
 
 bool Setup_OpenThreadHandles(Application* app){
-	TParam_LARequest* param = (TParam_LARequest*) malloc(sizeof(TParam_LARequest));
+	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
 	param->app = app;
 	app->threadHandles.hQnARequests = CreateThread(
@@ -174,14 +178,24 @@ int Get_FreeIndexTaxiList(Application* app){
 	return -1;
 }
 
-Taxi* Get_Taxi(Application* app, TCHAR* licensePlate){
+int Get_TaxiIndex(Application* app, TCHAR* licensePlate){
 	if(app->taxiList == NULL)
-		return NULL;
+		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
 		if(_tcscmp(app->taxiList[i].LicensePlate, licensePlate) == 0)
-			return &app->taxiList[i];
+			return i;
 	}
+
+	return -1;
+}
+
+Taxi* Get_Taxi(Application* app, int index){
+	if(app->taxiList == NULL)
+		return NULL;
+
+	if(!app->taxiList[index].empty)
+		return &app->taxiList[index];
 
 	return NULL;
 }
@@ -190,7 +204,7 @@ int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(!app->passengerList[i].empty)
+		if(!app->passengerList[i].passengerInfo.empty)
 			quantLoggedInPassengers++;
 	}
 
@@ -206,21 +220,31 @@ int Get_FreeIndexPassengerList(Application* app){
 		return -1;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(app->passengerList[i].empty)
+		if(app->passengerList[i].passengerInfo.empty)
 			return i;
 	}
 
 	return -1;
 }
 
-Passenger* Get_Passenger(Application* app, TCHAR* Id){
+int Get_PassengerIndex(Application* app, TCHAR* Id){
+	if(app->passengerList == NULL)
+		return -1;
+
+	for(int i = 0; i < app->maxPassengers; i++){
+		if(_tcscmp(app->passengerList[i].passengerInfo.Id, Id) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
+CenPassenger* Get_Passenger(Application* app, int index){
 	if(app->passengerList == NULL)
 		return NULL;
 
-	for(int i = 0; i < app->maxPassengers; i++){
-		if(_tcscmp(app->passengerList[i].Id, Id) == 0)
-			return &app->passengerList[i];
-	}
+	if(!app->passengerList[index].passengerInfo.empty)
+		return &app->passengerList[index];
 
 	return NULL;
 }
@@ -229,6 +253,46 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY){
 	//ToDo
 
 	return true;
+}
+
+bool Service_NewPassenger(Application* app, Passenger pass){
+	if(isPassengerListFull(app))
+		return false;
+
+	int freeIndex = Get_FreeIndexPassengerList(app);
+	if(freeIndex == -1)
+		return false;
+
+	app->passengerList[freeIndex].passengerInfo = pass;
+
+	TParam_TaxiAssignment* param = (TParam_TaxiAssignment*) malloc(sizeof(TParam_TaxiAssignment));
+	param->app = app;
+	param->myIndex = freeIndex;
+	app->passengerList[freeIndex].cpThreadHandles.hTaxiAssignment = CreateThread(//Each passenger will 
+		NULL,															 //Security Attributes
+		0,																 //Stack Size (0 = default)
+		Thread_TaxiAssignment,											 //Function
+		(LPVOID) param,													 //Param
+		0,																 //Creation flags
+		&app->passengerList[freeIndex].cpThreadHandles.dwIdTaxiAssignment//Thread Id
+	);
+
+	NewTransportBuffer* transportBuffer = (NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer;
+	transportBuffer->transportRequests[transportBuffer->head] = pass;
+	transportBuffer->head = (transportBuffer->head + 1) % NTBUFFER_MAX;
+	Service_NotifyTaxisNewTransport(app);
+
+	return true;
+}
+
+void Service_NotifyTaxisNewTransport(Application* app){
+	//Manual reset event
+	SetEvent(app->syncHandles.hEvent_Notify_T_NewTranspReq);
+	ResetEvent(app->syncHandles.hEvent_Notify_T_NewTranspReq);
+	//OR
+	//Auto reset event (tested, and no flaws found)
+	/*for(int i = 0; i < Get_QuantLoggedInTaxis(app); i++)
+		SetEvent(app->syncHandles.hEvent_Notify_T_NP);*/
 }
 
 LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
@@ -240,46 +304,35 @@ LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 
 	if(!isValid_ObjectPosition(app, loginRequest->coordX, loginRequest->coordY))
 		return LR_INVALID_POSITION;
-	
+
+	if(Get_TaxiIndex(app, loginRequest->licensePlate) == -1)
+		return LR_INVALID_EXISTS;
 
 	Taxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
 	anchorTaxi->empty = false;
 	_tcscpy_s(anchorTaxi->LicensePlate, _countof(anchorTaxi->LicensePlate), loginRequest->licensePlate);
 	anchorTaxi->object.coordX = loginRequest->coordX;
 	anchorTaxi->object.coordY = loginRequest->coordY;
-	
+
 	return LR_SUCCESS;
 }
 
-bool Service_NewPassenger(Application* app, Passenger pass){
-	if(isPassengerListFull(app))
-		return false;
+NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest){
+	if(ntiRequest == NULL || Utils_StringIsEmpty(ntiRequest->idPassenger))
+		return NTIR_INVALID_UNDEFINED;
 
-	int freeIndex = Get_FreeIndexPassengerList(app);
-	if(freeIndex == -1)
-		return false;
+	int passIndex = Get_PassengerIndex(app, ntiRequest->idPassenger);
+	int taxiIndex = Get_TaxiIndex(app, ntiRequest->licensePlate);
 
-	_tprintf(TEXT("%d"), freeIndex);
+	if(taxiIndex == -1)//Taxi received is invalid (not supposed to ever happen!)
+		return NTIR_INVALID_UNDEFINED;
 
-	app->passengerList[freeIndex] = pass;
-	NewTransportBuffer* transportBuffer = (NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer;
-	transportBuffer->transportRequests[transportBuffer->head] = pass;
-	transportBuffer->head = (transportBuffer->head + 1) % NTBUFFER_MAX;
-	Service_NotifyTaxisNewTransport(app);
+	if(passIndex == -1)//Passenger doesn't exist
+		return NTIR_INVALID_ID;
 
-	return true;
-}
-
-NTInterestResponse Service_RequestPassenger(Application* app, NTInterestRequest* assignRequest){
-	return AR_SUCCESS;
-}
-
-void Service_NotifyTaxisNewTransport(Application* app){
-	//Manual reset event
-	SetEvent(app->syncHandles.hEvent_Notify_T_NewTranspReq); 
-	ResetEvent(app->syncHandles.hEvent_Notify_T_NewTranspReq);
-	//OR
-	//Auto reset event (tested, and no flaws found)
-	/*for(int i = 0; i < Get_QuantLoggedInTaxis(app); i++)
-		SetEvent(app->syncHandles.hEvent_Notify_T_NP);*/
+	if(WaitForSingleObject(app->passengerList[passIndex].cpThreadHandles.hTaxiAssignment, 0) == WAIT_OBJECT_0)
+		return NTIR_INVALID_CLOSED;
+	
+	app->passengerList[passIndex].interestedTaxis[taxiIndex] = true;
+	return NTIR_SUCCESS;
 }
