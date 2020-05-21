@@ -49,7 +49,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	TCHAR sCommand[STRING_MEDIUM];
 	TCHAR sArgument[STRING_SMALL];
-	CentralCommands command;
 	bool flagReadyToLeave = false;
 	do{
 		ZeroMemory(sCommand, STRING_MEDIUM);
@@ -59,19 +58,18 @@ int _tmain(int argc, LPTSTR argv[]) {
 		_tscanf_s(TEXT(" %[^\n]"), sCommand, _countof(sCommand));
 		Utils_CleanStdin();
 
-		command = Service_UseCommand(&app, sCommand);
-		if(command == CC_HELP){
-			_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
-			_tprintf(TEXT("%s%s:\tShows list of logged in taxis"), Utils_NewSubLine(), CMD_LIST_TAXIS);
-			_tprintf(TEXT("%s%s:\tChange timeout of taxi assignment to a transport request"), Utils_NewSubLine(), CMD_SET_TIMEOUT);
-			_tprintf(TEXT("%s%s:\tAllow taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_ON);
-			_tprintf(TEXT("%s%s:\tDeny taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_OFF);
-			_tprintf(TEXT("%s%s:\tKick a specific taxi"), Utils_NewSubLine(), CMD_KICK_TAXI);
-			_tprintf(TEXT("%s%s:\tSimulate a new transport request notification"), Utils_NewSubLine(), CMD_SIMULATE_NTR);
-			_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
-		}
-
-		switch(command){
+		switch(Service_UseCommand(&app, sCommand)){
+			case CC_HELP:
+				_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
+				_tprintf(TEXT("%s%s:\tShows list of logged in taxis"), Utils_NewSubLine(), CMD_LIST_TAXIS);
+				_tprintf(TEXT("%s%s:\tChange timeout of taxi assignment to a transport request"), Utils_NewSubLine(), CMD_SET_TIMEOUT);
+				_tprintf(TEXT("%s%s:\tAllow taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_ON);
+				_tprintf(TEXT("%s%s:\tDeny taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_OFF);
+				_tprintf(TEXT("%s%s:\tKick a specific taxi"), Utils_NewSubLine(), CMD_KICK_TAXI);
+				_tprintf(TEXT("%s%s:\tSimulate a new transport request notification"), Utils_NewSubLine(), CMD_SIMULATE_NTR);
+				_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
+				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
+				break;
 			case CC_LIST_TAXIS:
 				_tprintf(TEXT("%sLogged Taxis List:"), Utils_NewSubLine());
 				for(int i = 0; i < app.maxTaxis; i++){

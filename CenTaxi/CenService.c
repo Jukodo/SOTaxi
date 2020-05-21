@@ -144,71 +144,64 @@ bool Setup_OpenMap(Application* app){
 	}
 
 	char currentChar;
-	int columnCount = 0;
-	int lineCount = 0;
+	int columnCount;
+	int lineCount;
 	int biggestColumn = 0;
-	while(currentChar = fgetc(mapFile)){
-		if(feof(mapFile))
-			break;
-
-		if(columnCount > STRING_LARGE){
-			_tprintf(TEXT("%sThe map width is longer than it is allowed! (%d)"), Utils_NewLine, STRING_LARGE);
-		}
-
-		if(currentChar == '\n'){
-			if(biggestColumn == 0)
-				biggestColumn = columnCount;
-			else if(columnCount != biggestColumn){//Different width in diferent lines, map is not square
-				_tprintf(TEXT("%sInvalid map! Needs have the same column width in every lines!"), Utils_NewSubLine);
+	for(int i = 0; i < 2; i++){
+		if(i == 1){
+			if(app->map.height < MAP_MIN_HEIGHT || app->map.width < MAP_MIN_WIDTH){
+				_tprintf(TEXT("%sInvalid map! Needs have the minimum dimensions! (width: %d | height: %d)"), Utils_NewLine(), MAP_MIN_WIDTH, MAP_MIN_HEIGHT);
 				return false;
 			}
-			columnCount = 0;
-			lineCount++;
-			continue;
-		}
-	
-		columnCount++;
-	}
-	lineCount++; //Last line doesn't contain \n, so we have to compensate for the line count
-
-	char** mapArray = (char*) calloc(lineCount, sizeof(char*));
-	if(mapArray == NULL)
-		return false;
-	for(int iLine = 0; iLine < lineCount; iLine++){
-		mapArray[iLine] = (char*) calloc(columnCount, sizeof(char));
-		if(mapArray[iLine] == NULL)
-			return false;
-	}
-
-	fseek(mapFile, 0, SEEK_SET);
-	lineCount = 0;
-	columnCount = 0;
-
-	while(currentChar = fgetc(mapFile)){
-		if(feof(mapFile))
-			break;
-
-		if(currentChar == '\n'){
-			columnCount = 0;
-			lineCount++;
-			continue;
+			app->map.cellArray = calloc(app->map.height * app->map.width, sizeof(char));
+			if(app->map.cellArray == NULL)
+				return false;
 		}
 
-		mapArray[lineCount][columnCount] = currentChar;
-		columnCount++;
-	}
+		fseek(mapFile, 0, SEEK_SET);
+		lineCount = 0;
+		columnCount = 0;
 
-	for(int iLine = 0; iLine < lineCount; iLine++){
-		for(int iColumn = 0; iColumn < columnCount; iColumn++){
-			_tprintf(TEXT("%c"), mapArray[iLine][iColumn]);
+		while(currentChar = fgetc(mapFile)){
+			if(feof(mapFile))
+				break;
+
+			
+
+			if(currentChar == '\n'){
+				if(i == 0){
+					if(biggestColumn == 0)
+						biggestColumn = columnCount;
+					else if(columnCount != biggestColumn){//Different width in diferent lines, map is not square
+						_tprintf(TEXT("%sInvalid map! Needs have the same column width in every lines!"), Utils_NewLine());
+						return false;
+					}
+				}
+				columnCount = 0;
+				lineCount++;
+				continue;
+			} else if(currentChar != MAP_STRUCTURE_CHAR && currentChar != MAP_ROAD_CHAR){
+				_tprintf(TEXT("%sInvalid map! Contains invalid characters!%sCharacter found: %c%sAcceptable characters: %c and %c"),
+					Utils_NewLine(),
+					Utils_NewSubLine(),
+					currentChar,
+					Utils_NewSubLine(), 
+					MAP_STRUCTURE_CHAR,
+					MAP_ROAD_CHAR);
+
+				return false;
+			}
+
+			if(i == 1)
+				app->map.cellArray[(lineCount * app->map.width) + columnCount] = currentChar;
+			columnCount++;
 		}
-		_tprintf(TEXT("\n"));
+		lineCount++; //Last line doesn't contain \n, so we have to compensate for the line count
+		app->map.width = columnCount;
+		app->map.height = lineCount;
 	}
 
-	_tprintf(TEXT("%sMap width: %d"), Utils_NewSubLine(), columnCount);
-
-	_tprintf(TEXT("%sMap height: %d"), Utils_NewSubLine(), lineCount);
-
+	fclose(mapFile);
 	return true;
 }
 
@@ -396,6 +389,9 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_SIMULATE_NTR) == 0){ //Continues on Main (asking for value argument)
 		Simulate_NewTransport(app);
 		return CC_SIMULATE_NTR;
+	} else if(_tcscmp(command, CMD_SHOW_MAP) == 0){
+		Temp_ShowMap(app);
+		return CC_SHOW_MAP;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -497,4 +493,17 @@ void Simulate_NewTransport(Application* app){
 	_stprintf_s(tempP.Id, _countof(tempP.Id), TEXT("Pass%d"), rand() % 50 + 10);
 	if(!Service_NewPassenger(app, tempP))
 		_tprintf(TEXT("%sPassenger limit has been reached... This passenger will be ignored!"), Utils_NewSubLine());
+}
+
+void Temp_ShowMap(Application* app){
+	int iLine = 0;
+	int iColumn = 0;
+	for(int i = 0; i < (app->map.height * app->map.width); i++){
+		iColumn = i % app->map.width;
+		iLine = i / app->map.height;
+		if(iColumn == 0 && iLine != 0)
+			_tprintf(TEXT("\n"));
+
+		_tprintf(TEXT("%c"), app->map.cellArray[i]);
+	}
 }

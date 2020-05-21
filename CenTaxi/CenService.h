@@ -30,6 +30,7 @@ struct ShmHandles{
 struct Application{
 	Settings settings;
 	Taxi* taxiList;
+	Map map;
 	CenPassenger* passengerList;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
@@ -45,6 +46,7 @@ struct Application{
 #define CMD_TAXI_LOGIN_OFF TEXT("/taxiLoginOff")
 #define CMD_KICK_TAXI TEXT("/kickTaxi")
 #define CMD_SIMULATE_NTR TEXT("/simulateNTR")
+#define CMD_SHOW_MAP TEXT("/showMap")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 enum CentralCommands{
@@ -55,6 +57,7 @@ enum CentralCommands{
 	CC_TAXI_LOGIN_OFF,
 	CC_KICK_TAXI,
 	CC_SIMULATE_NTR,
+	CC_SHOW_MAP,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };
@@ -94,4 +97,6 @@ void Service_CloseApp(Application* app);
 
 bool Command_SetAssignmentTimeout(Application* app, TCHAR* value);
 void Command_AllowTaxiLogins(Application* app, bool allow);
+
 void Simulate_NewTransport(Application* app);
+void Temp_ShowMap(Application* app);
