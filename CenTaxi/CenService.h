@@ -25,6 +25,8 @@ struct ShmHandles{
 	LPVOID lpSHM_QnARequest;
 	HANDLE hSHM_NTBuffer;
 	LPVOID lpSHM_NTBuffer;
+	HANDLE hSHM_Map;
+	LPVOID lpSHM_Map;
 };
 
 struct Application{
@@ -65,12 +67,13 @@ enum CentralCommands{
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
 bool Setup_OpenThreadHandles(Application* app);
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles);
-bool Setup_OpenSmhHandles(Application* app);
+bool Setup_OpenShmHandles(Application* app);
+bool Setup_OpenShmHandles_Map(Application* app);
 bool Setup_OpenMap(Application* app);
 
 void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);
-void Setup_CloseSmhHandles(ShmHandles* shmHandles);
+void Setup_CloseShmHandles(ShmHandles* shmHandles);
 
 bool isTaxiListFull(Application* app);
 int Get_QuantLoggedInTaxis(Application* app);
@@ -88,7 +91,7 @@ bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
-LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
+LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 

@@ -10,7 +10,10 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 
 		switch(shm->requestType){
 			case RT_LOGIN:
-				shm->loginResponse = Service_LoginTaxi(param->app, &shm->loginRequest);
+				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
+
+				shm->loginResponse.mapWidth = param->app->map.width;
+				shm->loginResponse.mapHeight = param->app->map.height;
 				break;
 			case RT_NT_INTEREST:
 				shm->ntIntResponse = Service_RegisterInterest(param->app, &shm->ntIntRequest);

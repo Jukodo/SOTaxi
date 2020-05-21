@@ -14,19 +14,19 @@ bool Setup_Application(Application* app){
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	syncHandles->hMutex_QnARequest = CreateMutex(//This mutex is only created on and for ConTaxi
-		NULL,					//Security attributes
-		FALSE,					//Initial owner (TRUE = Locked from the creation)
-		NAME_MUTEX_QnARequest	//Mutex name
+		NULL,							//Security attributes
+		FALSE,							//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_QnARequest			//Mutex name
 	);
 	syncHandles->hEvent_QnARequest_Read = OpenEvent(//This event is already created with CenTaxi
-		EVENT_ALL_ACCESS,			//Desired access flag
-		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
-		NAME_EVENT_QnARequest_Read	//Event name
+		EVENT_ALL_ACCESS,				//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_QnARequest_Read		//Event name
 	);
 	syncHandles->hEvent_QnARequest_Write = OpenEvent(//This event is already created with CenTaxi
-		EVENT_ALL_ACCESS,			//Desired access flag
-		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
-		NAME_EVENT_QnARequest_Write	//Event name
+		EVENT_ALL_ACCESS,				//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_QnARequest_Write		//Event name
 	);
 
 	syncHandles->hEvent_Notify_T_NewTranspReq = OpenEvent(//This event is already created with CenTaxi
@@ -82,6 +82,26 @@ bool Setup_OpenSmhHandles(Application* app){
 		return false;
 	#pragma endregion
 
+	#pragma region Map
+	app->shmHandles.hSHM_Map = OpenFileMapping(
+		FILE_MAP_READ,					//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SHM_Map	//File mapping object name
+	);
+	if(app->shmHandles.hSHM_Map == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_Map = MapViewOfFile(
+		app->shmHandles.hSHM_Map,	//File mapping object handle
+		FILE_MAP_READ,				//Desired access flag
+		0,							//DWORD high-order of the file offset where the view begins
+		0,							//DWORD low-order of the file offset where the view begins
+		sizeof((app->map.width * app->map.height) * sizeof(char))	//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_Map == NULL)
+		return false;
+	#pragma endregion
+
 	return true;
 }
 
@@ -126,9 +146,30 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);
 	CloseHandle(shmHandles->hSHM_NTBuffer);
 #pragma endregion
+#pragma region Map
+	//Is closed on Service_GetMap()
+#pragma endregion
 }
 
 void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
 	CloseHandle(threadHandles->hQnARequests);
 	CloseHandle(threadHandles->hNotificationReceiver_NewTransport);
+}
+
+bool Service_GetMap(Application* app){
+	if(app->shmHandles.hSHM_Map == NULL || app->shmHandles.lpSHM_Map == NULL){
+		_tprintf(TEXT("%sThis function is not supposed to be running or something wrong happened!"), Utils_NewSubLine());
+		return false;
+	}
+
+	app->map.cellArray = calloc(app->map.width * app->map.height, sizeof(char));
+	CopyMemory(app->map.cellArray, app->shmHandles.lpSHM_Map, (app->map.width * app->map.height) * sizeof(char));
+
+	//Since it only gets the map when login, there is no need to keep the map view of file open
+	UnmapViewOfFile(app->shmHandles.lpSHM_Map);
+	CloseHandle(app->shmHandles.hSHM_Map);
+	app->shmHandles.lpSHM_Map = NULL;
+	app->shmHandles.hSHM_Map = NULL;
+
+	return true;
 }

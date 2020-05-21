@@ -16,12 +16,16 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	switch(param->request.requestType){
 	case RT_LOGIN:
 
-		switch(shm->loginResponse){
+		switch(shm->loginResponse.loginResponseType){
 			case LR_SUCCESS:
 				param->app->loggedInTaxi.empty = false;
 				_tcscpy_s(param->app->loggedInTaxi.LicensePlate, _countof(param->app->loggedInTaxi.LicensePlate), param->request.loginRequest.licensePlate);
 				param->app->loggedInTaxi.object.coordX = param->request.loginRequest.coordX;
 				param->app->loggedInTaxi.object.coordY = param->request.loginRequest.coordY;
+
+				param->app->map.width = shm->loginResponse.mapWidth;
+				param->app->map.height = shm->loginResponse.mapHeight;
+				Service_GetMap(param->app);
 				break;
 			case LR_INVALID_UNDEFINED:
 				_tprintf(TEXT("%sError... Please try again!"), Utils_NewSubLine());

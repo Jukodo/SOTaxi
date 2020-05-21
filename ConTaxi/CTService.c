@@ -77,6 +77,9 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 		return TC_DEFINE_CDN;
 	} else if(_tcscmp(command, CMD_REQUEST_INTEREST) == 0){ //Continues on Main (asking for value argument)
 		return TC_REQUEST_INTEREST;
+	} else if(_tcscmp(command, CMD_SHOW_MAP) == 0){
+		Temp_ShowMap(app);
+		return TC_SHOW_MAP;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return TC_CLOSEAPP;
@@ -157,4 +160,17 @@ void Command_AutoResp(Application* app, bool autoResp){
 		_tprintf(TEXT("%sAutomatic interest requests is now ON!"), Utils_NewSubLine());
 	else
 		_tprintf(TEXT("%sAutomatic interest requests is now OFF!"), Utils_NewSubLine());
+}
+
+void Temp_ShowMap(Application* app){
+	int iLine = 0;
+	int iColumn = 0;
+	for(int i = 0; i < (app->map.height * app->map.width); i++){
+		iColumn = i % app->map.width;
+		iLine = i / app->map.height;
+		if(iColumn == 0)
+			_tprintf(TEXT("\n"));
+
+		_tprintf(TEXT("%c"), app->map.cellArray[i]);
+	}
 }

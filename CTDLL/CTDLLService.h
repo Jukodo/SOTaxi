@@ -26,11 +26,14 @@ struct ShmHandles{
 	LPVOID lpSHM_QnARequest;
 	HANDLE hSHM_NTBuffer;
 	LPVOID lpSHM_NTBuffer;
+	HANDLE hSHM_Map;
+	LPVOID lpSHM_Map;
 };
 
 struct Application{
 	Settings settings;
 	Taxi loggedInTaxi;
+	Map map;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
 	ShmHandles shmHandles;
@@ -46,6 +49,7 @@ struct Application{
 #define CMD_AUTORESP_OFF TEXT("/autoRespOff")
 #define CMD_DEFINE_CDN TEXT("/defineCDN")
 #define CMD_REQUEST_INTEREST TEXT("/reqInterest")
+#define CMD_SHOW_MAP TEXT("/showMap")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 enum TaxiCommands{
@@ -56,6 +60,7 @@ enum TaxiCommands{
 	TC_AUTORESP_OFF,
 	TC_DEFINE_CDN,
 	TC_REQUEST_INTEREST,
+	TC_SHOW_MAP,
 	TC_CLOSEAPP,
 	TC_UNDEFINED
 };
@@ -69,3 +74,5 @@ CTDLL_API void Setup_CloseAllHandles(Application* app);
 CTDLL_API void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 CTDLL_API void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 CTDLL_API void Setup_CloseThreadHandles(ThreadHandles* threadHandles);
+
+CTDLL_API bool Service_GetMap(Application* app);

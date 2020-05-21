@@ -123,6 +123,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 			_tprintf(TEXT("%s%s:\tTurn off automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_OFF);
 			_tprintf(TEXT("%s%s:\tDefine new CDN value"), Utils_NewSubLine(), CMD_DEFINE_CDN);
 			_tprintf(TEXT("%s%s:\tSend interest to a new transport request"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
+			_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
 			_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 		}
 

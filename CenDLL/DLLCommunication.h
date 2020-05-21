@@ -7,7 +7,8 @@ typedef struct LoginRequest LoginRequest;
 typedef struct NTInterestRequest NTInterestRequest;
 
 //Responses
-typedef enum LoginResponse LoginResponse;
+typedef struct LoginResponse LoginResponse;
+typedef enum LoginResponseType LoginResponseType;
 typedef enum NTInterestResponse NTInterestResponse;
 
 //Other Enums
@@ -32,7 +33,13 @@ struct NewTransportBuffer{
 	int head;
 };
 
-enum LoginResponse{
+struct LoginResponse{
+	LoginResponseType loginResponseType;
+	int mapWidth;
+	int mapHeight;
+};
+
+enum LoginResponseType{
 	LR_SUCCESS,
 	LR_INVALID_UNDEFINED,
 	LR_INVALID_CLOSED,

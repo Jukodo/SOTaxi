@@ -13,3 +13,5 @@ void Service_CloseApp(Application* app);
 bool Command_DefineCDN(Application* app, TCHAR* value);
 bool Command_Speed(Application* app, bool speedUp);
 void Command_AutoResp(Application* app, bool autoResp);
+
+void Temp_ShowMap(Application* app);

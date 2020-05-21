@@ -34,9 +34,9 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ret = ret && (app->passengerList != NULL);
 	ret = ret && (app->taxiList != NULL); 
 	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
-	ret = ret && Setup_OpenSmhHandles(app);
-	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
+	ret = ret && Setup_OpenShmHandles(app);
 	ret = ret && Setup_OpenMap(app);
+	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
 
 	return ret;
 }
@@ -83,7 +83,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
 }
 
-bool Setup_OpenSmhHandles(Application* app){
+bool Setup_OpenShmHandles(Application* app){
 	#pragma region LARequest
 	app->shmHandles.hSHM_QnARequest = CreateFileMapping(
 		INVALID_HANDLE_VALUE,	//File handle
@@ -105,7 +105,7 @@ bool Setup_OpenSmhHandles(Application* app){
 	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
 	#pragma endregion
-
+	
 	#pragma region NewTransportBuffer
 	app->shmHandles.hSHM_NTBuffer = CreateFileMapping(
 		INVALID_HANDLE_VALUE,			//File handle
@@ -131,7 +131,40 @@ bool Setup_OpenSmhHandles(Application* app){
 	ZeroMemory(app->shmHandles.lpSHM_NTBuffer, sizeof(NewTransportBuffer)); //Makes sure head starts at 0 (unecessary to zero everything)
 	#pragma endregion
 
+	#pragma region Map
+	/*Is being openned by Setup_OpenShmHandles_Map(), which is being called at OpenMap()
+	**	Reason: After openning the map, it must write in on shared memory, hence needing the shared memory
+	**	HOWEVER, creating the shared memory needs the width and height of the map
+	**	SO, OpenMap() opens the map, gathers info about width and height, 
+	**	THEN, creates the shared memory using Setup_OpenShmHandles_Map()
+	**	AND, write the map into the memory
+	*/
+	#pragma endregion
+
 	return true;
+}
+
+bool Setup_OpenShmHandles_Map(Application* app){
+	app->shmHandles.hSHM_Map = CreateFileMapping(
+		INVALID_HANDLE_VALUE,			//File handle
+		NULL,							//Security Attributes
+		PAGE_READWRITE,					//Protection flags
+		0,								//DWORD high-order max size
+		sizeof((app->map.width * app->map.height) * sizeof(char)),		//DWORD low-order max size
+		NAME_SHM_Map	//File mapping object name
+	);
+	if(app->shmHandles.hSHM_Map == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_Map = MapViewOfFile(
+		app->shmHandles.hSHM_Map,	//File mapping object handle
+		FILE_MAP_ALL_ACCESS,			//Desired access flag
+		0,								//DWORD high-order of the file offset where the view begins
+		0,								//DWORD low-order of the file offset where the view begins
+		sizeof((app->map.width * app->map.height) * sizeof(char))		//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_Map == NULL)
+		return false;
 }
 
 bool Setup_OpenMap(Application* app){
@@ -147,12 +180,30 @@ bool Setup_OpenMap(Application* app){
 	int columnCount;
 	int lineCount;
 	int biggestColumn = 0;
+
+	/*The following FOR uses 2 iterations, the reason is only to shorten the code, but in return it gets a bit messy
+	**	Iteration 0: Goes through all the characters; 
+	**				 When finds \n it means it is starting a new line;
+	**				 Counts how many lines and columns the map has;
+	**				 If any line has a different column count then the others the map will be considerated invalid.
+	**	Iteration 1: Checks if width and height follow the minimum dimenstion requirement, if not, it is invalid;
+	**				 Will create a shared memory with the dimentions gathered on Iteration 0;
+	**				 Allocate an array with the size of ((width * height) * sizeof(char)) using calloc (basically ZeroMemory after allocating)
+	**				 Jump back to the beginning of the file and reset line and column count vars;
+	**				 Verifies each character if it is valid, only 2 characters are allowed (MAP_STRUCTURE_CHAR and MAP_ROAD_CHAR);
+	**				 Writes each character into the allocated array.
+	*/
+
 	for(int i = 0; i < 2; i++){
 		if(i == 1){
 			if(app->map.height < MAP_MIN_HEIGHT || app->map.width < MAP_MIN_WIDTH){
 				_tprintf(TEXT("%sInvalid map! Needs have the minimum dimensions! (width: %d | height: %d)"), Utils_NewLine(), MAP_MIN_WIDTH, MAP_MIN_HEIGHT);
 				return false;
 			}
+			
+			if(!Setup_OpenShmHandles_Map(app))
+				return false;
+
 			app->map.cellArray = calloc(app->map.height * app->map.width, sizeof(char));
 			if(app->map.cellArray == NULL)
 				return false;
@@ -165,8 +216,6 @@ bool Setup_OpenMap(Application* app){
 		while(currentChar = fgetc(mapFile)){
 			if(feof(mapFile))
 				break;
-
-			
 
 			if(currentChar == '\n'){
 				if(i == 0){
@@ -201,13 +250,15 @@ bool Setup_OpenMap(Application* app){
 		app->map.height = lineCount;
 	}
 
+	CopyMemory(app->shmHandles.lpSHM_Map, app->map.cellArray, (app->map.height * app->map.width) * sizeof(char));
+
 	fclose(mapFile);
 	return true;
 }
 
 void Setup_CloseAllHandles(Application* app){
 	Setup_CloseSyncHandles(&app->syncHandles);
-	Setup_CloseSmhHandles(&app->shmHandles);
+	Setup_CloseShmHandles(&app->shmHandles);
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
@@ -216,7 +267,7 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
 }
 
-void Setup_CloseSmhHandles(ShmHandles* shmHandles){
+void Setup_CloseShmHandles(ShmHandles* shmHandles){
 	#pragma region QnARequest
 	UnmapViewOfFile(shmHandles->lpSHM_QnARequest);
 	CloseHandle(shmHandles->hSHM_QnARequest);
@@ -224,6 +275,10 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 	#pragma region NewTransportBuffer
 	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);
 	CloseHandle(shmHandles->hSHM_NTBuffer);
+	#pragma endregion
+	#pragma region Map
+	UnmapViewOfFile(shmHandles->lpSHM_Map);
+	CloseHandle(shmHandles->hSHM_Map);
 	#pragma endregion
 }
 
@@ -400,7 +455,7 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	return CC_UNDEFINED;
 }
 
-LoginResponse Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
+LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
 	if(loginRequest == NULL || Utils_StringIsEmpty(loginRequest->licensePlate))
 		return LR_INVALID_UNDEFINED;
 
@@ -501,7 +556,7 @@ void Temp_ShowMap(Application* app){
 	for(int i = 0; i < (app->map.height * app->map.width); i++){
 		iColumn = i % app->map.width;
 		iLine = i / app->map.height;
-		if(iColumn == 0 && iLine != 0)
+		if(iColumn == 0)
 			_tprintf(TEXT("\n"));
 
 		_tprintf(TEXT("%c"), app->map.cellArray[i]);
