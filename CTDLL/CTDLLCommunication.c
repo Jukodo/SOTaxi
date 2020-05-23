@@ -14,7 +14,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Write, INFINITE);
 
 	switch(param->request.requestType){
-	case RT_LOGIN:
+	case QnART_LOGIN:
 
 		switch(shm->loginResponse.loginResponseType){
 			case LR_SUCCESS:
@@ -49,7 +49,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 
 		break;
 
-	case RT_NT_INTEREST:
+	case QnART_NT_INTEREST:
 
 		switch(shm->ntIntResponse){
 			case NTIR_SUCCESS:
@@ -74,6 +74,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 
 	ReleaseMutex(param->app->syncHandles.hMutex_QnARequest);
 	SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
+
 	free(param);
 	return 1;
 }
@@ -103,5 +104,22 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 		}
 	}
 
+	free(param);
+	return 1;
+}
+
+DWORD WINAPI Thread_TossRequest(LPVOID _param){
+	TParam_TossRequest* param = (TParam_TossRequest*) _param;
+	TossRequestsBuffer* buffer = (TossRequestsBuffer*) param->app->shmHandles.lpSHM_TossReqBuffer;
+
+	WaitForSingleObject(param->app->syncHandles.hMutex_TossRequest_CanAccess, INFINITE);
+	
+	buffer->tossRequests[buffer->head] = param->tossRequest;
+	buffer->head = (buffer->head + 1) % TOSSBUFFER_MAX;
+
+	ReleaseSemaphore(param->app->syncHandles.hSemaphore_HasTossRequest, 1, NULL);
+	ReleaseMutex(param->app->syncHandles.hMutex_TossRequest_CanAccess);
+
+	free(param);
 	return 1;
 }

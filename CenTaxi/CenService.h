@@ -12,12 +12,15 @@ typedef enum CentralCommands CentralCommands;
 struct ThreadHandles{
 	HANDLE hQnARequests;
 	DWORD dwIdQnARequests;
+	HANDLE hTossRequests;
+	DWORD dwIdTossRequests;
 };
 
 struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
+	HANDLE hSemaphore_HasTossRequest;
 };
 
 struct ShmHandles{
@@ -27,6 +30,8 @@ struct ShmHandles{
 	LPVOID lpSHM_NTBuffer;
 	HANDLE hSHM_Map;
 	LPVOID lpSHM_Map;
+	HANDLE hSHM_TossReqBuffer;
+	LPVOID lpSHM_TossReqBuffer;
 };
 
 struct Application{

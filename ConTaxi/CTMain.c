@@ -27,7 +27,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	#pragma region Login
 	//REMOVE PRE INSERTED INFO LATER (TAG_REMOVELATER)
-	TCHAR sLicensePlate[9] = TEXT("aa-aa-aa");
+	TCHAR sLicensePlate[STRING_LICENSEPLATE] = TEXT("aa-aa-aa");
 	TCHAR sCoordinates_X[3] = TEXT("11");
 	TCHAR sCoordinates_Y[3] = TEXT("22");
 	TCHAR opt[2];

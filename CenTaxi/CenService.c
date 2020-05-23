@@ -4,7 +4,7 @@
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ZeroMemory(app, sizeof(Application));
-	srand(time(NULL));
+	srand((unsigned int) time(NULL));
 	app->settings.secAssignmentTimeout = DEFAULT_ASSIGNMENT_TIMEOUT;
 	app->settings.allowTaxiLogins = DEFAULT_ALLOW_TAXI_LOGINS;
 
@@ -42,19 +42,36 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 }
 
 bool Setup_OpenThreadHandles(Application* app){
-	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
+	#pragma region QnARequest
+	TParam_QnARequest* qnarParam = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
+	qnarParam->app = app;
 
-	param->app = app;
 	app->threadHandles.hQnARequests = CreateThread(
-			NULL,								//Security Attributes
-			0,									//Stack Size (0 = default)
-			Thread_ReceiveQnARequests,			//Function
-			(LPVOID) param,						//Param
-			0,									//Creation flags
-			&app->threadHandles.dwIdQnARequests //Thread Id
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_ReceiveQnARequests,			//Function
+		(LPVOID) qnarParam,						//Param
+		0,									//Creation flags
+		&app->threadHandles.dwIdQnARequests //Thread Id
 	);
-	
-	return !(app->threadHandles.hQnARequests == NULL);
+	#pragma endregion
+
+	#pragma region TossRequest
+	TParam_ConsumeTossRequests* ctrParam = (TParam_ConsumeTossRequests*) malloc(sizeof(TParam_ConsumeTossRequests));
+	ctrParam->app = app;
+
+	app->threadHandles.hTossRequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_ConsumeTossRequests,			//Function
+		(LPVOID) ctrParam,						//Param
+		0,									//Creation flags
+		&app->threadHandles.dwIdTossRequests //Thread Id
+	);
+	#pragma endregion
+
+	return !(app->threadHandles.hQnARequests == NULL ||
+		app->threadHandles.hTossRequests == NULL);
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
@@ -78,13 +95,21 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_NewTransportRequest	//Event Name
 	);
 
+	syncHandles->hSemaphore_HasTossRequest = CreateSemaphore(
+		NULL,							//Security Attributes
+		0,								//Initial Count
+		TOSSBUFFER_MAX,					//Max Count
+		NAME_SEMAPHORE_HasTossRequest	//Semaphore Name
+	);
+
 	return !(syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
-		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
+		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
+		syncHandles->hSemaphore_HasTossRequest == NULL);
 }
 
 bool Setup_OpenShmHandles(Application* app){
-	#pragma region LARequest
+	#pragma region QnARequest
 	app->shmHandles.hSHM_QnARequest = CreateFileMapping(
 		INVALID_HANDLE_VALUE,	//File handle
 		NULL,					//Security Attributes
@@ -141,6 +166,31 @@ bool Setup_OpenShmHandles(Application* app){
 	*/
 	#pragma endregion
 
+	#pragma region TossRequest
+	app->shmHandles.hSHM_TossReqBuffer = CreateFileMapping(
+		INVALID_HANDLE_VALUE,			//File handle
+		NULL,							//Security Attributes
+		PAGE_READWRITE,					//Protection flags
+		0,								//DWORD high-order max size
+		sizeof(TossRequestsBuffer),		//DWORD low-order max size
+		NAME_SHM_TossRequestBuffer		//File mapping object name
+	);
+	if(app->shmHandles.hSHM_TossReqBuffer == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_TossReqBuffer = MapViewOfFile(
+		app->shmHandles.hSHM_TossReqBuffer,	//File mapping object handle
+		FILE_MAP_ALL_ACCESS,			//Desired access flag
+		0,								//DWORD high-order of the file offset where the view begins
+		0,								//DWORD low-order of the file offset where the view begins
+		sizeof(TossRequestsBuffer)		//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_TossReqBuffer == NULL)
+		return false;
+
+	ZeroMemory(app->shmHandles.lpSHM_TossReqBuffer, sizeof(TossRequestsBuffer)); //Makes sure head and tail starts at 0 (unecessary to zero everything)
+	#pragma endregion
+
 	return true;
 }
 
@@ -165,6 +215,8 @@ bool Setup_OpenShmHandles_Map(Application* app){
 	);
 	if(app->shmHandles.lpSHM_Map == NULL)
 		return false;
+
+	return true;
 }
 
 bool Setup_OpenMap(Application* app){
@@ -265,6 +317,7 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hEvent_QnARequest_Read);
 	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
+	CloseHandle(syncHandles->hSemaphore_HasTossRequest);
 }
 
 void Setup_CloseShmHandles(ShmHandles* shmHandles){
@@ -279,6 +332,10 @@ void Setup_CloseShmHandles(ShmHandles* shmHandles){
 	#pragma region Map
 	UnmapViewOfFile(shmHandles->lpSHM_Map);
 	CloseHandle(shmHandles->hSHM_Map);
+	#pragma endregion
+	#pragma region TossRequestBuffer
+	UnmapViewOfFile(shmHandles->lpSHM_TossReqBuffer);
+	CloseHandle(shmHandles->hSHM_TossReqBuffer);
 	#pragma endregion
 }
 

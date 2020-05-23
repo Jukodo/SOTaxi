@@ -35,10 +35,23 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_NewTransportRequest	//Event name
 	);
 
+	syncHandles->hMutex_TossRequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
+		NULL,							//Security attributes
+		FALSE,							//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_TossRequest			//Mutex name
+	);
+	syncHandles->hSemaphore_HasTossRequest = OpenSemaphore(
+		SEMAPHORE_ALL_ACCESS,			//Security Attributes
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SEMAPHORE_HasTossRequest	//Semaphore Name
+	);
+
 	return !(syncHandles->hMutex_QnARequest == NULL ||
 		syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
-		syncHandles->hEvent_Notify_T_NewTranspReq == NULL);
+		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
+		syncHandles->hMutex_TossRequest_CanAccess == NULL ||
+		syncHandles->hSemaphore_HasTossRequest == NULL);
 }
 
 bool Setup_OpenSmhHandles(Application* app){
@@ -96,9 +109,29 @@ bool Setup_OpenSmhHandles(Application* app){
 		FILE_MAP_READ,				//Desired access flag
 		0,							//DWORD high-order of the file offset where the view begins
 		0,							//DWORD low-order of the file offset where the view begins
-		sizeof((app->map.width * app->map.height) * sizeof(char))	//Number of bytes to map
+		(app->map.width * app->map.height * sizeof(char))	//Number of bytes to map
 	);
 	if(app->shmHandles.lpSHM_Map == NULL)
+		return false;
+	#pragma endregion
+
+	#pragma region TossRequestBuffer
+	app->shmHandles.hSHM_TossReqBuffer = OpenFileMapping(
+		FILE_MAP_ALL_ACCESS,		//Desired access flag
+		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
+		NAME_SHM_TossRequestBuffer	//File mapping object name
+	);
+	if(app->shmHandles.hSHM_TossReqBuffer == NULL)
+		return false;
+
+	app->shmHandles.lpSHM_TossReqBuffer = MapViewOfFile(
+		app->shmHandles.hSHM_TossReqBuffer,	//File mapping object handle
+		FILE_MAP_ALL_ACCESS,				//Desired access flag
+		0,							//DWORD high-order of the file offset where the view begins
+		0,							//DWORD low-order of the file offset where the view begins
+		sizeof(TossRequestsBuffer)	//Number of bytes to map
+	);
+	if(app->shmHandles.lpSHM_TossReqBuffer == NULL)
 		return false;
 	#pragma endregion
 
@@ -135,20 +168,26 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles){
 	CloseHandle(syncHandles->hEvent_QnARequest_Read);
 	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
+	CloseHandle(syncHandles->hMutex_TossRequest_CanAccess);
+	CloseHandle(syncHandles->hSemaphore_HasTossRequest);
 }
 
 void Setup_CloseSmhHandles(ShmHandles* shmHandles){
-#pragma region SendRequest
+	#pragma region SendRequest
 	UnmapViewOfFile(shmHandles->lpSHM_QnARequest);
 	CloseHandle(shmHandles->hSHM_QnARequest);
-#pragma endregion
-#pragma region NewTransportBuffer
+	#pragma endregion
+	#pragma region NewTransportBuffer
 	UnmapViewOfFile(shmHandles->lpSHM_NTBuffer);
 	CloseHandle(shmHandles->hSHM_NTBuffer);
-#pragma endregion
-#pragma region Map
+	#pragma endregion
+	#pragma region Map
 	//Is closed on Service_GetMap()
-#pragma endregion
+	#pragma endregion
+	#pragma region TossRequestBuffer
+	UnmapViewOfFile(shmHandles->lpSHM_TossReqBuffer);
+	CloseHandle(shmHandles->hSHM_TossReqBuffer);
+	#pragma endregion
 }
 
 void Setup_CloseThreadHandles(ThreadHandles* threadHandles){

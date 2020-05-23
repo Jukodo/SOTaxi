@@ -6,9 +6,6 @@ bool isLoggedIn(Application* app){
 }
 
 bool isValid_LicensePlate(TCHAR* sLicensePlate){
-	if(_tcslen(sLicensePlate) != 8)
-		return false;
-
 	for(unsigned int i = 0; i < _tcslen(sLicensePlate); i++){
 		if((i+1)%3 == 0){ //every third character it is supposed to be a '-'
 			if(sLicensePlate[i] == '-')
@@ -37,22 +34,22 @@ bool isValid_Coordinates(TCHAR* sCoordinates){
 }
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
-	TParam_QnARequest* request = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
+	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
 	LoginRequest loginRequest;
 	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
 	loginRequest.coordX = (float) _tstof(sCoordinates_X);
 	loginRequest.coordY = (float) _tstof(sCoordinates_Y);
 
-	request->app = app;
-	request->request.loginRequest = loginRequest;
-	request->request.requestType = RT_LOGIN;
+	param->app = app;
+	param->request.loginRequest = loginRequest;
+	param->request.requestType = QnART_LOGIN;
 
 	app->threadHandles.hQnARequests = CreateThread(
 		NULL,								//Security Attributes
 		0,									//Stack Size (0 = default)
 		Thread_SendQnARequests,				//Function
-		(LPVOID) request,					//Param
+		(LPVOID) param,					//Param
 		0,									//Creation Flag
 		&app->threadHandles.dwIdQnARequests //Thread ID
 	);
@@ -97,7 +94,7 @@ void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 
 	param->app = app;
 	param->request.ntIntRequest = ntIntRequest;
-	param->request.requestType = RT_NT_INTEREST;
+	param->request.requestType = QnART_NT_INTEREST;
 
 	app->threadHandles.hQnARequests = CreateThread(
 		NULL,								//Security Attributes
@@ -113,6 +110,49 @@ void Service_CloseApp(Application* app){
 	/*ToDo (TAG_TODO)
 	**Notify central about this shutdown, in order to logout taxi from central
 	*/
+}
+
+void Service_NewPosition(Application* app, double newX, double newY){
+	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
+
+	TossPosition tossPosition;
+	_tcscpy_s(tossPosition.licensePlate, _countof(tossPosition.licensePlate), app->loggedInTaxi.LicensePlate);
+	tossPosition.newX = newX;
+	tossPosition.newY = newY;
+
+	param->app = app;
+	param->tossRequest.tossPosition = tossPosition;
+	param->tossRequest.tossType = TRT_TAXI_POSITION;
+
+	app->threadHandles.hTossRequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_TossRequest,				//Function
+		(LPVOID) param,					//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdTossRequests //Thread ID
+	);
+}
+
+void Service_NewState(Application* app, TaxiState newState){
+	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
+
+	TossState tossState;
+	_tcscpy_s(tossState.licensePlate, _countof(tossState.licensePlate), app->loggedInTaxi.LicensePlate);
+	tossState.newState = newState;
+
+	param->app = app;
+	param->tossRequest.tossState = tossState;
+	param->tossRequest.tossType = TRT_TAXI_STATE;
+
+	app->threadHandles.hTossRequests = CreateThread(
+		NULL,									//Security Attributes
+		0,										//Stack Size (0 = default)
+		Thread_TossRequest,						//Function
+		(LPVOID) param,							//Param
+		0,										//Creation Flag
+		&app->threadHandles.dwIdTossRequests	//Thread ID
+	);
 }
 
 bool Command_DefineCDN(Application* app, TCHAR* value){

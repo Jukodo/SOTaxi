@@ -2,7 +2,7 @@
 #include "CenDLL.h"
 
 typedef struct Taxi Taxi;
-typedef enum TaxiStatus TaxiStatus;
+typedef enum TaxiState TaxiState;
 
 struct Taxi{
 	bool empty;
@@ -10,7 +10,7 @@ struct Taxi{
 	XYObject object;
 };
 
-enum TaxiStatus{
+enum TaxiState{
 	TS_EMPTY, //Is empty
 	TS_OTW_PASS, //On The Way to the passenger
 	TS_WITH_PASS, //Currently transporting a passenger

@@ -9,6 +9,8 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
 void Service_RegisterInterest(Application* app, TCHAR* idPassenger);
 void Service_CloseApp(Application* app);
+void Service_NewPosition(Application* app, double newX, double newY);
+void Service_NewState(Application* app, TaxiState newState);
 
 bool Command_DefineCDN(Application* app, TCHAR* value);
 bool Command_Speed(Application* app, bool speedUp);

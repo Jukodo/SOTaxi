@@ -12,6 +12,8 @@ struct ThreadHandles{
 	DWORD dwIdQnARequests;
 	HANDLE hNotificationReceiver_NewTransport;
 	DWORD dwIdNotificationReceiver_NewTransport;
+	HANDLE hTossRequests;
+	DWORD dwIdTossRequests;
 };
 
 struct SyncHandles{
@@ -19,6 +21,8 @@ struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
+	HANDLE hMutex_TossRequest_CanAccess;
+	HANDLE hSemaphore_HasTossRequest;
 };
 
 struct ShmHandles{
@@ -28,6 +32,8 @@ struct ShmHandles{
 	LPVOID lpSHM_NTBuffer;
 	HANDLE hSHM_Map;
 	LPVOID lpSHM_Map;
+	HANDLE hSHM_TossReqBuffer;
+	LPVOID lpSHM_TossReqBuffer;
 };
 
 struct Application{
