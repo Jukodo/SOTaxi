@@ -54,6 +54,8 @@ struct Application{
 #define CMD_KICK_TAXI TEXT("/kickTaxi")
 #define CMD_SIMULATE_NTR TEXT("/simulateNTR")
 #define CMD_SHOW_MAP TEXT("/showMap")
+#define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
+#define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 enum CentralCommands{
@@ -65,6 +67,8 @@ enum CentralCommands{
 	CC_KICK_TAXI,
 	CC_SIMULATE_NTR,
 	CC_SHOW_MAP,
+	CC_SAVE_REGISTRY,
+	CC_LOAD_REGISTRY,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };
@@ -109,3 +113,5 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 
 void Simulate_NewTransport(Application* app);
 void Temp_ShowMap(Application* app);
+void Temp_SaveRegistry(Application* app);
+void Temp_LoadRegistry(Application* app);

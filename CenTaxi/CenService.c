@@ -518,6 +518,12 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_SHOW_MAP) == 0){
 		Temp_ShowMap(app);
 		return CC_SHOW_MAP;
+	} else if(_tcscmp(command, CMD_SAVE_REGISTRY) == 0){
+		Temp_SaveRegistry(app);
+		return CC_SAVE_REGISTRY;
+	} else if(_tcscmp(command, CMD_LOAD_REGISTRY) == 0){
+		Temp_LoadRegistry(app);
+		return CC_LOAD_REGISTRY;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -639,4 +645,71 @@ void Temp_ShowMap(Application* app){
 
 		_tprintf(TEXT("%c"), app->map.cellArray[i]);
 	}
+}
+
+void Temp_SaveRegistry(Application* app){
+	HKEY hRegKey;
+	DWORD createState;
+
+	LSTATUS createRet = RegCreateKeyEx(
+		HKEY_CURRENT_USER,
+		TEXT("Software\\SOTaxi"),
+		0,
+		NULL,
+		REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,
+		NULL,
+		&hRegKey,
+		&createState);
+
+	if(createRet != ERROR_SUCCESS){
+		_tprintf(TEXT("%sError trying to open RegistryKey..."), Utils_NewLine());
+		return;
+	}
+
+	TCHAR valueA[STRING_SMALL] = TEXT("ValAAA");
+	TCHAR valueB[STRING_SMALL] = TEXT("ValBBB");
+	DWORD size = STRING_SMALL * sizeof(TCHAR);
+	RegSetValueEx(hRegKey, TEXT("ValueA"), 0, REG_SZ, (LPBYTE) valueA, STRING_SMALL * sizeof(TCHAR));
+	RegSetValueEx(hRegKey, TEXT("ValueB"), 0, REG_SZ, (LPBYTE) valueB, STRING_SMALL * sizeof(TCHAR));
+	_tprintf(TEXT("%sSaved ValueA:%s and ValueB:%s into registry"), Utils_NewSubLine(), valueA, valueB);
+
+	RegCloseKey(hRegKey);
+}
+
+void Temp_LoadRegistry(Application* app){
+	HKEY hRegKey;
+	DWORD createState;
+
+	LSTATUS createRet = RegCreateKeyEx(
+		HKEY_CURRENT_USER,
+		TEXT("Software\\SOTaxi"),
+		0,
+		NULL,
+		REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,
+		NULL,
+		&hRegKey,
+		&createState);
+
+	if(createRet != ERROR_SUCCESS){
+		_tprintf(TEXT("%sError trying to open RegistryKey..."), Utils_NewLine());
+		return;
+	}
+
+	if(createState == REG_OPENED_EXISTING_KEY){
+		TCHAR valueA[STRING_SMALL];
+		ZeroMemory(valueA, STRING_SMALL * sizeof(TCHAR));
+		TCHAR valueB[STRING_SMALL];
+		ZeroMemory(valueB, STRING_SMALL * sizeof(TCHAR));
+		DWORD size = STRING_SMALL * sizeof(TCHAR);
+		RegQueryValueEx(hRegKey, TEXT("ValueA"), NULL, NULL, (LPBYTE) valueA, &size);
+		RegQueryValueEx(hRegKey, TEXT("ValueB"), NULL, NULL, (LPBYTE) valueB, &size);
+		_tprintf(TEXT("%sLoaded ValueA:%s and ValueB:%s from registry"), Utils_NewSubLine(), valueA, valueB);
+	} else{
+		_tprintf(TEXT("%sNo registry key found"), Utils_NewSubLine());
+	}
+
+	RegCloseKey(hRegKey);
+
 }
