@@ -28,8 +28,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma region Login
 	//REMOVE PRE INSERTED INFO LATER (TAG_REMOVELATER)
 	TCHAR sLicensePlate[STRING_LICENSEPLATE] = TEXT("aa-aa-aa");
-	TCHAR sCoordinates_X[3] = TEXT("11");
-	TCHAR sCoordinates_Y[3] = TEXT("22");
+	TCHAR sCoordinates_X[3] = TEXT("0");
+	TCHAR sCoordinates_Y[3] = TEXT("48");
 	TCHAR opt[2];
 	bool flagLoginFailed = true;
 	do{
@@ -95,8 +95,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	} while(flagLoginFailed);
 
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
-	app.NTBuffer_Tail = ((NewTransportBuffer*) app.shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
-	ResumeThread(app.threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
+	Service_PosLoginSetup(&app);
 	#pragma endregion
 
 	#pragma region Commands

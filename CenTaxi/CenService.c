@@ -388,6 +388,20 @@ Taxi* Get_Taxi(Application* app, int index){
 	return NULL;
 }
 
+Taxi* Get_TaxiAt(Application* app, int coordX, int coordY){
+	if(app->taxiList == NULL)
+		return NULL;
+
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(!app->taxiList[i].empty &&
+			((int) app->taxiList[i].object.coordX) == coordX &&
+			((int) app->taxiList[i].object.coordY) == coordY)
+			return &app->taxiList[i];
+	}
+
+	return NULL;
+}
+
 int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
@@ -613,8 +627,15 @@ void Temp_ShowMap(Application* app){
 	for(int i = 0; i < (app->map.height * app->map.width); i++){
 		iColumn = i % app->map.width;
 		iLine = i / app->map.height;
+
 		if(iColumn == 0)
 			_tprintf(TEXT("\n"));
+
+		Taxi* taxiFound = Get_TaxiAt(app, iColumn, iLine);
+		if(taxiFound != NULL){
+			_tprintf(TEXT("T"));
+			continue;
+		}
 
 		_tprintf(TEXT("%c"), app->map.cellArray[i]);
 	}

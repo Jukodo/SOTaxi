@@ -81,7 +81,7 @@ struct TossPosition{
 
 struct TossState{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
-	TaxiStatus newState;
+	TaxiState newState;
 };
 
 struct TossRequest{

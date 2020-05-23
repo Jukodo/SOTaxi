@@ -14,6 +14,8 @@ struct ThreadHandles{
 	DWORD dwIdNotificationReceiver_NewTransport;
 	HANDLE hTossRequests;
 	DWORD dwIdTossRequests;
+	HANDLE hStepRoutine;
+	DWORD dwIdStepRoutine;
 };
 
 struct SyncHandles{
@@ -39,6 +41,7 @@ struct ShmHandles{
 struct Application{
 	Settings settings;
 	Taxi loggedInTaxi;
+	HANDLE taxiMovementRoutine;
 	Map map;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;

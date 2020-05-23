@@ -84,15 +84,13 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 		WaitForSingleObject(param->app->syncHandles.hSemaphore_HasTossRequest, INFINITE);
 		if(buffer->tail != buffer->head){
 			buffer->tossRequests[buffer->tail];
-			_tprintf(TEXT("%sCentral consumed a toss request... TossType: %d"), Utils_NewLine(), buffer->tossRequests[buffer->tail].tossType);
 			switch(buffer->tossRequests[buffer->tail].tossType){
 				case TRT_TAXI_POSITION:
-					_tprintf(TEXT("%sAnd it is a taxi position toss!"), Utils_NewSubLine());
-					_tprintf(TEXT("%sNew position of taxi %s is X:%.2lf Y:%.2lf..."), 
-						Utils_NewSubLine(),
-						buffer->tossRequests[buffer->tail].tossPosition.licensePlate,
-						buffer->tossRequests[buffer->tail].tossPosition.newX,
-						buffer->tossRequests[buffer->tail].tossPosition.newY);
+					{
+						Taxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+						updatingTaxi->object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
+						updatingTaxi->object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
+					}
 					break;
 				case TRT_TAXI_STATE:
 					_tprintf(TEXT("%sAnd it is a taxi state toss!"), Utils_NewSubLine());

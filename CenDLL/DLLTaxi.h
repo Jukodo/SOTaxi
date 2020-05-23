@@ -8,6 +8,7 @@ struct Taxi{
 	bool empty;
 	TCHAR LicensePlate[STRING_SMALL];
 	XYObject object;
+	TaxiState state;
 };
 
 enum TaxiState{

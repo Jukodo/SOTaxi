@@ -85,6 +85,7 @@ int Get_QuantLoggedInTaxis(Application* app);
 int Get_FreeIndexTaxiList(Application* app);
 int Get_TaxiIndex(Application* app, TCHAR* licensePlate);
 Taxi* Get_Taxi(Application* app, int index);
+Taxi* Get_TaxiAt(Application* app, int coordX, int coordY);
 
 bool isPassengerListFull(Application* app);
 int Get_QuantLoggedInTaxis(Application* app);

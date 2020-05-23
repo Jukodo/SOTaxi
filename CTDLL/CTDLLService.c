@@ -7,7 +7,10 @@ bool Setup_Application(Application* app){
 	app->loggedInTaxi.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
 
-	return (Setup_OpenSyncHandles(&app->syncHandles) &&
+	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, TEXT("TESTINGTIMERAAAAAAAAAAAA"));
+
+	return (app->taxiMovementRoutine != NULL &&
+		Setup_OpenSyncHandles(&app->syncHandles) &&
 		Setup_OpenSmhHandles(app) &&
 		Setup_OpenThreadHandles(app));
 }
@@ -139,14 +142,14 @@ bool Setup_OpenSmhHandles(Application* app){
 }
 
 bool Setup_OpenThreadHandles(Application* app){
-	TParam_NotificationReceiver_NT* param = (TParam_NotificationReceiver_NT*) malloc(sizeof(TParam_NotificationReceiver_NT));
-	param->app = app;
+	TParam_NotificationReceiver_NT* nrParam = (TParam_NotificationReceiver_NT*) malloc(sizeof(TParam_NotificationReceiver_NT));
+	nrParam->app = app;
 
 	app->threadHandles.hNotificationReceiver_NewTransport = CreateThread(
 		NULL,														//Security Attributes
 		0,															//Stack Size (0 = default)
 		Thread_NotificationReceiver_NewTransport,					//Function
-		(LPVOID) param,												//Param
+		(LPVOID) nrParam,												//Param
 		CREATE_SUSPENDED,											//Creation Flag
 		&app->threadHandles.dwIdNotificationReceiver_NewTransport	//Thread ID
 	);

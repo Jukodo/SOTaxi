@@ -49,9 +49,27 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 		NULL,								//Security Attributes
 		0,									//Stack Size (0 = default)
 		Thread_SendQnARequests,				//Function
-		(LPVOID) param,					//Param
+		(LPVOID) param,						//Param
 		0,									//Creation Flag
 		&app->threadHandles.dwIdQnARequests //Thread ID
+	);
+}
+
+void Service_PosLoginSetup(Application* app){
+	app->NTBuffer_Tail = ((NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
+	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
+	app->loggedInTaxi.object.speedX = 1;
+	app->loggedInTaxi.object.speedY = 0;
+
+	TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
+	srParam->app = app;
+	app->threadHandles.hStepRoutine = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_StepRoutine,					//Function
+		(LPVOID) srParam,					//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdStepRoutine //Thread ID
 	);
 }
 
@@ -200,6 +218,50 @@ void Command_AutoResp(Application* app, bool autoResp){
 		_tprintf(TEXT("%sAutomatic interest requests is now ON!"), Utils_NewSubLine());
 	else
 		_tprintf(TEXT("%sAutomatic interest requests is now OFF!"), Utils_NewSubLine());
+}
+
+DWORD WINAPI Thread_StepRoutine(LPVOID _param){
+	TParam_StepRoutine* param = (TParam_StepRoutine*) _param;
+
+	LARGE_INTEGER liTime;
+	liTime.QuadPart = -10000000LL * 1 /*Triggers after 1 second*/;
+	SetWaitableTimer(param->app->taxiMovementRoutine, &liTime, 1000, NULL, NULL, FALSE);
+	while(true){
+		WaitForSingleObject(param->app->taxiMovementRoutine, INFINITE);
+
+		Taxi* loggedInTaxi = &param->app->loggedInTaxi;
+		if(param->app->loggedInTaxi.state == TS_EMPTY){
+			if(Movement_NextRandomStep(param->app, &loggedInTaxi->object)){
+				_tprintf(TEXT("%sStepped successfuly"), Utils_NewSubLine());
+				Service_NewPosition(param->app, loggedInTaxi->object.coordX, loggedInTaxi->object.coordY);
+			}
+		}
+	}
+
+	free(param);
+	return 1;
+}
+
+bool Movement_NextRandomStep(Application* app, XYObject* object){
+	if((object->speedX * object->speedY) != 0){ //Doesn't allow diagonal movement
+		_tprintf(TEXT("%sTrying to move diagonally SpeedX:%.2lf SpeedY:%.2lf"), Utils_NewSubLine(), object->speedX, object->speedY);
+		return false;
+	}
+
+	double nextX = object->coordX + (object->speedX * object->speedMultiplier);
+	double nextY = object->coordY + (object->speedY * object->speedMultiplier);
+	if(nextX < 0 || nextX >= app->map.width){
+		_tprintf(TEXT("%sX out of bounds X:%.2lf MaxX:%d"), Utils_NewSubLine(), nextX, app->map.width-1);
+		return false;
+	}
+	if(nextY < 0 || nextY >= app->map.height){
+		_tprintf(TEXT("%sY out of bounds Y:%.2lf MaxY:%d"), Utils_NewSubLine(), nextY, app->map.height-1);
+		return false;
+	}
+
+	object->coordX = nextX;
+	object->coordY = nextY;
+	return true;
 }
 
 void Temp_ShowMap(Application* app){
