@@ -10,13 +10,23 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 
 		switch(shm->requestType){
 			case QnART_LOGIN:
-				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
+			{
+				TCHAR log[STRING_XXL];
+				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %d | Y: %d"), shm->loginRequest.licensePlate, shm->loginRequest.coordX, shm->loginRequest.coordY);
+				Utils_DLL_Log(log);
 
+				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
 				shm->loginResponse.mapWidth = param->app->map.width;
 				shm->loginResponse.mapHeight = param->app->map.height;
+			}
 				break;
 			case QnART_NT_INTEREST:
+			{
+				TCHAR log[STRING_XXL];
+				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi of Interest in a transport request, sending: LicensePlate: %s | PassengerId: %s"), shm->ntIntRequest.licensePlate, shm->ntIntRequest.idPassenger);
+				Utils_DLL_Log(log);
 				shm->ntIntResponse = Service_RegisterInterest(param->app, &shm->ntIntRequest);
+			}
 				break;
 		}
 
@@ -35,6 +45,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		TRUE,	//Manual Reset
 		NULL	//WaitableTimer name
 	);
+	Utils_DLL_Register(TEXT("UnnamedTimer:line31:cenCommunication.c"), DLL_TYPE_WAITABLETIMER);
 	if(hAssignTimeout == NULL)
 		return -1;
 
@@ -87,34 +98,44 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 			switch(buffer->tossRequests[buffer->tail].tossType){
 				case TRT_TAXI_POSITION:
 					{
+						TCHAR log[STRING_XXL];
+						swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewX: %.2lf | NewY: %.2lf"),
+							buffer->tossRequests[buffer->tail].tossPosition.licensePlate,
+							buffer->tossRequests[buffer->tail].tossPosition.newX,
+							buffer->tossRequests[buffer->tail].tossPosition.newY);
+						Utils_DLL_Log(log);
+
 						Taxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
 						updatingTaxi->object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
 						updatingTaxi->object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
 					}
 					break;
 				case TRT_TAXI_STATE:
-					_tprintf(TEXT("%sAnd it is a taxi state toss!"), Utils_NewSubLine());
+				{
 					TCHAR state[STRING_MEDIUM];
 					switch(buffer->tossRequests[buffer->tail].tossState.newState){
-						case TS_EMPTY:
-							_tcscpy_s(state, _countof(state), TEXT("Empty"));
-							break;
-						case TS_OTW_PASS:
-							_tcscpy_s(state, _countof(state), TEXT("PickingUpPassenger"));
-							break;
-						case TS_WITH_PASS:
-							_tcscpy_s(state, _countof(state), TEXT("WithPassenger"));
-							break;
-						case TS_STATIONARY:
-							_tcscpy_s(state, _countof(state), TEXT("Stationary"));
-							break;
-						default:
-							return -1;
+					case TS_EMPTY:
+						_tcscpy_s(state, _countof(state), TEXT("Empty"));
+						break;
+					case TS_OTW_PASS:
+						_tcscpy_s(state, _countof(state), TEXT("PickingUpPassenger"));
+						break;
+					case TS_WITH_PASS:
+						_tcscpy_s(state, _countof(state), TEXT("WithPassenger"));
+						break;
+					case TS_STATIONARY:
+						_tcscpy_s(state, _countof(state), TEXT("Stationary"));
+						break;
+					default:
+						return -1;
 					}
-					_tprintf(TEXT("%sNew state of taxi %s is %s..."),
-						Utils_NewSubLine(),
+					TCHAR log[STRING_XXL];
+					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewStateType: %d (%s)"),
 						buffer->tossRequests[buffer->tail].tossState.licensePlate,
+						buffer->tossRequests[buffer->tail].tossState.newState,
 						state);
+					Utils_DLL_Log(log);
+				}
 					break;
 			}
 			buffer->tail = (buffer->tail + 1) % TOSSBUFFER_MAX;

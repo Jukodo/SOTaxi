@@ -32,6 +32,8 @@
 
 #define NAME_SEMAPHORE_HasTossRequest TEXT("JUSO2TAXI_SEMAPHORE_HTR")
 
+#define NAME_WAITTIMER_StepRoutine TEXT("JUSO2TAXI_WAITTIMER_SR")
+
 //Main
 #include <stdio.h>
 //Bool

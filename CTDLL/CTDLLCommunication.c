@@ -90,6 +90,8 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 		while(buffer->head != param->app->NTBuffer_Tail){
 			buffer->transportRequests[param->app->NTBuffer_Tail];
 
+			Utils_DLL_Log(TEXT("ConTaxi received a notification from CenTaxi using Manual Event triggered on CenService.c (Service_NotifyTaxisNewTransport)"));
+
 			_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2f, %.2f) for a taxi!%sPlease use \"%s\" if you are interested!%s"), 
 				Utils_NewSubLine(), 
 				Utils_NewSubLine(),
@@ -116,6 +118,32 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	
 	buffer->tossRequests[buffer->head] = param->tossRequest;
 	buffer->head = (buffer->head + 1) % TOSSBUFFER_MAX;
+
+	TCHAR state[STRING_SMALL];
+	ZeroMemory(state, STRING_SMALL*sizeof(TCHAR));
+	switch(param->app->loggedInTaxi.state){
+		case TS_EMPTY:
+			_tcscpy_s(state, _countof(state), TEXT("empty"));
+			break;
+		case TS_OTW_PASS:
+			_tcscpy_s(state, _countof(state), TEXT("otwPass"));
+			break;
+		case TS_WITH_PASS:
+			_tcscpy_s(state, _countof(state), TEXT("withPass"));
+			break;
+		case TS_STATIONARY:
+			_tcscpy_s(state, _countof(state), TEXT("stationary"));
+			break;
+	}
+	TCHAR log[STRING_XXL];
+	swprintf(log, STRING_XXL, TEXT("Taxi changed position... LicensePlate: %s | X: %.2lf | Y: %.2lf | Passenger: ToDo | State: %s | Speed: %.2lf | CDN: %d"),
+		param->app->loggedInTaxi.LicensePlate,
+		param->app->loggedInTaxi.object.coordX,
+		param->app->loggedInTaxi.object.coordY,
+		state,
+		param->app->loggedInTaxi.object.speedMultiplier,
+		param->app->settings.CDN);
+	Utils_DLL_Log(log);
 
 	ReleaseSemaphore(param->app->syncHandles.hSemaphore_HasTossRequest, 1, NULL);
 	ReleaseMutex(param->app->syncHandles.hMutex_TossRequest_CanAccess);

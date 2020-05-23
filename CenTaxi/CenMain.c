@@ -4,6 +4,7 @@
 int _tmain(int argc, LPTSTR argv[]) {
 	#pragma region OneInstanceLock
 	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_OneInstance_CEN);
+	Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
 	if(GetLastError() == ERROR_ALREADY_EXISTS){
 		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
 		getchar();
@@ -70,6 +71,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
+				_tprintf(TEXT("%s%s:\tCreate DLL log [temp]"), Utils_NewSubLine(), CMD_DLL_LOG);
 				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 				break;
 			case CC_LIST_TAXIS:

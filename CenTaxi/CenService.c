@@ -81,12 +81,14 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		FALSE,						//Initial State
 		NAME_EVENT_QnARequest_Read	//Event Name
 	);
+	Utils_DLL_Register(NAME_EVENT_QnARequest_Read, DLL_TYPE_EVENT);
 	syncHandles->hEvent_QnARequest_Write = CreateEvent(
 		NULL,						//Security Attributes
 		FALSE,						//Manual Reset
 		TRUE,						//Initial State
 		NAME_EVENT_QnARequest_Write	//Event Name
 	);
+	Utils_DLL_Register(NAME_EVENT_QnARequest_Write, DLL_TYPE_EVENT);
 
 	syncHandles->hEvent_Notify_T_NewTranspReq = CreateEvent(
 		NULL,							//Security Attributes
@@ -94,6 +96,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		FALSE,							//Initial State
 		NAME_EVENT_NewTransportRequest	//Event Name
 	);
+	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
 	syncHandles->hSemaphore_HasTossRequest = CreateSemaphore(
 		NULL,							//Security Attributes
@@ -101,6 +104,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		TOSSBUFFER_MAX,					//Max Count
 		NAME_SEMAPHORE_HasTossRequest	//Semaphore Name
 	);
+	Utils_DLL_Register(NAME_SEMAPHORE_HasTossRequest, DLL_TYPE_SEMAPHORE);
 
 	return !(syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
@@ -118,6 +122,7 @@ bool Setup_OpenShmHandles(Application* app){
 		sizeof(QnARequest),		//DWORD low-order max size
 		NAME_SHM_QnARequest		//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_QnARequest, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_QnARequest == NULL)
 		return false;
 	app->shmHandles.lpSHM_QnARequest = MapViewOfFile(
@@ -127,6 +132,7 @@ bool Setup_OpenShmHandles(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof(QnARequest)				//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_QnARequest, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
 	#pragma endregion
@@ -140,6 +146,7 @@ bool Setup_OpenShmHandles(Application* app){
 		sizeof(NewTransportBuffer),		//DWORD low-order max size
 		NAME_SHM_TransportRequestBuffer	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_TransportRequestBuffer, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_NTBuffer == NULL)
 		return false;
 
@@ -150,6 +157,7 @@ bool Setup_OpenShmHandles(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof(NewTransportBuffer)		//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_TransportRequestBuffer, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_NTBuffer == NULL)
 		return false;
 
@@ -175,6 +183,7 @@ bool Setup_OpenShmHandles(Application* app){
 		sizeof(TossRequestsBuffer),		//DWORD low-order max size
 		NAME_SHM_TossRequestBuffer		//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_TossRequestBuffer, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_TossReqBuffer == NULL)
 		return false;
 
@@ -185,6 +194,7 @@ bool Setup_OpenShmHandles(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof(TossRequestsBuffer)		//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_TossRequestBuffer, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_TossReqBuffer == NULL)
 		return false;
 
@@ -203,6 +213,7 @@ bool Setup_OpenShmHandles_Map(Application* app){
 		sizeof((app->map.width * app->map.height) * sizeof(char)),		//DWORD low-order max size
 		NAME_SHM_Map	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_Map, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_Map == NULL)
 		return false;
 
@@ -213,6 +224,7 @@ bool Setup_OpenShmHandles_Map(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof((app->map.width * app->map.height) * sizeof(char))		//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_Map, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_Map == NULL)
 		return false;
 
@@ -524,6 +536,9 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_LOAD_REGISTRY) == 0){
 		Temp_LoadRegistry(app);
 		return CC_LOAD_REGISTRY;
+	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
+		Utils_DLL_Test();
+		return CC_DLL_LOG;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;

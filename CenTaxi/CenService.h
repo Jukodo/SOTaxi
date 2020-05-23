@@ -56,6 +56,7 @@ struct Application{
 #define CMD_SHOW_MAP TEXT("/showMap")
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
+#define CMD_DLL_LOG TEXT("/createDllLog")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 enum CentralCommands{
@@ -69,6 +70,7 @@ enum CentralCommands{
 	CC_SHOW_MAP,
 	CC_SAVE_REGISTRY,
 	CC_LOAD_REGISTRY,
+	CC_DLL_LOG,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };

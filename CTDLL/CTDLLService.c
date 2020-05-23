@@ -7,7 +7,8 @@ bool Setup_Application(Application* app){
 	app->loggedInTaxi.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
 
-	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, TEXT("TESTINGTIMERAAAAAAAAAAAA"));
+	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NAME_WAITTIMER_StepRoutine);
+	Utils_DLL_Register(NAME_WAITTIMER_StepRoutine, DLL_TYPE_WAITABLETIMER);
 
 	return (app->taxiMovementRoutine != NULL &&
 		Setup_OpenSyncHandles(&app->syncHandles) &&
@@ -21,33 +22,39 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		FALSE,							//Initial owner (TRUE = Locked from the creation)
 		NAME_MUTEX_QnARequest			//Mutex name
 	);
+	Utils_DLL_Register(NAME_MUTEX_QnARequest, DLL_TYPE_MUTEX);
 	syncHandles->hEvent_QnARequest_Read = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_EVENT_QnARequest_Read		//Event name
 	);
+	Utils_DLL_Register(NAME_EVENT_QnARequest_Read, DLL_TYPE_EVENT);
 	syncHandles->hEvent_QnARequest_Write = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_EVENT_QnARequest_Write		//Event name
 	);
+	Utils_DLL_Register(NAME_EVENT_QnARequest_Write, DLL_TYPE_EVENT);
 
 	syncHandles->hEvent_Notify_T_NewTranspReq = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_EVENT_NewTransportRequest	//Event name
 	);
+	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
 	syncHandles->hMutex_TossRequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
 		NULL,							//Security attributes
 		FALSE,							//Initial owner (TRUE = Locked from the creation)
 		NAME_MUTEX_TossRequest			//Mutex name
 	);
+	Utils_DLL_Register(NAME_MUTEX_TossRequest, DLL_TYPE_MUTEX);
 	syncHandles->hSemaphore_HasTossRequest = OpenSemaphore(
 		SEMAPHORE_ALL_ACCESS,			//Security Attributes
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_SEMAPHORE_HasTossRequest	//Semaphore Name
 	);
+	Utils_DLL_Register(NAME_SEMAPHORE_HasTossRequest, DLL_TYPE_SEMAPHORE);
 
 	return !(syncHandles->hMutex_QnARequest == NULL ||
 		syncHandles->hEvent_QnARequest_Read == NULL ||
@@ -64,6 +71,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		FALSE,					//Inherit handle (child processes can inherit the handle)(?)
 		NAME_SHM_QnARequest	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_QnARequest, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_QnARequest == NULL)
 		return false;
 
@@ -74,6 +82,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof(QnARequest)				//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_QnARequest, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_QnARequest == NULL)
 		return false;
 	#pragma endregion
@@ -84,6 +93,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_SHM_TransportRequestBuffer	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_TransportRequestBuffer, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_NTBuffer == NULL)
 		return false;
 
@@ -94,6 +104,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		0,								//DWORD low-order of the file offset where the view begins
 		sizeof(NewTransportBuffer)		//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_TransportRequestBuffer, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_NTBuffer == NULL)
 		return false;
 	#pragma endregion
@@ -104,6 +115,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
 		NAME_SHM_Map	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_Map, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_Map == NULL)
 		return false;
 
@@ -114,6 +126,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		0,							//DWORD low-order of the file offset where the view begins
 		(app->map.width * app->map.height * sizeof(char))	//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_Map, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_Map == NULL)
 		return false;
 	#pragma endregion
@@ -124,6 +137,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		FALSE,						//Inherit handle (child processes can inherit the handle)(?)
 		NAME_SHM_TossRequestBuffer	//File mapping object name
 	);
+	Utils_DLL_Register(NAME_SHM_TossRequestBuffer, DLL_TYPE_FILEMAPPING);
 	if(app->shmHandles.hSHM_TossReqBuffer == NULL)
 		return false;
 
@@ -134,6 +148,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		0,							//DWORD low-order of the file offset where the view begins
 		sizeof(TossRequestsBuffer)	//Number of bytes to map
 	);
+	Utils_DLL_Register(NAME_SHM_TossRequestBuffer, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_TossReqBuffer == NULL)
 		return false;
 	#pragma endregion
