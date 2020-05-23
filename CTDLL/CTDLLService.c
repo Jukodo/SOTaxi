@@ -7,8 +7,8 @@ bool Setup_Application(Application* app){
 	app->loggedInTaxi.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
 
-	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NAME_WAITTIMER_StepRoutine);
-	Utils_DLL_Register(NAME_WAITTIMER_StepRoutine, DLL_TYPE_WAITABLETIMER);
+	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NULL);
+	Utils_DLL_Register(TEXT("UnnamedWTimer:line4:CTDLLService.c"), DLL_TYPE_WAITABLETIMER);
 
 	return (app->taxiMovementRoutine != NULL &&
 		Setup_OpenSyncHandles(&app->syncHandles) &&

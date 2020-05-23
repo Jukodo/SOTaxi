@@ -6,6 +6,9 @@ bool isLoggedIn(Application* app){
 }
 
 bool isValid_LicensePlate(TCHAR* sLicensePlate){
+	if(_tcslen(sLicensePlate) != 8)
+		return false;
+
 	for(unsigned int i = 0; i < _tcslen(sLicensePlate); i++){
 		if((i+1)%3 == 0){ //every third character it is supposed to be a '-'
 			if(sLicensePlate[i] == '-')
