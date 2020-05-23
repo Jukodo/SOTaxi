@@ -12,7 +12,7 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 			case QnART_LOGIN:
 			{
 				TCHAR log[STRING_XXL];
-				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %d | Y: %d"), shm->loginRequest.licensePlate, shm->loginRequest.coordX, shm->loginRequest.coordY);
+				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %.2lf | Y: %.2lf"), shm->loginRequest.licensePlate, shm->loginRequest.coordX, shm->loginRequest.coordY);
 				Utils_DLL_Log(log);
 
 				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
