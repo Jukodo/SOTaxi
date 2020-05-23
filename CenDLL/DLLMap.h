@@ -8,7 +8,6 @@
 
 typedef struct XYObject XYObject;
 typedef struct Map Map;
-typedef struct Cell Cell;
 
 struct Map{
 	int width;
