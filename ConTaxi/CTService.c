@@ -235,7 +235,6 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 		Taxi* loggedInTaxi = &param->app->loggedInTaxi;
 		if(param->app->loggedInTaxi.state == TS_EMPTY){
 			if(Movement_NextRandomStep(param->app, &loggedInTaxi->object)){
-				_tprintf(TEXT("%sStepped successfuly"), Utils_NewSubLine());
 				Service_NewPosition(param->app, loggedInTaxi->object.coordX, loggedInTaxi->object.coordY);
 			}
 		}
