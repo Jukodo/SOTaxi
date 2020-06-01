@@ -23,6 +23,10 @@ typedef enum TossRequestType TossRequestType;
 typedef struct NewTransportBuffer NewTransportBuffer;
 typedef struct TossRequestsBuffer TossRequestsBuffer;
 
+//Named Pipe
+typedef struct NPCommsTaxiCentral NPCommsTaxiCentral;
+typedef struct NPCTC_Identity NPCTC_Identity;
+
 struct LoginRequest{
 	TCHAR licensePlate[STRING_SMALL];
 	float coordX;
@@ -106,4 +110,12 @@ struct TossRequestsBuffer{
 	TossRequest tossRequests[TOSSBUFFER_MAX];
 	int head;
 	int tail;
+};
+
+struct NPCommsTaxiCentral{
+	TCHAR licensePlate[STRING_LICENSEPLATE];
+};
+
+struct NPCTC_Identity{
+	TCHAR licensePlate[STRING_LICENSEPLATE];
 };

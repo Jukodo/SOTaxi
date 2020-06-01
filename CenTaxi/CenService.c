@@ -17,7 +17,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	int i;
 	for(i = 0; i < maxTaxis; i++){
 		ZeroMemory(&app->taxiList[i], sizeof(Taxi));
-		app->taxiList[i].empty = true;
+		app->taxiList[i].taxiInfo.empty = true;
 	}
 
 	for(i = 0; i < maxPassengers; i++){
@@ -70,8 +70,23 @@ bool Setup_OpenThreadHandles(Application* app){
 	);
 	#pragma endregion
 
+	#pragma region ConnectingTaxiPipes
+	TParam_ConnectingTaxiPipes* ctpParam = (TParam_ConnectingTaxiPipes*) malloc(sizeof(TParam_ConnectingTaxiPipes));
+	ctpParam->app = app;
+
+	app->threadHandles.hConnectingTaxiPipes = CreateThread(
+		NULL,										//Security Attributes
+		0,											//Stack Size (0 = default)
+		Thread_ConnectingTaxiPipes,					//Function
+		(LPVOID) ctpParam,							//Param
+		0,											//Creation flags
+		&app->threadHandles.dwIdConnectingTaxiPipes	//Thread Id
+	);
+	#pragma endregion
+
 	return !(app->threadHandles.hQnARequests == NULL ||
-		app->threadHandles.hTossRequests == NULL);
+		app->threadHandles.hTossRequests == NULL ||
+		app->threadHandles.hConnectingTaxiPipes == NULL);
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
@@ -97,6 +112,14 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_NewTransportRequest	//Event Name
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
+
+	syncHandles->hEvent_TaxiLoggingIn = CreateEvent(
+		NULL,						//Security Attributes
+		FALSE,						//Manual Reset
+		FALSE,						//Initial State
+		NAME_EVENT_TaxiLoggingIn	//Event Name
+	);
+	Utils_DLL_Register(NAME_EVENT_TaxiLoggingIn, DLL_TYPE_EVENT);
 
 	syncHandles->hSemaphore_HasTossRequest = CreateSemaphore(
 		NULL,							//Security Attributes
@@ -359,7 +382,7 @@ int Get_QuantLoggedInTaxis(Application* app){
 	int quantLoggedInTaxis = 0;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].empty)
+		if(!app->taxiList[i].taxiInfo.empty)
 			quantLoggedInTaxis++;
 	}
 
@@ -371,7 +394,7 @@ int Get_FreeIndexTaxiList(Application* app){
 		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(app->taxiList[i].empty)
+		if(app->taxiList[i].taxiInfo.empty)
 			return i;
 	}
 
@@ -383,7 +406,7 @@ int Get_TaxiIndex(Application* app, TCHAR* licensePlate){
 		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(_tcscmp(app->taxiList[i].LicensePlate, licensePlate) == 0 && !app->taxiList[i].empty)
+		if(_tcscmp(app->taxiList[i].taxiInfo.LicensePlate, licensePlate) == 0 && !app->taxiList[i].taxiInfo.empty)
 			return i;
 	}
 
@@ -394,7 +417,7 @@ Taxi* Get_Taxi(Application* app, int index){
 	if(app->taxiList == NULL)
 		return NULL;
 
-	if(!app->taxiList[index].empty)
+	if(!app->taxiList[index].taxiInfo.empty)
 		return &app->taxiList[index];
 
 	return NULL;
@@ -405,9 +428,9 @@ Taxi* Get_TaxiAt(Application* app, int coordX, int coordY){
 		return NULL;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].empty &&
-			((int) app->taxiList[i].object.coordX) == coordX &&
-			((int) app->taxiList[i].object.coordY) == coordY)
+		if(!app->taxiList[i].taxiInfo.empty &&
+			((int) app->taxiList[i].taxiInfo.object.coordX) == coordX &&
+			((int) app->taxiList[i].taxiInfo.object.coordY) == coordY)
 			return &app->taxiList[i];
 	}
 

@@ -5,7 +5,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	TParam_QnARequest* param = (TParam_QnARequest*) _param;
 	QnARequest* shm = param->app->shmHandles.lpSHM_QnARequest;
 
-	WaitForSingleObject(param->app->syncHandles.hMutex_QnARequest, INFINITE);
+	WaitForSingleObject(param->app->syncHandles.hMutex_QnARequest_CanAccess, INFINITE);
 	WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Write, INFINITE);
 
 	CopyMemory(shm, &param->request, sizeof(QnARequest));
@@ -18,10 +18,10 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 
 		switch(shm->loginResponse.loginResponseType){
 			case LR_SUCCESS:
-				param->app->loggedInTaxi.empty = false;
-				_tcscpy_s(param->app->loggedInTaxi.LicensePlate, _countof(param->app->loggedInTaxi.LicensePlate), param->request.loginRequest.licensePlate);
-				param->app->loggedInTaxi.object.coordX = param->request.loginRequest.coordX;
-				param->app->loggedInTaxi.object.coordY = param->request.loginRequest.coordY;
+				param->app->loggedInTaxi.taxiInfo.empty = false;
+				_tcscpy_s(param->app->loggedInTaxi.taxiInfo.LicensePlate, _countof(param->app->loggedInTaxi.taxiInfo.LicensePlate), param->request.loginRequest.licensePlate);
+				param->app->loggedInTaxi.taxiInfo.object.coordX = param->request.loginRequest.coordX;
+				param->app->loggedInTaxi.taxiInfo.object.coordY = param->request.loginRequest.coordY;
 
 				param->app->map.width = shm->loginResponse.mapWidth;
 				param->app->map.height = shm->loginResponse.mapHeight;
@@ -72,7 +72,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 		break;
 	}
 
-	ReleaseMutex(param->app->syncHandles.hMutex_QnARequest);
+	ReleaseMutex(param->app->syncHandles.hMutex_QnARequest_CanAccess);
 	SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
 
 	free(param);
@@ -121,7 +121,7 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 
 	TCHAR state[STRING_SMALL];
 	ZeroMemory(state, STRING_SMALL*sizeof(TCHAR));
-	switch(param->app->loggedInTaxi.state){
+	switch(param->app->loggedInTaxi.taxiInfo.state){
 		case TS_EMPTY:
 			_tcscpy_s(state, _countof(state), TEXT("empty"));
 			break;
@@ -137,11 +137,11 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	}
 	TCHAR log[STRING_XXL];
 	swprintf(log, STRING_XXL, TEXT("Taxi changed position... LicensePlate: %s | X: %.2lf | Y: %.2lf | Passenger: ToDo | State: %s | Speed: %.2lf | CDN: %d"),
-		param->app->loggedInTaxi.LicensePlate,
-		param->app->loggedInTaxi.object.coordX,
-		param->app->loggedInTaxi.object.coordY,
+		param->app->loggedInTaxi.taxiInfo.LicensePlate,
+		param->app->loggedInTaxi.taxiInfo.object.coordX,
+		param->app->loggedInTaxi.taxiInfo.object.coordY,
 		state,
-		param->app->loggedInTaxi.object.speedMultiplier,
+		param->app->loggedInTaxi.taxiInfo.object.speedMultiplier,
 		param->app->settings.CDN);
 	Utils_DLL_Log(log);
 

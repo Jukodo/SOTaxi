@@ -41,5 +41,8 @@
     <ClInclude Include="CTDLLSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CTDLLTaxi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

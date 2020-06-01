@@ -7,11 +7,13 @@
 #endif
 
 #define NAME_MUTEX_QnARequest TEXT("JUSO2TAXI_MUTEX_QNAR")
+#define NAME_MUTEX_Connecting2Central TEXT("JUSO2TAXI_MUTEX_C2C")
 #define NAME_MUTEX_TossRequest TEXT("JUSO2TAXI_MUTEX_TR")
 
 //GenericDLL
 #include "CenDLL.h"
 //Data
 #include "CTDLLSettings.h"
+#include "CTDLLTaxi.h"
 #include "CTDLLService.h"
 #include "CTDLLCommunication.h"

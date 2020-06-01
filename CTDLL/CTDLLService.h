@@ -19,11 +19,13 @@ struct ThreadHandles{
 };
 
 struct SyncHandles{
-	HANDLE hMutex_QnARequest;
+	HANDLE hMutex_QnARequest_CanAccess;
+	HANDLE hMutex_TossRequest_CanAccess;
+	HANDLE hMutex_CommsTaxiCentral_CanAccess;
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
-	HANDLE hMutex_TossRequest_CanAccess;
+	HANDLE hEvent_TaxiLoggingIn;
 	HANDLE hSemaphore_HasTossRequest;
 };
 
@@ -40,7 +42,7 @@ struct ShmHandles{
 
 struct Application{
 	Settings settings;
-	Taxi loggedInTaxi;
+	CTTaxi loggedInTaxi;
 	HANDLE taxiMovementRoutine;
 	Map map;
 	ThreadHandles threadHandles;
@@ -84,4 +86,5 @@ CTDLL_API void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 CTDLL_API void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 CTDLL_API void Setup_CloseThreadHandles(ThreadHandles* threadHandles);
 
+CTDLL_API bool Service_ConnectToCentralNamedPipe(Application* app);
 CTDLL_API bool Service_GetMap(Application* app);

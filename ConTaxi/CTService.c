@@ -2,7 +2,7 @@
 #include "CTService.h"
 
 bool isLoggedIn(Application* app){
-	return !app->loggedInTaxi.empty;
+	return !app->loggedInTaxi.taxiInfo.empty;
 }
 
 bool isValid_LicensePlate(TCHAR* sLicensePlate){
@@ -58,12 +58,17 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 	);
 }
 
-void Service_PosLoginSetup(Application* app){
+bool Service_PosLoginSetup(Application* app){
 	app->NTBuffer_Tail = ((NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
 	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
-	app->loggedInTaxi.object.speedX = 1;
-	app->loggedInTaxi.object.speedY = 0;
+	app->loggedInTaxi.taxiInfo.object.speedX = 1;
+	app->loggedInTaxi.taxiInfo.object.speedY = 0;
 
+	if(!Service_ConnectToCentralNamedPipe(app)){
+		_tprintf(TEXT("%sFailed while trying to connect to central's named pipe!"), Utils_NewSubLine());
+		return false;
+	}
+	
 	TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
 	srParam->app = app;
 	app->threadHandles.hStepRoutine = CreateThread(
@@ -74,6 +79,8 @@ void Service_PosLoginSetup(Application* app){
 		0,									//Creation Flag
 		&app->threadHandles.dwIdStepRoutine //Thread ID
 	);
+
+	return true;
 }
 
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
@@ -111,7 +118,7 @@ void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 
 	NTInterestRequest ntIntRequest;
 	_tcscpy_s(ntIntRequest.idPassenger, _countof(ntIntRequest.idPassenger), idPassenger);
-	_tcscpy_s(ntIntRequest.licensePlate, _countof(ntIntRequest.idPassenger), app->loggedInTaxi.LicensePlate);
+	_tcscpy_s(ntIntRequest.licensePlate, _countof(ntIntRequest.idPassenger), app->loggedInTaxi.taxiInfo.LicensePlate);
 
 	param->app = app;
 	param->request.ntIntRequest = ntIntRequest;
@@ -137,7 +144,7 @@ void Service_NewPosition(Application* app, double newX, double newY){
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
 	TossPosition tossPosition;
-	_tcscpy_s(tossPosition.licensePlate, _countof(tossPosition.licensePlate), app->loggedInTaxi.LicensePlate);
+	_tcscpy_s(tossPosition.licensePlate, _countof(tossPosition.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
 	tossPosition.newX = newX;
 	tossPosition.newY = newY;
 
@@ -159,7 +166,7 @@ void Service_NewState(Application* app, TaxiState newState){
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
 	TossState tossState;
-	_tcscpy_s(tossState.licensePlate, _countof(tossState.licensePlate), app->loggedInTaxi.LicensePlate);
+	_tcscpy_s(tossState.licensePlate, _countof(tossState.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
 	tossState.newState = newState;
 
 	param->app = app;
@@ -194,21 +201,21 @@ bool Command_DefineCDN(Application* app, TCHAR* value){
 bool Command_Speed(Application* app, bool speedUp){
 	if(speedUp){
 
-		if(app->loggedInTaxi.object.speedMultiplier == TOPMAX_SPEED){
-			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any higher!"), Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+		if(app->loggedInTaxi.taxiInfo.object.speedMultiplier == TOPMAX_SPEED){
+			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any higher!"), Utils_NewSubLine(), app->loggedInTaxi.taxiInfo.object.speedMultiplier);
 			return false;
 		}
 
-		app->loggedInTaxi.object.speedMultiplier += SPEED_CHANGEBY;
-		_tprintf(TEXT("%sYour speed has been increased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+		app->loggedInTaxi.taxiInfo.object.speedMultiplier += SPEED_CHANGEBY;
+		_tprintf(TEXT("%sYour speed has been increased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.taxiInfo.object.speedMultiplier);
 	} else{
-		if(app->loggedInTaxi.object.speedMultiplier == TOPMIN_SPEED){
-			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any lower!"), Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+		if(app->loggedInTaxi.taxiInfo.object.speedMultiplier == TOPMIN_SPEED){
+			_tprintf(TEXT("%sCurrent speed (%.2lf) cannot go any lower!"), Utils_NewSubLine(), app->loggedInTaxi.taxiInfo.object.speedMultiplier);
 			return false;
 		}
 
-		app->loggedInTaxi.object.speedMultiplier -= SPEED_CHANGEBY;
-		_tprintf(TEXT("%sYour speed has been decreased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.object.speedMultiplier);
+		app->loggedInTaxi.taxiInfo.object.speedMultiplier -= SPEED_CHANGEBY;
+		_tprintf(TEXT("%sYour speed has been decreased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.taxiInfo.object.speedMultiplier);
 	}
 
 	return true;
@@ -233,7 +240,7 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 		WaitForSingleObject(param->app->taxiMovementRoutine, INFINITE);
 
 		Taxi* loggedInTaxi = &param->app->loggedInTaxi;
-		if(param->app->loggedInTaxi.state == TS_EMPTY){
+		if(param->app->loggedInTaxi.taxiInfo.state == TS_EMPTY){
 			if(Movement_NextRandomStep(param->app, &loggedInTaxi->object)){
 				Service_NewPosition(param->app, loggedInTaxi->object.coordX, loggedInTaxi->object.coordY);
 			}

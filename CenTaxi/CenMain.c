@@ -77,13 +77,13 @@ int _tmain(int argc, LPTSTR argv[]) {
 			case CC_LIST_TAXIS:
 				_tprintf(TEXT("%sLogged Taxis List:"), Utils_NewSubLine());
 				for(int i = 0; i < app.maxTaxis; i++){
-					if(!app.taxiList[i].empty)
+					if(!app.taxiList[i].taxiInfo.empty)
 						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf)"), 
 							Utils_NewSubLine(), 
 							i+1,
-							app.taxiList[i].LicensePlate,
-							app.taxiList[i].object.coordX,
-							app.taxiList[i].object.coordY);
+							app.taxiList[i].taxiInfo.LicensePlate,
+							app.taxiList[i].taxiInfo.object.coordX,
+							app.taxiList[i].taxiInfo.object.coordY);
 					else
 						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 				}

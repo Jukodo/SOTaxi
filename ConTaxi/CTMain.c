@@ -90,12 +90,12 @@ int _tmain(int argc, LPTSTR argv[]) {
 			WaitForSingleObject(app.threadHandles.hQnARequests, INFINITE);
 		}
 		flagLoginFailed = !isLoggedIn(&app);
+		flagLoginFailed = flagLoginFailed || !Service_PosLoginSetup(&app);
+
 		if(flagLoginFailed)
 			_tprintf(TEXT("%sLog in failed... Please try again!"), Utils_NewSubLine());
 	} while(flagLoginFailed);
-
-	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine()); 
-	Service_PosLoginSetup(&app);
+	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine());
 	#pragma endregion
 
 	#pragma region Commands
@@ -108,7 +108,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	do{
 		ZeroMemory(sCommand, STRING_MEDIUM);
 		ZeroMemory(sArgument, STRING_SMALL);
-		_tprintf(TEXT("%s[ConTaxi] Logged in as %s!%sWaiting for command:"), Utils_NewLine(), app.loggedInTaxi.LicensePlate, Utils_NewSubLine());
+		_tprintf(TEXT("%s[ConTaxi] Logged in as %s!%sWaiting for command:"), Utils_NewLine(), app.loggedInTaxi.taxiInfo.LicensePlate, Utils_NewSubLine());
 		_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 		_tscanf_s(TEXT(" %[^\n]"), sCommand, _countof(sCommand));
 		Utils_CleanStdin();

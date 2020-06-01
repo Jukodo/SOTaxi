@@ -12,7 +12,7 @@ bool isValid_LicensePlate(TCHAR* sLicensePlate);
 bool isValid_Coordinates(TCHAR* sCoordinates);
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
-void Service_PosLoginSetup(Application* app);
+bool Service_PosLoginSetup(Application* app);
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
 void Service_RegisterInterest(Application* app, TCHAR* idPassenger);
 void Service_CloseApp(Application* app);

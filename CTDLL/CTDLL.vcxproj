@@ -167,6 +167,7 @@
     <ClInclude Include="CTDLL.h" />
     <ClInclude Include="CTDLLService.h" />
     <ClInclude Include="CTDLLSettings.h" />
+    <ClInclude Include="CTDLLTaxi.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

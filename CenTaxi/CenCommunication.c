@@ -145,3 +145,56 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 	free(param);
 	return 1;
 }
+
+DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
+	TParam_ConnectingTaxiPipes* param = (TParam_ConnectingTaxiPipes*) _param;
+
+	HANDLE hPipe;
+	while(true){
+		hPipe = CreateNamedPipe(
+			NAME_NAMEDPIPE_CommsTaxiCentral,	//Named Pipe name
+			PIPE_ACCESS_DUPLEX,						//Access to read and write
+			PIPE_TYPE_MESSAGE |						//Message type
+			PIPE_WAIT,								//Blocking mode
+			param->app->maxTaxis,					//Max instances
+			sizeof(NPCommsTaxiCentral),					//Buffer size of output
+			sizeof(NPCTC_Identity),					//Buffer size of input
+			0,										//Client timeout
+			NULL);									//Security attributes
+
+		//If the CreateNamedPipe return invalid handle check if busy or unexpected error
+		if(hPipe == INVALID_HANDLE_VALUE){
+			if(GetLastError() == ERROR_PIPE_BUSY){
+				_tprintf(TEXT("%sCentral doesn't have more empty slots for taxis! Try again later..."), Utils_NewSubLine());
+				continue;
+			} else
+				_tprintf(TEXT("%sCreateNamedPipe failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+			return -1;
+		}
+
+		//The taxi connection failed, hence, closing the pipe
+		if(!ConnectNamedPipe(hPipe, NULL))
+			CloseHandle(hPipe);
+
+		NPCTC_Identity taxiIdentity;
+		ReadFile(
+			hPipe,					//Named pipe handle
+			&taxiIdentity,			//Read into
+			sizeof(NPCTC_Identity), //Size being read
+			NULL,					//Quantity of bytes read
+			NULL);					//Overlapped IO
+
+		int taxiIndex = Get_TaxiIndex(param->app, taxiIdentity.licensePlate);
+		if(taxiIndex == -1){ //Taxi is not listed on the central
+			//TAG_ToDo: Maybe force logout on said taxi through named pipe
+			_tprintf(TEXT("%sA non logged in taxi (%s) tried to connect"), Utils_NewSubLine(), taxiIdentity.licensePlate);
+			return -1;
+		}
+
+		param->app->taxiList[taxiIndex].taxiNamedPipe = hPipe;
+		_tprintf(TEXT("%sTaxi with license plate %s with index of %d has been connected to the central!"), Utils_NewSubLine(), taxiIdentity.licensePlate, taxiIndex);
+	}
+
+	free(param);
+	return 1;
+}

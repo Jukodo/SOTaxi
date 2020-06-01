@@ -29,8 +29,11 @@
 #define NAME_EVENT_QnARequest_Read TEXT("JUSO2TAXI_EVENT_QNAR_R")
 #define NAME_EVENT_QnARequest_Write TEXT("JUSO2TAXI_EVENT_QNAR_W")
 #define NAME_EVENT_NewTransportRequest TEXT("JUSO2TAXI_EVENT_NTR")
+#define NAME_EVENT_TaxiLoggingIn TEXT("JUSO2TAXI_EVENT_TLI")
 
 #define NAME_SEMAPHORE_HasTossRequest TEXT("JUSO2TAXI_SEMAPHORE_HTR")
+
+#define NAME_NAMEDPIPE_CommsTaxiCentral TEXT("\\\\.\\pipe\\JUSO2TAXI_NAMEDPIPE_CTC")
 
 //Main
 #include <stdio.h>

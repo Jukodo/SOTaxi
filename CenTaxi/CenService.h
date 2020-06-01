@@ -1,5 +1,6 @@
 #pragma once
 #include "CenDLL.h"
+#include "CenTaxi.h"
 #include "CenPassenger.h"
 #include "CenSettings.h"
 
@@ -14,12 +15,15 @@ struct ThreadHandles{
 	DWORD dwIdQnARequests;
 	HANDLE hTossRequests;
 	DWORD dwIdTossRequests;
+	HANDLE hConnectingTaxiPipes;
+	DWORD dwIdConnectingTaxiPipes;
 };
 
 struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
+	HANDLE hEvent_TaxiLoggingIn;
 	HANDLE hSemaphore_HasTossRequest;
 };
 
@@ -36,7 +40,7 @@ struct ShmHandles{
 
 struct Application{
 	Settings settings;
-	Taxi* taxiList;
+	CenTaxi* taxiList;
 	Map map;
 	CenPassenger* passengerList;
 	ThreadHandles threadHandles;

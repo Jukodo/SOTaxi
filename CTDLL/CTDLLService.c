@@ -3,8 +3,8 @@
 
 bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
-	app->loggedInTaxi.empty = true;
-	app->loggedInTaxi.object.speedMultiplier = DEFAULT_SPEED;
+	app->loggedInTaxi.taxiInfo.empty = true;
+	app->loggedInTaxi.taxiInfo.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
 
 	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NULL);
@@ -17,12 +17,24 @@ bool Setup_Application(Application* app){
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hMutex_QnARequest = CreateMutex(//This mutex is only created on and for ConTaxi
+	syncHandles->hMutex_QnARequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
 		NULL,							//Security attributes
 		FALSE,							//Initial owner (TRUE = Locked from the creation)
 		NAME_MUTEX_QnARequest			//Mutex name
 	);
 	Utils_DLL_Register(NAME_MUTEX_QnARequest, DLL_TYPE_MUTEX);
+	syncHandles->hMutex_TossRequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
+		NULL,							//Security attributes
+		FALSE,							//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_TossRequest			//Mutex name
+	);
+	Utils_DLL_Register(NAME_MUTEX_TossRequest, DLL_TYPE_MUTEX);
+	syncHandles->hMutex_CommsTaxiCentral_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
+		NULL,							//Security attributes
+		FALSE,							//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_Connecting2Central	//Mutex name
+	);
+	Utils_DLL_Register(NAME_MUTEX_Connecting2Central, DLL_TYPE_MUTEX);
 	syncHandles->hEvent_QnARequest_Read = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
@@ -43,12 +55,13 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
-	syncHandles->hMutex_TossRequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
-		NULL,							//Security attributes
-		FALSE,							//Initial owner (TRUE = Locked from the creation)
-		NAME_MUTEX_TossRequest			//Mutex name
+	syncHandles->hEvent_TaxiLoggingIn = OpenEvent(//This event is already created with CenTaxi
+		EVENT_ALL_ACCESS,				//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_TaxiLoggingIn		//Event name
 	);
-	Utils_DLL_Register(NAME_MUTEX_TossRequest, DLL_TYPE_MUTEX);
+	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
+
 	syncHandles->hSemaphore_HasTossRequest = OpenSemaphore(
 		SEMAPHORE_ALL_ACCESS,			//Security Attributes
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
@@ -56,11 +69,13 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_SEMAPHORE_HasTossRequest, DLL_TYPE_SEMAPHORE);
 
-	return !(syncHandles->hMutex_QnARequest == NULL ||
+	return !(syncHandles->hMutex_QnARequest_CanAccess == NULL ||
+		syncHandles->hMutex_TossRequest_CanAccess == NULL ||
+		syncHandles->hMutex_CommsTaxiCentral_CanAccess == NULL ||
 		syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
-		syncHandles->hMutex_TossRequest_CanAccess == NULL ||
+		syncHandles->hEvent_TaxiLoggingIn == NULL ||
 		syncHandles->hSemaphore_HasTossRequest == NULL);
 }
 
@@ -182,11 +197,13 @@ void Setup_CloseAllHandles(Application* app){
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
-	CloseHandle(syncHandles->hMutex_QnARequest);
+	CloseHandle(syncHandles->hMutex_QnARequest_CanAccess);
+	CloseHandle(syncHandles->hMutex_TossRequest_CanAccess);
+	CloseHandle(syncHandles->hMutex_CommsTaxiCentral_CanAccess);
 	CloseHandle(syncHandles->hEvent_QnARequest_Read);
 	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
-	CloseHandle(syncHandles->hMutex_TossRequest_CanAccess);
+	CloseHandle(syncHandles->hEvent_TaxiLoggingIn);
 	CloseHandle(syncHandles->hSemaphore_HasTossRequest);
 }
 
@@ -211,6 +228,47 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
 	CloseHandle(threadHandles->hQnARequests);
 	CloseHandle(threadHandles->hNotificationReceiver_NewTransport);
+}
+
+bool Service_ConnectToCentralNamedPipe(Application* app){
+	WaitForSingleObject(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess, INFINITE);
+
+	HANDLE hPipe = CreateFile(
+		NAME_NAMEDPIPE_CommsTaxiCentral,   //Named Pipe name
+		GENERIC_READ |  //Read Access
+		GENERIC_WRITE,	//Write Access
+		0,              //Doesn't share
+		NULL,           //Security attributes
+		OPEN_EXISTING,  //Open existing pipe 
+		0,              //Atributes
+		NULL);          //Template file 
+
+	if(hPipe == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sCentral doesn't have more empty slots for taxis! Try again later..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateFile failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		CloseHandle(hPipe);
+		ReleaseMutex(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess);
+		return false;
+	}
+
+	NPCTC_Identity npctcIdentity;
+	_tcscpy_s(npctcIdentity.licensePlate, _countof(npctcIdentity.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
+
+	WriteFile(
+		hPipe,					//Named pipe handle
+		&npctcIdentity,			//Write from 
+		sizeof(NPCTC_Identity), //Size being written
+		NULL,					//Quantity Bytes written
+		NULL);					//Overlapped IO
+
+	//TAG_ToDo
+	app->loggedInTaxi.centralNamedPipe = hPipe;
+
+	ReleaseMutex(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess);
+	return true;
 }
 
 bool Service_GetMap(Application* app){
