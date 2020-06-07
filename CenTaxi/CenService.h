@@ -48,6 +48,7 @@ struct Application{
 	ShmHandles shmHandles;
 	int maxTaxis;
 	int maxPassengers;
+	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
 };
 
 #define CMD_HELP TEXT("/help")
@@ -61,6 +62,8 @@ struct Application{
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
 #define CMD_DLL_LOG TEXT("/createDllLog")
+#define CMD_ASSIGN_RANDOM TEXT("/assignRandom")
+#define CMD_SHUTDOWN_RANDOM TEXT("/shutdownRandom")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 enum CentralCommands{
@@ -76,6 +79,8 @@ enum CentralCommands{
 	CC_LOAD_REGISTRY,
 	CC_DLL_LOG,
 	CC_CLOSEAPP,
+	CC_ASSIGN_RANDOM,
+	CC_SHUTDOWN_RANDOM,
 	CC_UNDEFINED
 };
 
@@ -91,11 +96,13 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseShmHandles(ShmHandles* shmHandles);
 
 bool isTaxiListFull(Application* app);
+bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY);
+bool Delete_Taxi(Application* app, int index);
 int Get_QuantLoggedInTaxis(Application* app);
 int Get_FreeIndexTaxiList(Application* app);
 int Get_TaxiIndex(Application* app, TCHAR* licensePlate);
-Taxi* Get_Taxi(Application* app, int index);
-Taxi* Get_TaxiAt(Application* app, int coordX, int coordY);
+CenTaxi* Get_Taxi(Application* app, int index);
+CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY);
 
 bool isPassengerListFull(Application* app);
 int Get_QuantLoggedInTaxis(Application* app);
@@ -103,7 +110,7 @@ int Get_FreeIndexTaxiList(Application* app);
 int Get_PassengerIndex(Application* app, TCHAR* Id);
 CenPassenger* Get_Passenger(Application* app, int index);
 
-bool isValid_ObjectPosition(Application* app, float coordX, float coordY);
+bool isValid_ObjectPosition(Application* app, double coordX, double coordY);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
@@ -111,7 +118,8 @@ LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest
 bool Service_NewPassenger(Application* app, Passenger pass);
 NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 
-bool Service_KickTaxi(Application* app, TCHAR* licensePlate);
+bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex);
+bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global);
 void Service_CloseApp(Application* app);
 
 bool Command_SetAssignmentTimeout(Application* app, TCHAR* value);
@@ -121,3 +129,5 @@ void Simulate_NewTransport(Application* app);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);
+void Temp_AssignRandom(Application* app);
+void Temp_ShutdownRandom(Application* app);

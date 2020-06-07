@@ -18,19 +18,23 @@ typedef enum NTInterestResponse NTInterestResponse;
 //Other Enums
 typedef enum QnARequestType QnARequestType;
 typedef enum TossRequestType TossRequestType;
+typedef enum CommsTCType CommsTCType;
+typedef enum ShutdownType ShutdownType;
 
 //SHM
 typedef struct NewTransportBuffer NewTransportBuffer;
 typedef struct TossRequestsBuffer TossRequestsBuffer;
 
 //Named Pipe
-typedef struct NPCommsTaxiCentral NPCommsTaxiCentral;
-typedef struct NPCTC_Identity NPCTC_Identity;
+typedef struct CommsTC CommsTC;
+typedef struct CommsTC_Identity CommsTC_Identity;
+typedef struct CommsTC_Assign CommsTC_Assign;
+typedef struct CommsTC_Shutdown CommsTC_Shutdown;
 
 struct LoginRequest{
 	TCHAR licensePlate[STRING_SMALL];
-	float coordX;
-	float coordY;
+	double coordX;
+	double coordY;
 };
 
 struct NTInterestRequest{
@@ -112,10 +116,35 @@ struct TossRequestsBuffer{
 	int tail;
 };
 
-struct NPCommsTaxiCentral{
+struct CommsTC_Identity{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 };
 
-struct NPCTC_Identity{
-	TCHAR licensePlate[STRING_LICENSEPLATE];
+struct CommsTC_Assign{
+	TCHAR passId[STRING_SMALL];
+	double coordX;
+	double coordY;
+};
+
+struct CommsTC_Shutdown{
+	ShutdownType shutdownType;
+	TCHAR message[STRING_LARGE];
+};
+
+enum CommsTCType{
+	CTC_ASSIGNED,
+	CTC_SHUTDOWN
+};
+
+struct CommsTC{
+	union{
+		CommsTC_Assign assignComm;
+		CommsTC_Shutdown shutdownComm;
+	};
+	CommsTCType commType;
+};
+
+enum Shutdown_Type{
+	ST_GLOBAL,
+	ST_KICKED
 };

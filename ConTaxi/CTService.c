@@ -59,15 +59,16 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 }
 
 bool Service_PosLoginSetup(Application* app){
-	app->NTBuffer_Tail = ((NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
-	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
-	app->loggedInTaxi.taxiInfo.object.speedX = 1;
-	app->loggedInTaxi.taxiInfo.object.speedY = 0;
-
 	if(!Service_ConnectToCentralNamedPipe(app)){
 		_tprintf(TEXT("%sFailed while trying to connect to central's named pipe!"), Utils_NewSubLine());
 		return false;
 	}
+
+	app->NTBuffer_Tail = ((NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
+	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
+	ResumeThread(app->threadHandles.hNotificationReceiver_NamedPipe); //Allows NamedPipe notifications to start popping up
+	app->loggedInTaxi.taxiInfo.object.speedX = 1;
+	app->loggedInTaxi.taxiInfo.object.speedY = 0;
 	
 	TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
 	srParam->app = app;
@@ -236,13 +237,13 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 	LARGE_INTEGER liTime;
 	liTime.QuadPart = -10000000LL * 1 /*Triggers after 1 second*/;
 	SetWaitableTimer(param->app->taxiMovementRoutine, &liTime, 1000, NULL, NULL, FALSE);
-	while(true){
+	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->taxiMovementRoutine, INFINITE);
 
-		Taxi* loggedInTaxi = &param->app->loggedInTaxi;
+		CTTaxi* loggedInTaxi = &param->app->loggedInTaxi;
 		if(param->app->loggedInTaxi.taxiInfo.state == TS_EMPTY){
-			if(Movement_NextRandomStep(param->app, &loggedInTaxi->object)){
-				Service_NewPosition(param->app, loggedInTaxi->object.coordX, loggedInTaxi->object.coordY);
+			if(Movement_NextRandomStep(param->app, &loggedInTaxi->taxiInfo.object)){
+				Service_NewPosition(param->app, loggedInTaxi->taxiInfo.object.coordX, loggedInTaxi->taxiInfo.object.coordY);
 			}
 		}
 	}

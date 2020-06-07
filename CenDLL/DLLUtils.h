@@ -20,6 +20,7 @@ CENDLL_API bool Utils_StringIsEmpty(TCHAR* str);
 CENDLL_API TCHAR* Utils_NewLine();
 CENDLL_API TCHAR* Utils_NewSubLine();
 CENDLL_API void Utils_CleanStdin();
+CENDLL_API bool Utils_CloseNamedPipe(HANDLE namedPipe);
 
 CENDLL_API void Utils_DLL_Register(TCHAR* name, int type);
 CENDLL_API void Utils_DLL_Log(TCHAR* text);

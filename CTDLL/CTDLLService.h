@@ -12,6 +12,8 @@ struct ThreadHandles{
 	DWORD dwIdQnARequests;
 	HANDLE hNotificationReceiver_NewTransport;
 	DWORD dwIdNotificationReceiver_NewTransport;
+	HANDLE hNotificationReceiver_NamedPipe;
+	DWORD dwIdNotificationReceiver_NamedPipe;
 	HANDLE hTossRequests;
 	DWORD dwIdTossRequests;
 	HANDLE hStepRoutine;
@@ -51,6 +53,7 @@ struct Application{
 	int maxTaxis;
 	int maxPassengers;
 	int NTBuffer_Tail; //Used as a tail for the new transport request buffer (each taxi has a tail)
+	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
 };
 
 #define CMD_HELP TEXT("/help")
@@ -82,9 +85,9 @@ CTDLL_API bool Setup_OpenSmhHandles(Application* app);
 CTDLL_API bool Setup_OpenThreadHandles(Application* app);
 
 CTDLL_API void Setup_CloseAllHandles(Application* app);
+CTDLL_API void Setup_CloseThreadHandles(ThreadHandles* threadHandles);
 CTDLL_API void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 CTDLL_API void Setup_CloseSmhHandles(ShmHandles* shmHandles);
-CTDLL_API void Setup_CloseThreadHandles(ThreadHandles* threadHandles);
 
 CTDLL_API bool Service_ConnectToCentralNamedPipe(Application* app);
 CTDLL_API bool Service_GetMap(Application* app);

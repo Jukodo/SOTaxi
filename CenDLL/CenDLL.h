@@ -18,6 +18,9 @@
 
 #define STRING_LICENSEPLATE 9
 
+#define SHUTDOWN_REASON_Undefined TEXT("Undefined Reason")
+#define SHUTDOWN_REASON_Global TEXT("Application is closing")
+
 #define NAME_SHM_QnARequest TEXT("JUSO2TAXI_SMH_QNAR")
 #define NAME_SHM_TransportRequestBuffer TEXT("JUSO2TAXI_SMH_TRB")
 #define NAME_SHM_Map TEXT("JUSO2TAXI_SMH_MAP")

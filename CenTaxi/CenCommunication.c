@@ -4,8 +4,12 @@
 DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 	TParam_QnARequest* param = (TParam_QnARequest*) _param;
 
-	while(true){
+	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Read, INFINITE);
+
+		if(!param->app->keepRunning)
+			break;
+
 		QnARequest* shm = param->app->shmHandles.lpSHM_QnARequest;
 
 		switch(shm->requestType){
@@ -32,6 +36,8 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 
 		SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
 	}
+	_tprintf(TEXT("%sThread_ReceiveQnARequests closing"), Utils_NewLine());
+
 	free(param);
 	return 1;
 }
@@ -76,10 +82,12 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	}
 
 	_tprintf(TEXT("%sQuantity of interested taxis = %d"), Utils_NewSubLine(), numIntTaxis);
-	int a = (rand() % numIntTaxis);
-	_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), Get_Taxi(param->app, myPassenger->interestedTaxis[a])->LicensePlate);
+	int chosenTaxi = (rand() % numIntTaxis);
+
+	_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), Get_Taxi(param->app, myPassenger->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
+	Service_AssignTaxi2Passenger(param->app, myPassenger->interestedTaxis[chosenTaxi], param->myIndex);
 	/*TAG_TODO
-	**Notify Taxi that he has been chosen and assigned to respective passenger
+	**Notify Taxi that he has been chosen and assigned to respective passenger *CHECK*
 	**Notify Passenger that he has be assigned to respective taxi
 	*/
 
@@ -91,8 +99,12 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 	TParam_ConsumeTossRequests* param = (TParam_ConsumeTossRequests*) _param;
 	TossRequestsBuffer* buffer = (TossRequestsBuffer*) param->app->shmHandles.lpSHM_TossReqBuffer;
 
-	while(true){
+	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hSemaphore_HasTossRequest, INFINITE);
+
+		if(!param->app->keepRunning)
+			break;
+
 		if(buffer->tail != buffer->head){
 			buffer->tossRequests[buffer->tail];
 			switch(buffer->tossRequests[buffer->tail].tossType){
@@ -105,9 +117,9 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 							buffer->tossRequests[buffer->tail].tossPosition.newY);
 						Utils_DLL_Log(log);
 
-						Taxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
-						updatingTaxi->object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
-						updatingTaxi->object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
+						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+						updatingTaxi->taxiInfo.object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
+						updatingTaxi->taxiInfo.object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
 					}
 					break;
 				case TRT_TAXI_STATE:
@@ -141,6 +153,7 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 			buffer->tail = (buffer->tail + 1) % TOSSBUFFER_MAX;
 		}
 	}
+	_tprintf(TEXT("%sThread_ConsumeTossRequests closing"), Utils_NewLine());
 
 	free(param);
 	return 1;
@@ -150,17 +163,17 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 	TParam_ConnectingTaxiPipes* param = (TParam_ConnectingTaxiPipes*) _param;
 
 	HANDLE hPipe;
-	while(true){
+	while(param->app->keepRunning){
 		hPipe = CreateNamedPipe(
 			NAME_NAMEDPIPE_CommsTaxiCentral,	//Named Pipe name
-			PIPE_ACCESS_DUPLEX,						//Access to read and write
-			PIPE_TYPE_MESSAGE |						//Message type
-			PIPE_WAIT,								//Blocking mode
-			param->app->maxTaxis,					//Max instances
-			sizeof(NPCommsTaxiCentral),					//Buffer size of output
-			sizeof(NPCTC_Identity),					//Buffer size of input
-			0,										//Client timeout
-			NULL);									//Security attributes
+			PIPE_ACCESS_DUPLEX,					//Access to read and write
+			PIPE_TYPE_MESSAGE |					//Message type
+			PIPE_WAIT,							//Blocking mode
+			param->app->maxTaxis,				//Max instances
+			sizeof(CommsTC),					//Buffer size of output
+			sizeof(CommsTC_Identity),			//Buffer size of input
+			0,									//Client timeout
+			NULL);								//Security attributes
 
 		//If the CreateNamedPipe return invalid handle check if busy or unexpected error
 		if(hPipe == INVALID_HANDLE_VALUE){
@@ -176,24 +189,33 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		if(!ConnectNamedPipe(hPipe, NULL))
 			CloseHandle(hPipe);
 
-		NPCTC_Identity taxiIdentity;
+		if(!param->app->keepRunning)
+			break;
+
+		CommsTC_Identity taxiIdentity;
 		ReadFile(
 			hPipe,					//Named pipe handle
 			&taxiIdentity,			//Read into
-			sizeof(NPCTC_Identity), //Size being read
+			sizeof(CommsTC_Identity), //Size being read
 			NULL,					//Quantity of bytes read
 			NULL);					//Overlapped IO
 
 		int taxiIndex = Get_TaxiIndex(param->app, taxiIdentity.licensePlate);
 		if(taxiIndex == -1){ //Taxi is not listed on the central
-			//TAG_ToDo: Maybe force logout on said taxi through named pipe
+			Utils_CloseNamedPipe(hPipe);
 			_tprintf(TEXT("%sA non logged in taxi (%s) tried to connect"), Utils_NewSubLine(), taxiIdentity.licensePlate);
 			return -1;
 		}
 
 		param->app->taxiList[taxiIndex].taxiNamedPipe = hPipe;
-		_tprintf(TEXT("%sTaxi with license plate %s with index of %d has been connected to the central!"), Utils_NewSubLine(), taxiIdentity.licensePlate, taxiIndex);
+		_tprintf(TEXT("%s[Taxi] %s (%.2lf, %.2lf) has logged in!"), 
+			Utils_NewSubLine(), 
+			taxiIdentity.licensePlate, 
+			param->app->taxiList[taxiIndex].taxiInfo.object.coordX,
+			param->app->taxiList[taxiIndex].taxiInfo.object.coordY);
 	}
+
+	_tprintf(TEXT("%sThread_ConnectingTaxiPipes closing"), Utils_NewLine());
 
 	free(param);
 	return 1;

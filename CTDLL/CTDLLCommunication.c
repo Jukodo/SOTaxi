@@ -83,7 +83,7 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 	TParam_NotificationReceiver_NT* param = (TParam_NotificationReceiver_NT*) _param;
 	NewTransportBuffer* buffer;
 
-	while(true){
+	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hEvent_Notify_T_NewTranspReq, INFINITE);
 		buffer = (NewTransportBuffer*) param->app->shmHandles.lpSHM_NTBuffer;
 
@@ -115,7 +115,7 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	TossRequestsBuffer* buffer = (TossRequestsBuffer*) param->app->shmHandles.lpSHM_TossReqBuffer;
 
 	WaitForSingleObject(param->app->syncHandles.hMutex_TossRequest_CanAccess, INFINITE);
-	
+
 	buffer->tossRequests[buffer->head] = param->tossRequest;
 	buffer->head = (buffer->head + 1) % TOSSBUFFER_MAX;
 
@@ -147,6 +147,51 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 
 	ReleaseSemaphore(param->app->syncHandles.hSemaphore_HasTossRequest, 1, NULL);
 	ReleaseMutex(param->app->syncHandles.hMutex_TossRequest_CanAccess);
+
+	free(param);
+	return 1;
+}
+
+DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
+	TParam_NotificationReceiver_NP* param = (TParam_NotificationReceiver_NP*) _param;
+
+	CommsTC notificationReceived;
+	while(param->app->keepRunning){
+		ReadFile(
+			param->app->loggedInTaxi.centralNamedPipe,	//Named pipe handle
+			&notificationReceived,						//Read into
+			sizeof(CommsTC),							//Size being read
+			NULL,										//Quantity of bytes read
+			NULL);										//Overlapped IO
+
+		switch(notificationReceived.commType){
+			case CTC_ASSIGNED:
+				_tprintf(TEXT("%sI've received a message that i've been assigned to [%s] at (%.2lf, %.2lf)!"), Utils_NewLine(), notificationReceived.assignComm.passId, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
+				/*ToDo (TAG_TODO)
+				**Set destination of taxi to passenger location
+				*/
+				break;
+			case CTC_SHUTDOWN:
+				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());
+				switch(notificationReceived.shutdownComm.shutdownType){
+					case ST_GLOBAL:
+						_tprintf(TEXT("%sThe shutdown was global!"), Utils_NewSubLine());
+						break;
+					case ST_KICKED:
+						_tprintf(TEXT("%sI've been kicked!"), Utils_NewSubLine());
+						break;
+				}
+				_tprintf(TEXT("%sReason: %s"), Utils_NewSubLine(), notificationReceived.shutdownComm.message);
+				_tprintf(TEXT("%sType anything to leave!"), Utils_NewSubLine());
+
+				param->app->keepRunning = false;
+				Utils_CloseNamedPipe(param->app->loggedInTaxi.centralNamedPipe);
+				if(param->app->taxiMovementRoutine != NULL)
+					CancelWaitableTimer(param->app->taxiMovementRoutine);
+
+				break;
+		}
+	}
 
 	free(param);
 	return 1;

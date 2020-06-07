@@ -103,8 +103,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	TCHAR sCommand[STRING_MEDIUM];
 	TCHAR sArgument[STRING_SMALL];
-	TaxiCommands command;
-	bool flagReadyToLeave = false;
 	do{
 		ZeroMemory(sCommand, STRING_MEDIUM);
 		ZeroMemory(sArgument, STRING_SMALL);
@@ -113,20 +111,21 @@ int _tmain(int argc, LPTSTR argv[]) {
 		_tscanf_s(TEXT(" %[^\n]"), sCommand, _countof(sCommand));
 		Utils_CleanStdin();
 
-		command = Service_UseCommand(&app, sCommand);
-		if(command == TC_HELP){
-			_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
-			_tprintf(TEXT("%s%s:\tSpeeds the taxi up by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_UP);
-			_tprintf(TEXT("%s%s:\tSpeeds the taxi down by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_DOWN);
-			_tprintf(TEXT("%s%s:\tTurn on automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_ON);
-			_tprintf(TEXT("%s%s:\tTurn off automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_OFF);
-			_tprintf(TEXT("%s%s:\tDefine new CDN value"), Utils_NewSubLine(), CMD_DEFINE_CDN);
-			_tprintf(TEXT("%s%s:\tSend interest to a new transport request"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
-			_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
-			_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
-		}
+		if(!app.keepRunning)
+			break;
 
-		switch(command){
+		switch(Service_UseCommand(&app, sCommand)){
+			case TC_HELP:
+				_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
+				_tprintf(TEXT("%s%s:\tSpeeds the taxi up by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_UP);
+				_tprintf(TEXT("%s%s:\tSpeeds the taxi down by 0.5cells per second"), Utils_NewSubLine(), CMD_SPEED_DOWN);
+				_tprintf(TEXT("%s%s:\tTurn on automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_ON);
+				_tprintf(TEXT("%s%s:\tTurn off automatic response to new passenger"), Utils_NewSubLine(), CMD_AUTORESP_OFF);
+				_tprintf(TEXT("%s%s:\tDefine new CDN value"), Utils_NewSubLine(), CMD_DEFINE_CDN);
+				_tprintf(TEXT("%s%s:\tSend interest to a new transport request"), Utils_NewSubLine(), CMD_REQUEST_INTEREST);
+				_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
+				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
+				break;
 			case TC_DEFINE_CDN:
 				_tprintf(TEXT("%sInsert new CDN value:"), Utils_NewSubLine());
 				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
@@ -145,14 +144,15 @@ int _tmain(int argc, LPTSTR argv[]) {
 				Service_RegisterInterest(&app, sArgument);
 				break;
 			case TC_CLOSEAPP:
-				flagReadyToLeave = true;
+				Service_CloseApp(&app);
+				app.keepRunning = false;
 				break;
 			case TC_UNDEFINED:
 				_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				continue;
 		}
 
-	} while(!flagReadyToLeave);
+	} while(app.keepRunning);
 	#pragma endregion
 
 	#pragma region Closing

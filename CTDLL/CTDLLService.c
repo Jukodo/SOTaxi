@@ -3,6 +3,7 @@
 
 bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
+	app->keepRunning = true;
 	app->loggedInTaxi.taxiInfo.empty = true;
 	app->loggedInTaxi.taxiInfo.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
@@ -187,13 +188,33 @@ bool Setup_OpenThreadHandles(Application* app){
 	if(app->threadHandles.hNotificationReceiver_NewTransport == NULL)
 		return false;
 
+	TParam_NotificationReceiver_NP* npParam = (TParam_NotificationReceiver_NP*) malloc(sizeof(TParam_NotificationReceiver_NP));
+	npParam->app = app;
+
+	app->threadHandles.hNotificationReceiver_NamedPipe = CreateThread(
+		NULL,														//Security Attributes
+		0,															//Stack Size (0 = default)
+		Thread_NotificationReceiver_NamedPipe,					//Function
+		(LPVOID) npParam,												//Param
+		CREATE_SUSPENDED,											//Creation Flag
+		&app->threadHandles.dwIdNotificationReceiver_NamedPipe	//Thread ID
+	);
+
+	if(app->threadHandles.hNotificationReceiver_NamedPipe == NULL)
+		return false;
+
 	return true;
 }
 
 void Setup_CloseAllHandles(Application* app){
+	Setup_CloseThreadHandles(&app->threadHandles);
 	Setup_CloseSyncHandles(&app->syncHandles);
 	Setup_CloseSmhHandles(&app->shmHandles);
-	Setup_CloseThreadHandles(&app->threadHandles);
+}
+
+void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
+	CloseHandle(threadHandles->hQnARequests);
+	CloseHandle(threadHandles->hNotificationReceiver_NewTransport);
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
@@ -225,11 +246,6 @@ void Setup_CloseSmhHandles(ShmHandles* shmHandles){
 	#pragma endregion
 }
 
-void Setup_CloseThreadHandles(ThreadHandles* threadHandles){
-	CloseHandle(threadHandles->hQnARequests);
-	CloseHandle(threadHandles->hNotificationReceiver_NewTransport);
-}
-
 bool Service_ConnectToCentralNamedPipe(Application* app){
 	WaitForSingleObject(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess, INFINITE);
 
@@ -254,17 +270,16 @@ bool Service_ConnectToCentralNamedPipe(Application* app){
 		return false;
 	}
 
-	NPCTC_Identity npctcIdentity;
+	CommsTC_Identity npctcIdentity;
 	_tcscpy_s(npctcIdentity.licensePlate, _countof(npctcIdentity.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
 
 	WriteFile(
 		hPipe,					//Named pipe handle
 		&npctcIdentity,			//Write from 
-		sizeof(NPCTC_Identity), //Size being written
+		sizeof(CommsTC_Identity), //Size being written
 		NULL,					//Quantity Bytes written
 		NULL);					//Overlapped IO
 
-	//TAG_ToDo
 	app->loggedInTaxi.centralNamedPipe = hPipe;
 
 	ReleaseMutex(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess);

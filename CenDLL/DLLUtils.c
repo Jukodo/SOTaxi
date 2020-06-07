@@ -36,6 +36,17 @@ void Utils_CleanStdin(){
 	while((c = fgetc(stdin)) != '\n' && c != EOF);
 }
 
+bool Utils_CloseNamedPipe(HANDLE namedPipe){
+	if(namedPipe == NULL)
+		return false;
+
+	FlushFileBuffers(namedPipe); //Flush the pipe to allow the client to read the pipe's contents before disconnecting. 
+	DisconnectNamedPipe(namedPipe); //Then disconnect the pipe
+	CloseHandle(namedPipe); //Close the handle to this pipe instance
+
+	return true;
+}
+
 void Utils_DLL_Register(TCHAR* name, int type){
 	HINSTANCE hLib = LoadLibrary(TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll"));
 	if(hLib == NULL){

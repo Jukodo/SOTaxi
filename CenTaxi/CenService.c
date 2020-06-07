@@ -5,6 +5,7 @@
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ZeroMemory(app, sizeof(Application));
 	srand((unsigned int) time(NULL));
+	app->keepRunning = true;
 	app->settings.secAssignmentTimeout = DEFAULT_ASSIGNMENT_TIMEOUT;
 	app->settings.allowTaxiLogins = DEFAULT_ALLOW_TAXI_LOGINS;
 
@@ -378,6 +379,37 @@ bool isTaxiListFull(Application* app){
 	return Get_QuantLoggedInTaxis(app) >= app->maxTaxis;
 }
 
+bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY){
+	/*No need for more validation...
+	**Since it is assumed that this function is only called at Service_LoginTaxi, which validates everything
+	*/
+
+	CenTaxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
+	if(anchorTaxi == NULL)
+		return false;
+	
+	anchorTaxi->taxiInfo.empty = false;
+	_tcscpy_s(anchorTaxi->taxiInfo.LicensePlate, _countof(anchorTaxi->taxiInfo.LicensePlate), licensePlate);
+	anchorTaxi->taxiInfo.object.coordX = coordX;
+	anchorTaxi->taxiInfo.object.coordY = coordY;
+	return true;
+}
+
+bool Delete_Taxi(Application* app, int index){
+	if(index < 0 || index >= app->maxTaxis)
+		return false;
+
+	CenTaxi* anchorTaxi = Get_Taxi(app, index);
+	if(anchorTaxi == NULL)
+		return false;
+
+	anchorTaxi->taxiInfo.empty = true;
+	if(anchorTaxi->taxiNamedPipe != NULL)
+		Utils_CloseNamedPipe(anchorTaxi->taxiNamedPipe);
+
+	return true;
+}
+
 int Get_QuantLoggedInTaxis(Application* app){
 	int quantLoggedInTaxis = 0;
 
@@ -413,7 +445,7 @@ int Get_TaxiIndex(Application* app, TCHAR* licensePlate){
 	return -1;
 }
 
-Taxi* Get_Taxi(Application* app, int index){
+CenTaxi* Get_Taxi(Application* app, int index){
 	if(app->taxiList == NULL)
 		return NULL;
 
@@ -423,7 +455,7 @@ Taxi* Get_Taxi(Application* app, int index){
 	return NULL;
 }
 
-Taxi* Get_TaxiAt(Application* app, int coordX, int coordY){
+CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY){
 	if(app->taxiList == NULL)
 		return NULL;
 
@@ -486,8 +518,9 @@ CenPassenger* Get_Passenger(Application* app, int index){
 	return NULL;
 }
 
-bool isValid_ObjectPosition(Application* app, float coordX, float coordY){
-	//ToDo
+bool isValid_ObjectPosition(Application* app, double coordX, double coordY){
+	if(coordX < 0 || coordX >= app->map.width || coordY < 0 || coordY >= app->map.height)
+		return false;
 
 	return true;
 }
@@ -562,6 +595,12 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
 		Utils_DLL_Test();
 		return CC_DLL_LOG;
+	} else if(_tcscmp(command, CMD_ASSIGN_RANDOM) == 0){
+		Temp_AssignRandom(app);
+		return CC_ASSIGN_RANDOM;
+	} else if(_tcscmp(command, CMD_SHUTDOWN_RANDOM) == 0){
+		Temp_ShutdownRandom(app);
+		return CC_SHUTDOWN_RANDOM;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -586,11 +625,8 @@ LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest
 	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
 		return LR_INVALID_EXISTS;
 
-	Taxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
-	anchorTaxi->empty = false;
-	_tcscpy_s(anchorTaxi->LicensePlate, _countof(anchorTaxi->LicensePlate), loginRequest->licensePlate);
-	anchorTaxi->object.coordX = loginRequest->coordX;
-	anchorTaxi->object.coordY = loginRequest->coordY;
+	if(!Add_Taxi(app, loginRequest->licensePlate, loginRequest->coordX, loginRequest->coordY))
+		return LR_INVALID_UNDEFINED;
 
 	return LR_SUCCESS;
 }
@@ -620,13 +656,78 @@ NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest*
 	return NTIR_SUCCESS;
 }
 
-bool Service_KickTaxi(Application* app, TCHAR* licensePlate){
-	return false;
+bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex){
+	if(taxiIndex < 0 || taxiIndex >= app->maxTaxis || passengerIndex < 0 || passengerIndex >= app->maxPassengers)
+		return false;
+	
+	if(app->taxiList[taxiIndex].taxiInfo.empty || app->passengerList[passengerIndex].passengerInfo.empty)
+		return false;
+
+	CommsTC sendNotification;
+	CommsTC_Assign assignComms;
+	_tcscpy_s(assignComms.passId, _countof(assignComms.passId), app->passengerList[passengerIndex].passengerInfo.Id);
+	assignComms.coordX = app->passengerList[passengerIndex].passengerInfo.object.coordX;
+	assignComms.coordY = app->passengerList[passengerIndex].passengerInfo.object.coordY;
+	sendNotification.assignComm = assignComms;
+	sendNotification.commType = CTC_ASSIGNED;
+
+	WriteFile(
+		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
+		&sendNotification,						//Write from 
+		sizeof(CommsTC),						//Size being written
+		NULL,									//Quantity Bytes written
+		NULL);									//Overlapped IO
+
+	return true;
+}
+
+bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global){
+	if(Utils_StringIsEmpty(licensePlate))
+		return false;
+
+	int taxiIndex = Get_TaxiIndex(app, licensePlate);
+	if(taxiIndex == -1)
+		return false;
+
+	CommsTC sendNotification;
+	CommsTC_Shutdown shutdownComms;
+	
+	if(Utils_StringIsEmpty(reason))
+		_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), TEXT("Undefined reason..."));
+	else
+		_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), reason);
+
+	if(global)
+		shutdownComms.shutdownType = ST_GLOBAL;
+	else
+		shutdownComms.shutdownType = ST_KICKED;
+	
+	sendNotification.shutdownComm = shutdownComms;
+	sendNotification.commType = CTC_SHUTDOWN;
+
+	WriteFile(
+		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
+		&sendNotification,						//Write from 
+		sizeof(CommsTC),						//Size being written
+		NULL,									//Quantity Bytes written
+		NULL);									//Overlapped IO
+
+	Delete_Taxi(app, taxiIndex);
+	return true;
 }
 
 void Service_CloseApp(Application* app){
+	app->keepRunning = false;
+	
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(app->taxiList[i].taxiInfo.empty)
+			continue;
+
+		Service_KickTaxi(app, app->taxiList[i].taxiInfo.LicensePlate, SHUTDOWN_REASON_Global, true);
+	}
+
 	/*ToDo (TAG_TODO)
-	**Notify taxis and passengers about this shutdown, in order to close everything accordingly
+	**Close threads and handles properly
 	*/
 }
 
@@ -675,7 +776,7 @@ void Temp_ShowMap(Application* app){
 		if(iColumn == 0)
 			_tprintf(TEXT("\n"));
 
-		Taxi* taxiFound = Get_TaxiAt(app, iColumn, iLine);
+		CenTaxi* taxiFound = Get_TaxiAt(app, iColumn, iLine);
 		if(taxiFound != NULL){
 			_tprintf(TEXT("T"));
 			continue;
@@ -750,4 +851,83 @@ void Temp_LoadRegistry(Application* app){
 
 	RegCloseKey(hRegKey);
 
+}
+
+void Temp_AssignRandom(Application* app){
+	int loggedTaxi = 0;
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(!app->taxiList[i].taxiInfo.empty)
+			loggedTaxi++;
+	}
+
+	if(loggedTaxi == 0){
+		_tprintf(TEXT("%sNo taxis logged in!"), Utils_NewSubLine());
+		return;
+	}
+
+	int chosenTaxi = rand() % loggedTaxi;
+	loggedTaxi = 0;
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(!app->taxiList[i].taxiInfo.empty){
+			if(chosenTaxi == 0){
+				CommsTC sendNotification;
+				CommsTC_Assign assignComms;
+				_tcscpy_s(assignComms.passId, _countof(assignComms.passId), TEXT("TestPass"));
+				assignComms.coordX = 6;
+				assignComms.coordY = 9;
+				sendNotification.assignComm = assignComms;
+				sendNotification.commType = CTC_ASSIGNED;
+
+				WriteFile(
+					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
+					&sendNotification,			//Write from 
+					sizeof(CommsTC), //Size being written
+					NULL,					//Quantity Bytes written
+					NULL);					//Overlapped IO
+				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
+				break;
+			}
+
+			chosenTaxi--;
+		}
+	}
+}
+
+void Temp_ShutdownRandom(Application* app){
+	int loggedTaxi = 0;
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(!app->taxiList[i].taxiInfo.empty)
+			loggedTaxi++;
+	}
+
+	if(loggedTaxi == 0){
+		_tprintf(TEXT("%sNo taxis logged in!"), Utils_NewSubLine());
+		return;
+	}
+
+	int chosenTaxi = rand() % loggedTaxi;
+	loggedTaxi = 0;
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(!app->taxiList[i].taxiInfo.empty){
+			if(chosenTaxi == 0){
+				CommsTC sendNotification;
+				CommsTC_Shutdown shutdownComms;
+				_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), TEXT("Kicked"));
+				shutdownComms.shutdownType = ST_KICKED;
+				sendNotification.shutdownComm = shutdownComms;
+				sendNotification.commType = CTC_SHUTDOWN;
+
+				WriteFile(
+					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
+					&sendNotification,			//Write from 
+					sizeof(CommsTC), //Size being written
+					NULL,					//Quantity Bytes written
+					NULL);					//Overlapped IO
+				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
+				break;
+			}
+
+			chosenTaxi--;
+		}
+	}
 }

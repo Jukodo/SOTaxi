@@ -50,6 +50,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	TCHAR sCommand[STRING_MEDIUM];
 	TCHAR sArgument[STRING_SMALL];
+	TCHAR sKickMessage[STRING_LARGE];
 	bool flagReadyToLeave = false;
 	do{
 		ZeroMemory(sCommand, STRING_MEDIUM);
@@ -72,6 +73,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
 				_tprintf(TEXT("%s%s:\tCreate DLL log [temp]"), Utils_NewSubLine(), CMD_DLL_LOG);
+				_tprintf(TEXT("%s%s:\tAssign random taxi [temp]"), Utils_NewSubLine(), CMD_SHUTDOWN_RANDOM);
+				_tprintf(TEXT("%s%s:\tShutdown random taxi [temp]"), Utils_NewSubLine(), CMD_SHUTDOWN_RANDOM);
 				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 				break;
 			case CC_LIST_TAXIS:
@@ -104,11 +107,17 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tscanf_s(TEXT(" %[^\n]"), sArgument, _countof(sArgument));
 				Utils_CleanStdin();
 
-				if(!Utils_StringIsNumber(sArgument) || !Service_KickTaxi(&app, sArgument)){
+				_tprintf(TEXT("%sWrite reason of kick:"), Utils_NewSubLine());
+				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
+				_tscanf_s(TEXT(" %[^\n]"), sKickMessage, _countof(sKickMessage));
+				Utils_CleanStdin();
+
+				if(!Service_KickTaxi(&app, sArgument, sKickMessage, false)){
 					_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				}
 				break;
 			case CC_CLOSEAPP:
+				Service_CloseApp(&app);
 				flagReadyToLeave = true;
 				break;
 			case CC_UNDEFINED:
@@ -119,6 +128,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	} while(!flagReadyToLeave);
 	#pragma endregion
 
+	_tprintf(TEXT("%sEverything is now closed! Press ENTER to leave..."), Utils_NewLine());
 	getchar();
 	return 0;
 }
