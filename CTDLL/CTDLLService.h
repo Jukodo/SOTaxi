@@ -91,3 +91,4 @@ CTDLL_API void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 
 CTDLL_API bool Service_ConnectToCentralNamedPipe(Application* app);
 CTDLL_API bool Service_GetMap(Application* app);
+CTDLL_API void Service_SetNewDestination(Application* app, double destX, double destY);

@@ -303,3 +303,9 @@ bool Service_GetMap(Application* app){
 
 	return true;
 }
+
+void Service_SetNewDestination(Application* app, double destX, double destY){
+	/*ToDo (TAG_TODO)
+	**Set destination of taxi to passenger location
+	*/
+}

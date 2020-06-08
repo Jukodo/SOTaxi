@@ -387,7 +387,14 @@ bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coord
 	CenTaxi* anchorTaxi = &app->taxiList[Get_FreeIndexTaxiList(app)];
 	if(anchorTaxi == NULL)
 		return false;
-	
+
+
+	_tprintf(TEXT("%s[Taxi Login] %s at (%.2lf, %.2lf)"),
+		Utils_NewSubLine(),
+		licensePlate,
+		coordX,
+		coordY);
+
 	anchorTaxi->taxiInfo.empty = false;
 	_tcscpy_s(anchorTaxi->taxiInfo.LicensePlate, _countof(anchorTaxi->taxiInfo.LicensePlate), licensePlate);
 	anchorTaxi->taxiInfo.object.coordX = coordX;
@@ -403,9 +410,16 @@ bool Delete_Taxi(Application* app, int index){
 	if(anchorTaxi == NULL)
 		return false;
 
+	_tprintf(TEXT("%s[Taxi Logout] %s at (%.2lf, %.2lf)"), 
+		Utils_NewSubLine(), 
+		anchorTaxi->taxiInfo.LicensePlate,
+		anchorTaxi->taxiInfo.object.coordX,
+		anchorTaxi->taxiInfo.object.coordY);
+
 	anchorTaxi->taxiInfo.empty = true;
 	if(anchorTaxi->taxiNamedPipe != NULL)
 		Utils_CloseNamedPipe(anchorTaxi->taxiNamedPipe);
+
 
 	return true;
 }

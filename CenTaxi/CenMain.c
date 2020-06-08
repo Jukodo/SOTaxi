@@ -129,6 +129,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 	#pragma endregion
 
 	_tprintf(TEXT("%sEverything is now closed! Press ENTER to leave..."), Utils_NewLine());
-	getchar();
+	_gettchar();
 	return 0;
 }

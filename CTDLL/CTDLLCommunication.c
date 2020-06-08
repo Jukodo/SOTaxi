@@ -166,10 +166,8 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 
 		switch(notificationReceived.commType){
 			case CTC_ASSIGNED:
-				_tprintf(TEXT("%sI've received a message that i've been assigned to [%s] at (%.2lf, %.2lf)!"), Utils_NewLine(), notificationReceived.assignComm.passId, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
-				/*ToDo (TAG_TODO)
-				**Set destination of taxi to passenger location
-				*/
+				_tprintf(TEXT("%s[Remove Me] I've received a message that i've been assigned to [%s] at (%.2lf, %.2lf)!"), Utils_NewLine(), notificationReceived.assignComm.passId, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
+				Service_SetNewDestination(param->app, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
 				break;
 			case CTC_SHUTDOWN:
 				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());
@@ -182,7 +180,7 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 						break;
 				}
 				_tprintf(TEXT("%sReason: %s"), Utils_NewSubLine(), notificationReceived.shutdownComm.message);
-				_tprintf(TEXT("%sType anything to leave!"), Utils_NewSubLine());
+				_tprintf(TEXT("%sType anything to leave..."), Utils_NewSubLine());
 
 				param->app->keepRunning = false;
 				Utils_CloseNamedPipe(param->app->loggedInTaxi.centralNamedPipe);

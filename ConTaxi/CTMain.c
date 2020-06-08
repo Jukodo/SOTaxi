@@ -143,10 +143,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 				Utils_CleanStdin();
 				Service_RegisterInterest(&app, sArgument);
 				break;
-			case TC_CLOSEAPP:
-				Service_CloseApp(&app);
-				app.keepRunning = false;
-				break;
 			case TC_UNDEFINED:
 				_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 				continue;

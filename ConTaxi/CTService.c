@@ -136,8 +136,29 @@ void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 }
 
 void Service_CloseApp(Application* app){
+	app->keepRunning = false;
+
+	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
+
+	TossRequest tossRequest;
+	tossRequest.tossType = TRT_TAXI_LOGOUT;
+	_tcscpy_s(tossRequest.tossLogout.licensePlate, _countof(tossRequest.tossLogout.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
+
+	param->app = app;
+	param->tossRequest = tossRequest;
+
+	app->threadHandles.hTossRequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_TossRequest,				//Function
+		(LPVOID) param,						//Param
+		0,									//Creation Flag
+		&app->threadHandles.dwIdTossRequests //Thread ID
+	);
+	WaitForSingleObject(app->threadHandles.hTossRequests, INFINITE);
 	/*ToDo (TAG_TODO)
 	**Notify central about this shutdown, in order to logout taxi from central
+	**Close handles
 	*/
 }
 
@@ -244,6 +265,8 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 		if(param->app->loggedInTaxi.taxiInfo.state == TS_EMPTY){
 			if(Movement_NextRandomStep(param->app, &loggedInTaxi->taxiInfo.object)){
 				Service_NewPosition(param->app, loggedInTaxi->taxiInfo.object.coordX, loggedInTaxi->taxiInfo.object.coordY);
+			} else{
+				CancelWaitableTimer(param->app->taxiMovementRoutine);
 			}
 		}
 	}

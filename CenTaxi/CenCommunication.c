@@ -7,9 +7,6 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Read, INFINITE);
 
-		if(!param->app->keepRunning)
-			break;
-
 		QnARequest* shm = param->app->shmHandles.lpSHM_QnARequest;
 
 		switch(shm->requestType){
@@ -36,7 +33,6 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 
 		SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
 	}
-	_tprintf(TEXT("%sThread_ReceiveQnARequests closing"), Utils_NewLine());
 
 	free(param);
 	return 1;
@@ -88,7 +84,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	Service_AssignTaxi2Passenger(param->app, myPassenger->interestedTaxis[chosenTaxi], param->myIndex);
 	/*TAG_TODO
 	**Notify Taxi that he has been chosen and assigned to respective passenger *CHECK*
-	**Notify Passenger that he has be assigned to respective taxi
+	**Notify Passenger that he has been assigned to respective taxi
 	*/
 
 	free(param);
@@ -101,9 +97,6 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 
 	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hSemaphore_HasTossRequest, INFINITE);
-
-		if(!param->app->keepRunning)
-			break;
 
 		if(buffer->tail != buffer->head){
 			buffer->tossRequests[buffer->tail];
@@ -149,11 +142,20 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 					Utils_DLL_Log(log);
 				}
 					break;
+				case TRT_TAXI_LOGOUT:
+				{
+					TCHAR log[STRING_XXL];
+					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiLogout, informing central about %s logout"),
+						buffer->tossRequests[buffer->tail].tossPosition.licensePlate);
+					Utils_DLL_Log(log);
+
+					Delete_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+				}
+				break;
 			}
 			buffer->tail = (buffer->tail + 1) % TOSSBUFFER_MAX;
 		}
 	}
-	_tprintf(TEXT("%sThread_ConsumeTossRequests closing"), Utils_NewLine());
 
 	free(param);
 	return 1;
@@ -189,9 +191,6 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		if(!ConnectNamedPipe(hPipe, NULL))
 			CloseHandle(hPipe);
 
-		if(!param->app->keepRunning)
-			break;
-
 		CommsTC_Identity taxiIdentity;
 		ReadFile(
 			hPipe,					//Named pipe handle
@@ -208,14 +207,7 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		}
 
 		param->app->taxiList[taxiIndex].taxiNamedPipe = hPipe;
-		_tprintf(TEXT("%s[Taxi] %s (%.2lf, %.2lf) has logged in!"), 
-			Utils_NewSubLine(), 
-			taxiIdentity.licensePlate, 
-			param->app->taxiList[taxiIndex].taxiInfo.object.coordX,
-			param->app->taxiList[taxiIndex].taxiInfo.object.coordY);
 	}
-
-	_tprintf(TEXT("%sThread_ConnectingTaxiPipes closing"), Utils_NewLine());
 
 	free(param);
 	return 1;

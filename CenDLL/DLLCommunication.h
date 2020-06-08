@@ -9,6 +9,7 @@ typedef struct NTInterestRequest NTInterestRequest;
 typedef struct TossRequest TossRequest;
 typedef struct TossPosition TossPosition;
 typedef struct TossState TossState;
+typedef struct TossLogout TossLogout;
 
 //Responses
 typedef struct LoginResponse LoginResponse;
@@ -92,17 +93,23 @@ struct TossState{
 	TaxiState newState;
 };
 
+struct TossLogout{
+	TCHAR licensePlate[STRING_LICENSEPLATE];
+};
+
 struct TossRequest{
 	union{
 		TossPosition tossPosition;
 		TossState tossState;
+		TossLogout tossLogout;
 	};
 	TossRequestType tossType;
 };
 
 enum TossRequestType{ //Types of Toss requests 
 	TRT_TAXI_POSITION, //Taxi new position
-	TRT_TAXI_STATE //Taxi new state
+	TRT_TAXI_STATE, //Taxi new state
+	TRT_TAXI_LOGOUT //Taxi logout
 };
 
 struct NewTransportBuffer{
