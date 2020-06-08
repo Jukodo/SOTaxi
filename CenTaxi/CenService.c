@@ -703,6 +703,14 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 	if(taxiIndex == -1)
 		return false;
 
+	CenTaxi* anchorTaxi = Get_Taxi(app, taxiIndex);
+	if(anchorTaxi == NULL)
+		return false;
+
+	//Doesn't allow taxis carrying passengers to be kicked
+	if(anchorTaxi->taxiInfo.state == TS_WITH_PASS)
+		return false;
+
 	CommsTC sendNotification;
 	CommsTC_Shutdown shutdownComms;
 	
@@ -720,11 +728,11 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 	sendNotification.commType = CTC_SHUTDOWN;
 
 	WriteFile(
-		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
-		&sendNotification,						//Write from 
-		sizeof(CommsTC),						//Size being written
-		NULL,									//Quantity Bytes written
-		NULL);									//Overlapped IO
+		anchorTaxi->taxiNamedPipe,	//Named pipe handle
+		&sendNotification,			//Write from 
+		sizeof(CommsTC),			//Size being written
+		NULL,						//Quantity Bytes written
+		NULL);						//Overlapped IO
 
 	Delete_Taxi(app, taxiIndex);
 	return true;
