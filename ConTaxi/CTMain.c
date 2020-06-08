@@ -153,7 +153,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	#pragma region Closing
 	_tprintf(TEXT("%sThe application is closing! Press enter to continue..."), Utils_NewLine());
-	getchar();
+	_gettchar();
 	Setup_CloseAllHandles(&app);
 	#pragma endregion
 

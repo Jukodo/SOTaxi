@@ -7,7 +7,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
 	if(GetLastError() == ERROR_ALREADY_EXISTS){
 		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
-		getchar();
+		_gettchar();
 		return 0;
 	}
 	#pragma endregion
@@ -18,17 +18,17 @@ int _tmain(int argc, LPTSTR argv[]) {
 	//argv[2] - Max Passengers
 	if(argc != 3){
 		_tprintf(TEXT("%sArguments error! Please be sure to include [MaxTaxi] and [MaxPassenger], respectively!"), Utils_NewLine());
-		getchar();
+		_gettchar();
 		return false;
 	}
 	if(!Utils_StringIsNumber(argv[1])){
 		_tprintf(TEXT("%sArguments error! [MaxTaxi] is not a number!"), Utils_NewLine());
-		getchar();
+		_gettchar();
 		return false;
 	}
 	if(!Utils_StringIsNumber(argv[2])){
 		_tprintf(TEXT("%sArguments error! [MaxPassenger] is not a number!"), Utils_NewLine());
-		getchar();
+		_gettchar();
 		return false;
 	}
 	int maxTaxi = _wtoi(argv[1]);
@@ -40,7 +40,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	if(!Setup_Application(&app, maxTaxi, maxPassenger)){
 		_tprintf(TEXT("%sError trying to set up central..."), Utils_NewLine());
-		getchar();
+		_gettchar();
 		return false;
 	}
 	#pragma endregion
