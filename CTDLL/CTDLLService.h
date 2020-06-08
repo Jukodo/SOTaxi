@@ -27,7 +27,6 @@ struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
-	HANDLE hEvent_TaxiLoggingIn;
 	HANDLE hSemaphore_HasTossRequest;
 };
 

@@ -23,7 +23,6 @@ struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
-	HANDLE hEvent_TaxiLoggingIn;
 	HANDLE hSemaphore_HasTossRequest;
 };
 
@@ -48,7 +47,7 @@ struct Application{
 	ShmHandles shmHandles;
 	int maxTaxis;
 	int maxPassengers;
-	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
+	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end //ToDo (TAG_TODO): Threads not closing properly
 };
 
 #define CMD_HELP TEXT("/help")

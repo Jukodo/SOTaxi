@@ -13,7 +13,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
     {
-        HINSTANCE hLib = LoadLibrary(TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll"));
+        HINSTANCE hLib = LoadLibrary(DLLPATH);
         FreeLibrary(hLib);
     }
         break;

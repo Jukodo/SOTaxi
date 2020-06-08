@@ -6,6 +6,16 @@
 #define CENDLL_API __declspec(dllimport)
 #endif
 
+#if _WIN32 || _WIN64
+#if _WIN64
+#define DLLPATH TEXT("../ImplicitDLL/SO2_TP_DLL_64.dll")
+#else
+#define DLLPATH TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll")
+#endif
+#endif
+
+#define ALLOW_PROF_DLL true
+
 #define NTBUFFER_MAX 5
 #define TOSSBUFFER_MAX 20
 #define TOPMAX_TAXI 50
@@ -26,13 +36,11 @@
 #define NAME_SHM_Map TEXT("JUSO2TAXI_SMH_MAP")
 #define NAME_SHM_TossRequestBuffer TEXT("JUSO2TAXI_SMH_TOSSRB")
 
-#define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
-#define NAME_MUTEX_OneInstance_CP TEXT("JUSO2TAXI_OI_CP")
-
 #define NAME_EVENT_QnARequest_Read TEXT("JUSO2TAXI_EVENT_QNAR_R")
 #define NAME_EVENT_QnARequest_Write TEXT("JUSO2TAXI_EVENT_QNAR_W")
 #define NAME_EVENT_NewTransportRequest TEXT("JUSO2TAXI_EVENT_NTR")
-#define NAME_EVENT_TaxiLoggingIn TEXT("JUSO2TAXI_EVENT_TLI")
+
+#define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
 
 #define NAME_SEMAPHORE_HasTossRequest TEXT("JUSO2TAXI_SEMAPHORE_HTR")
 

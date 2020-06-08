@@ -97,6 +97,9 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		FALSE,						//Initial State
 		NAME_EVENT_QnARequest_Read	//Event Name
 	);
+
+	_tprintf(TEXT("A: %d"), syncHandles->hEvent_QnARequest_Read);
+
 	Utils_DLL_Register(NAME_EVENT_QnARequest_Read, DLL_TYPE_EVENT);
 	syncHandles->hEvent_QnARequest_Write = CreateEvent(
 		NULL,						//Security Attributes
@@ -113,14 +116,6 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_EVENT_NewTransportRequest	//Event Name
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
-
-	syncHandles->hEvent_TaxiLoggingIn = CreateEvent(
-		NULL,						//Security Attributes
-		FALSE,						//Manual Reset
-		FALSE,						//Initial State
-		NAME_EVENT_TaxiLoggingIn	//Event Name
-	);
-	Utils_DLL_Register(NAME_EVENT_TaxiLoggingIn, DLL_TYPE_EVENT);
 
 	syncHandles->hSemaphore_HasTossRequest = CreateSemaphore(
 		NULL,							//Security Attributes
@@ -345,11 +340,13 @@ bool Setup_OpenMap(Application* app){
 }
 
 void Setup_CloseAllHandles(Application* app){
-	Setup_CloseSyncHandles(&app->syncHandles);
-	Setup_CloseShmHandles(&app->shmHandles);
+	Setup_CloseSyncHandles(&(app->syncHandles));
+	Setup_CloseShmHandles(&(app->shmHandles));
 }
 
 void Setup_CloseSyncHandles(SyncHandles* syncHandles){
+	_tprintf(TEXT("B: %d"), syncHandles->hEvent_QnARequest_Read);
+
 	CloseHandle(syncHandles->hEvent_QnARequest_Read);
 	CloseHandle(syncHandles->hEvent_QnARequest_Write);
 	CloseHandle(syncHandles->hEvent_Notify_T_NewTranspReq);
@@ -748,6 +745,7 @@ void Service_CloseApp(Application* app){
 		Service_KickTaxi(app, app->taxiList[i].taxiInfo.LicensePlate, SHUTDOWN_REASON_Global, true);
 	}
 
+	Setup_CloseAllHandles(app);
 	/*ToDo (TAG_TODO)
 	**Close threads and handles properly
 	*/

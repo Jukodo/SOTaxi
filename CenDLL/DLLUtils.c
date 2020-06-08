@@ -48,7 +48,10 @@ bool Utils_CloseNamedPipe(HANDLE namedPipe){
 }
 
 void Utils_DLL_Register(TCHAR* name, int type){
-	HINSTANCE hLib = LoadLibrary(TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll"));
+	if(!ALLOW_PROF_DLL)
+		return;
+
+	HINSTANCE hLib = LoadLibrary(DLLPATH);
 	if(hLib == NULL){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;
@@ -64,7 +67,10 @@ void Utils_DLL_Register(TCHAR* name, int type){
 }
 
 void Utils_DLL_Log(TCHAR* text){
-	HINSTANCE hLib = LoadLibrary(TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll"));
+	if(!ALLOW_PROF_DLL)
+		return;
+
+	HINSTANCE hLib = LoadLibrary(DLLPATH);
 	if(!hLib){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;
@@ -80,7 +86,10 @@ void Utils_DLL_Log(TCHAR* text){
 }
 
 void Utils_DLL_Test(){
-	HINSTANCE hLib = LoadLibrary(TEXT("../ImplicitDLL/SO2_TP_DLL_32.dll"));
+	if(!ALLOW_PROF_DLL)
+		return;
+
+	HINSTANCE hLib = LoadLibrary(DLLPATH);
 	if(!hLib){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;

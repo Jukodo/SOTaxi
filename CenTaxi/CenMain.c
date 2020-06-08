@@ -4,12 +4,12 @@
 int _tmain(int argc, LPTSTR argv[]) {
 	#pragma region OneInstanceLock
 	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_OneInstance_CEN);
-	Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
 	if(GetLastError() == ERROR_ALREADY_EXISTS){
 		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
 		_gettchar();
 		return 0;
 	}
+	Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
 	#pragma endregion
 
 	#pragma region ArgumentsSetup
@@ -117,7 +117,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 				}
 				break;
 			case CC_CLOSEAPP:
-				Service_CloseApp(&app);
 				flagReadyToLeave = true;
 				break;
 			case CC_UNDEFINED:
