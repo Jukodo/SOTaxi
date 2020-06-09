@@ -21,9 +21,15 @@
     <ClCompile Include="CTService.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CTThreads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CTService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CTThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

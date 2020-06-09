@@ -5,6 +5,7 @@ typedef struct Application Application;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
+
 typedef enum TaxiCommands TaxiCommands;
 
 struct ThreadHandles{

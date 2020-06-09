@@ -1,1 +1,2 @@
 taxi login queue - use event "canLogin" when new spots are available (?)
+taxi named pipe notifications - might try to send notification to taxis that only have first login stage complete

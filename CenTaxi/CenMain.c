@@ -2,6 +2,13 @@
 #include "CenService.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
+	/*Prof DLL, consumes LastError... Example:
+	** DWORD error = 1337;
+	** SetLastError(error);
+	** Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
+	** _tprintf(TEXT("%d"), GetLastError());
+	*/
+
 	#pragma region OneInstanceLock
 	HANDLE hMutex_OneInstanceLock = CreateMutex(NULL, TRUE, NAME_MUTEX_OneInstance_CEN);
 	if(GetLastError() == ERROR_ALREADY_EXISTS){

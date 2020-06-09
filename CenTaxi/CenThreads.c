@@ -1,5 +1,5 @@
 #pragma once
-#include "CenCommunication.h"
+#include "CenThreads.h"
 
 DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 	TParam_QnARequest* param = (TParam_QnARequest*) _param;
@@ -47,7 +47,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		TRUE,	//Manual Reset
 		NULL	//WaitableTimer name
 	);
-	Utils_DLL_Register(TEXT("UnnamedTimer:line31:cenCommunication.c"), DLL_TYPE_WAITABLETIMER);
+	Utils_DLL_Register(TEXT("UnnamedWTimer:line41:cenThreads.c"), DLL_TYPE_WAITABLETIMER);
 	if(hAssignTimeout == NULL)
 		return -1;
 

@@ -1,10 +1,10 @@
 #pragma once
 #include "CTService.h"
+#include "CTThreads.h"
 
 bool isLoggedIn(Application* app){
 	return !app->loggedInTaxi.taxiInfo.empty;
 }
-
 bool isValid_LicensePlate(TCHAR* sLicensePlate){
 	if(_tcslen(sLicensePlate) != 8)
 		return false;
@@ -23,7 +23,6 @@ bool isValid_LicensePlate(TCHAR* sLicensePlate){
 
 	return true;
 }
-
 bool isValid_Coordinates(TCHAR* sCoordinates){
 	if(_tcslen(sCoordinates) <= 0 || _tcslen(sCoordinates) > 2)
 		return false;
@@ -57,7 +56,6 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 		&app->threadHandles.dwIdQnARequests //Thread ID
 	);
 }
-
 bool Service_PosLoginSetup(Application* app){
 	if(!Service_ConnectToCentralNamedPipe(app)){
 		_tprintf(TEXT("%sFailed while trying to connect to central's named pipe!"), Utils_NewSubLine());
@@ -83,7 +81,6 @@ bool Service_PosLoginSetup(Application* app){
 
 	return true;
 }
-
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)
 		return TC_HELP;
@@ -113,7 +110,6 @@ TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 
 	return TC_UNDEFINED;
 }
-
 void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
@@ -134,7 +130,6 @@ void Service_RegisterInterest(Application* app, TCHAR* idPassenger){
 		&app->threadHandles.dwIdQnARequests //Thread ID
 	);
 }
-
 void Service_CloseApp(Application* app){
 	app->keepRunning = false;
 
@@ -161,7 +156,6 @@ void Service_CloseApp(Application* app){
 	**Close handles
 	*/
 }
-
 void Service_NewPosition(Application* app, double newX, double newY){
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
@@ -183,7 +177,6 @@ void Service_NewPosition(Application* app, double newX, double newY){
 		&app->threadHandles.dwIdTossRequests //Thread ID
 	);
 }
-
 void Service_NewState(Application* app, TaxiState newState){
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
@@ -219,7 +212,6 @@ bool Command_DefineCDN(Application* app, TCHAR* value){
 	_tprintf(TEXT("%sCDN value has been changed to %d!"), Utils_NewSubLine(), app->settings.CDN);
 	return true;
 }
-
 bool Command_Speed(Application* app, bool speedUp){
 	if(speedUp){
 
@@ -242,7 +234,6 @@ bool Command_Speed(Application* app, bool speedUp){
 
 	return true;
 }
-
 void Command_AutoResp(Application* app, bool autoResp){
 	app->settings.automaticInterest = autoResp;
 	
@@ -250,29 +241,6 @@ void Command_AutoResp(Application* app, bool autoResp){
 		_tprintf(TEXT("%sAutomatic interest requests is now ON!"), Utils_NewSubLine());
 	else
 		_tprintf(TEXT("%sAutomatic interest requests is now OFF!"), Utils_NewSubLine());
-}
-
-DWORD WINAPI Thread_StepRoutine(LPVOID _param){
-	TParam_StepRoutine* param = (TParam_StepRoutine*) _param;
-
-	LARGE_INTEGER liTime;
-	liTime.QuadPart = -10000000LL * 1 /*Triggers after 1 second*/;
-	SetWaitableTimer(param->app->taxiMovementRoutine, &liTime, 1000, NULL, NULL, FALSE);
-	while(param->app->keepRunning){
-		WaitForSingleObject(param->app->taxiMovementRoutine, INFINITE);
-
-		CTTaxi* loggedInTaxi = &param->app->loggedInTaxi;
-		if(param->app->loggedInTaxi.taxiInfo.state == TS_EMPTY){
-			if(Movement_NextRandomStep(param->app, &loggedInTaxi->taxiInfo.object)){
-				Service_NewPosition(param->app, loggedInTaxi->taxiInfo.object.coordX, loggedInTaxi->taxiInfo.object.coordY);
-			} else{
-				CancelWaitableTimer(param->app->taxiMovementRoutine);
-			}
-		}
-	}
-
-	free(param);
-	return 1;
 }
 
 bool Movement_NextRandomStep(Application* app, XYObject* object){
@@ -297,6 +265,10 @@ bool Movement_NextRandomStep(Application* app, XYObject* object){
 	return true;
 }
 
+/* ToDo (TAG_REMOVE)
+** Remove the following after
+** Only used to develop and test few features
+*/
 void Temp_ShowMap(Application* app){
 	int iLine = 0;
 	int iColumn = 0;

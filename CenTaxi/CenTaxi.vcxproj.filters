@@ -21,15 +21,12 @@
     <ClCompile Include="CenService.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CenCommunication.c">
+    <ClCompile Include="CenThreads.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CenService.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CenCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CenPassenger.h">
@@ -39,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CenTaxi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CenThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

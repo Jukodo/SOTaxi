@@ -146,9 +146,11 @@
   <ItemGroup>
     <ClCompile Include="CTMain.c" />
     <ClCompile Include="CTService.c" />
+    <ClCompile Include="CTThreads.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CTService.h" />
+    <ClInclude Include="CTThreads.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

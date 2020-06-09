@@ -180,7 +180,6 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 						break;
 				}
 				_tprintf(TEXT("%sReason: %s"), Utils_NewSubLine(), notificationReceived.shutdownComm.message);
-				_tprintf(TEXT("%sType anything to leave..."), Utils_NewSubLine());
 
 				param->app->keepRunning = false;
 				Utils_CloseNamedPipe(param->app->loggedInTaxi.centralNamedPipe);

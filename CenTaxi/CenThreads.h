@@ -1,6 +1,8 @@
 #pragma once
 #include "CenService.h"
 
+typedef struct Application Application;
+
 typedef struct TParam_QnARequest TParam_QnARequest;
 typedef struct TParam_TaxiAssignment TParam_TaxiAssignment;
 typedef struct TParam_ConsumeTossRequests TParam_ConsumeTossRequests;

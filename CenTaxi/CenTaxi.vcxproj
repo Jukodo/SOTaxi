@@ -144,12 +144,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CenCommunication.c" />
+    <ClCompile Include="CenThreads.c" />
     <ClCompile Include="CenMain.c" />
     <ClCompile Include="CenService.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CenCommunication.h" />
+    <ClInclude Include="CenThreads.h" />
     <ClInclude Include="CenPassenger.h" />
     <ClInclude Include="CenService.h" />
     <ClInclude Include="CenSettings.h" />

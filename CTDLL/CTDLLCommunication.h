@@ -3,6 +3,7 @@
 #include "CTDLL.h"
 
 typedef struct Application Application;
+
 typedef struct TParam_QnARequest TParam_QnARequest;
 typedef struct TParam_NotificationReceiver_NT TParam_NotificationReceiver_NT;
 typedef struct TParam_TossRequest TParam_TossRequest;

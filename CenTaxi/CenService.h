@@ -3,6 +3,7 @@
 #include "CenTaxi.h"
 #include "CenPassenger.h"
 #include "CenSettings.h"
+#include "CenThreads.h"
 
 typedef struct Application Application;
 typedef struct ThreadHandles ThreadHandles;
@@ -124,6 +125,10 @@ void Service_CloseApp(Application* app);
 bool Command_SetAssignmentTimeout(Application* app, TCHAR* value);
 void Command_AllowTaxiLogins(Application* app, bool allow);
 
+/* ToDo (TAG_REMOVE)
+** Remove the following after
+** Only used to develop and test few features
+*/
 void Simulate_NewTransport(Application* app);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
