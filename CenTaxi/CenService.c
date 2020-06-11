@@ -34,7 +34,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	bool ret = true;
 	ret = ret && (app->passengerList != NULL);
 	ret = ret && (app->taxiList != NULL); 
-	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
+	ret = ret && Setup_OpenSyncHandles(app);
 	ret = ret && Setup_OpenShmHandles(app);
 	ret = ret && Setup_OpenMap(app);
 	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
@@ -88,8 +88,8 @@ bool Setup_OpenThreadHandles(Application* app){
 		app->threadHandles.hTossRequests == NULL ||
 		app->threadHandles.hConnectingTaxiPipes == NULL);
 }
-bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
-	syncHandles->hEvent_QnARequest_Read = CreateEvent(
+bool Setup_OpenSyncHandles(Application* app){
+	app->syncHandles.hEvent_QnARequest_Read = CreateEvent(
 		NULL,						//Security Attributes
 		FALSE,						//Manual Reset
 		FALSE,						//Initial State
@@ -97,7 +97,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 
 	Utils_DLL_Register(NAME_EVENT_QnARequest_Read, DLL_TYPE_EVENT);
-	syncHandles->hEvent_QnARequest_Write = CreateEvent(
+	app->syncHandles.hEvent_QnARequest_Write = CreateEvent(
 		NULL,						//Security Attributes
 		FALSE,						//Manual Reset
 		TRUE,						//Initial State
@@ -105,7 +105,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_EVENT_QnARequest_Write, DLL_TYPE_EVENT);
 
-	syncHandles->hEvent_Notify_T_NewTranspReq = CreateEvent(
+	app->syncHandles.hEvent_Notify_T_NewTranspReq = CreateEvent(
 		NULL,							//Security Attributes
 		TRUE,							//Manual Reset
 		FALSE,							//Initial State
@@ -113,7 +113,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
-	syncHandles->hSemaphore_HasTossRequest = CreateSemaphore(
+	app->syncHandles.hSemaphore_HasTossRequest = CreateSemaphore(
 		NULL,							//Security Attributes
 		0,								//Initial Count
 		TOSSBUFFER_MAX,					//Max Count
@@ -121,10 +121,19 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_SEMAPHORE_HasTossRequest, DLL_TYPE_SEMAPHORE);
 
-	return !(syncHandles->hEvent_QnARequest_Read == NULL ||
-		syncHandles->hEvent_QnARequest_Write == NULL ||
-		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
-		syncHandles->hSemaphore_HasTossRequest == NULL);
+	app->syncHandles.hSemaphore_TaxiNPSpots = CreateSemaphore(
+		NULL,							//Security Attributes
+		app->maxTaxis,					//Initial Count
+		app->maxTaxis,					//Max Count
+		NAME_SEMAPHORE_TaxiNPSpots		//Semaphore Name
+	);
+	Utils_DLL_Register(NAME_SEMAPHORE_TaxiNPSpots, DLL_TYPE_SEMAPHORE);
+
+	return !(app->syncHandles.hEvent_QnARequest_Read == NULL ||
+		app->syncHandles.hEvent_QnARequest_Write == NULL ||
+		app->syncHandles.hEvent_Notify_T_NewTranspReq == NULL ||
+		app->syncHandles.hSemaphore_HasTossRequest == NULL ||
+		app->syncHandles.hSemaphore_TaxiNPSpots == NULL);
 }
 bool Setup_OpenShmHandles(Application* app){
 	#pragma region QnARequest
@@ -361,9 +370,6 @@ void Setup_CloseShmHandles(ShmHandles* shmHandles){
 	#pragma endregion
 }
 
-bool isTaxiListFull(Application* app){
-	return Get_QuantLoggedInTaxis(app) >= app->maxTaxis;
-}
 bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY){
 	/*No need for more validation...
 	**Since it is assumed that this function is only called at Service_LoginTaxi, which validates everything
@@ -401,8 +407,10 @@ bool Delete_Taxi(Application* app, int index){
 		anchorTaxi->taxiInfo.object.coordY);
 
 	anchorTaxi->taxiInfo.empty = true;
-	if(anchorTaxi->taxiNamedPipe != NULL)
+	if(anchorTaxi->taxiNamedPipe != NULL){
+		ReleaseSemaphore(app->syncHandles.hSemaphore_TaxiNPSpots, 1, NULL);
 		Utils_CloseNamedPipe(anchorTaxi->taxiNamedPipe);
+	}
 
 
 	return true;
@@ -416,6 +424,9 @@ int Get_QuantLoggedInTaxis(Application* app){
 	}
 
 	return quantLoggedInTaxis;
+}
+bool isTaxiListFull(Application* app){
+	return Get_QuantLoggedInTaxis(app) >= app->maxTaxis;
 }
 int Get_FreeIndexTaxiList(Application* app){
 	if(isTaxiListFull(app))
@@ -462,9 +473,6 @@ CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY){
 	return NULL;
 }
 
-bool isPassengerListFull(Application* app){
-	return Get_QuantLoggedInPassengers(app) >= app->maxPassengers;
-}
 int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
@@ -474,6 +482,9 @@ int Get_QuantLoggedInPassengers(Application* app){
 	}
 
 	return quantLoggedInPassengers;
+}
+bool isPassengerListFull(Application* app){
+	return Get_QuantLoggedInPassengers(app) >= app->maxPassengers;
 }
 int Get_FreeIndexPassengerList(Application* app){
 	if(isPassengerListFull(app))

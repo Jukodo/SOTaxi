@@ -111,8 +111,11 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 						Utils_DLL_Log(log);
 
 						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
-						updatingTaxi->taxiInfo.object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
-						updatingTaxi->taxiInfo.object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
+						
+						if(updatingTaxi != NULL){
+							updatingTaxi->taxiInfo.object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
+							updatingTaxi->taxiInfo.object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
+						}
 					}
 					break;
 				case TRT_TAXI_STATE:
@@ -166,6 +169,10 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 
 	HANDLE hPipe;
 	while(param->app->keepRunning){
+		_tprintf(TEXT("%sBefore waiting"), Utils_NewSubLine());
+		WaitForSingleObject(param->app->syncHandles.hSemaphore_TaxiNPSpots, INFINITE);
+		_tprintf(TEXT("%sAfter waiting"), Utils_NewSubLine());
+
 		hPipe = CreateNamedPipe(
 			NAME_NAMEDPIPE_CommsTaxiCentral,	//Named Pipe name
 			PIPE_ACCESS_DUPLEX,					//Access to read and write
@@ -188,8 +195,10 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		}
 
 		//The taxi connection failed, hence, closing the pipe
-		if(!ConnectNamedPipe(hPipe, NULL))
+		if(!ConnectNamedPipe(hPipe, NULL)){
+			ReleaseSemaphore(param->app->syncHandles.hSemaphore_TaxiNPSpots, 1, NULL);
 			CloseHandle(hPipe);
+		}
 
 		CommsTC_Identity taxiIdentity;
 		ReadFile(

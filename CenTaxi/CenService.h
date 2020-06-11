@@ -25,6 +25,7 @@ struct SyncHandles{
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
 	HANDLE hSemaphore_HasTossRequest;
+	HANDLE hSemaphore_TaxiNPSpots;
 };
 
 struct ShmHandles{
@@ -86,7 +87,7 @@ enum CentralCommands{
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
 bool Setup_OpenThreadHandles(Application* app);
-bool Setup_OpenSyncHandles(SyncHandles* syncHandles);
+bool Setup_OpenSyncHandles(Application* app);
 bool Setup_OpenShmHandles(Application* app);
 bool Setup_OpenShmHandles_Map(Application* app);
 bool Setup_OpenMap(Application* app);
