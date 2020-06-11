@@ -21,6 +21,8 @@
 #define TOPMAX_TAXI 50
 #define TOPMAX_PASSENGERS 50
 
+#define SECOND_IN_MILI 1000
+
 #define STRING_SMALL 15
 #define STRING_MEDIUM 25
 #define STRING_LARGE 50
@@ -39,6 +41,7 @@
 #define NAME_EVENT_QnARequest_Read TEXT("JUSO2TAXI_EVENT_QNAR_R")
 #define NAME_EVENT_QnARequest_Write TEXT("JUSO2TAXI_EVENT_QNAR_W")
 #define NAME_EVENT_NewTransportRequest TEXT("JUSO2TAXI_EVENT_NTR")
+#define NAME_EVENT_NewTaxiSpot TEXT("JUSO2TAXI_EVENT_NTS")
 
 #define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
 
@@ -63,3 +66,5 @@
 #include "DLLUtils.h"
 #include "DLLPassenger.h"
 #include "DLLCommunication.h"
+
+HINSTANCE hLib;

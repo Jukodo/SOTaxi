@@ -28,6 +28,7 @@ struct SyncHandles{
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
+	HANDLE hEvent_NewTaxiSpot;
 	HANDLE hSemaphore_HasTossRequest;
 };
 
@@ -65,6 +66,9 @@ struct Application{
 #define CMD_REQUEST_INTEREST TEXT("/reqInterest")
 #define CMD_SHOW_MAP TEXT("/showMap")
 #define CMD_CLOSEAPP TEXT("/closeApp")
+
+#define TIMEOUT_TaxiLoginQueue_Seconds 30 //30 seconds
+#define TIMEOUT_TaxiLoginQueue SECOND_IN_MILI * TIMEOUT_TaxiLoginQueue_Seconds //30 seconds
 
 enum TaxiCommands{
 	TC_HELP,

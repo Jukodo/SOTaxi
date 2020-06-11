@@ -17,6 +17,11 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 				Utils_DLL_Log(log);
 
 				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
+
+				if(shm->loginResponse.loginResponseType == LR_INVALID_FULL){
+					ResetEvent(param->app->syncHandles.hEvent_NewTaxiSpot);
+				}
+
 				shm->loginResponse.mapWidth = param->app->map.width;
 				shm->loginResponse.mapHeight = param->app->map.height;
 			}
@@ -169,9 +174,7 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 
 	HANDLE hPipe;
 	while(param->app->keepRunning){
-		_tprintf(TEXT("%sBefore waiting"), Utils_NewSubLine());
 		WaitForSingleObject(param->app->syncHandles.hSemaphore_TaxiNPSpots, INFINITE);
-		_tprintf(TEXT("%sAfter waiting"), Utils_NewSubLine());
 
 		hPipe = CreateNamedPipe(
 			NAME_NAMEDPIPE_CommsTaxiCentral,	//Named Pipe name

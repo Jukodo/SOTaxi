@@ -4,6 +4,11 @@
 #include "CTService.h"
 
 int _tmain(int argc, LPTSTR argv[]) {
+	/*ToDo (TAG_REMOVE)
+	**Maybe remove later if removing auto license plates below
+	*/
+	Utils_GenerateNewRand();
+
 	#pragma region ApplicationSetup
 	Application app;
 	TCHAR retryOpt[2];
@@ -27,7 +32,14 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	#pragma region Login
 	//REMOVE PRE INSERTED INFO LATER (TAG_REMOVELATER)
-	TCHAR sLicensePlate[9] = TEXT("aa-aa-aa");
+	TCHAR sLicensePlate[9];
+	swprintf(sLicensePlate, 9, TEXT("%c%c-%d%d-%c%c"),
+		Utils_GetRandomLetter(),
+		Utils_GetRandomLetter(),
+		rand()%10,
+		rand()%10,
+		Utils_GetRandomLetter(),
+		Utils_GetRandomLetter());
 	TCHAR sCoordinates_X[3] = TEXT("0");
 	TCHAR sCoordinates_Y[3] = TEXT("48");
 	TCHAR opt[2];
@@ -85,9 +97,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 			ZeroMemory(sCoordinates_Y, sizeof(sCoordinates_Y));
 			continue;
 		} else {
-			Service_Login(&app, sLicensePlate, sCoordinates_X, sCoordinates_Y);
 			_tprintf(TEXT("%sTrying to log in. Please wait..."), Utils_NewSubLine());
-			WaitForSingleObject(app.threadHandles.hQnARequests, INFINITE);
+			Service_Login(&app, sLicensePlate, sCoordinates_X, sCoordinates_Y);
 		}
 		flagLoginFailed = !isLoggedIn(&app);
 		flagLoginFailed = flagLoginFailed || !Service_PosLoginSetup(&app);

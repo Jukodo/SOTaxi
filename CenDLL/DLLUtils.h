@@ -25,3 +25,7 @@ CENDLL_API bool Utils_CloseNamedPipe(HANDLE namedPipe);
 CENDLL_API void Utils_DLL_Register(TCHAR* name, int type);
 CENDLL_API void Utils_DLL_Log(TCHAR* text);
 CENDLL_API void Utils_DLL_Test();
+
+//Used for debug stuff
+CENDLL_API void Utils_GenerateNewRand();
+CENDLL_API TCHAR Utils_GetRandomLetter();

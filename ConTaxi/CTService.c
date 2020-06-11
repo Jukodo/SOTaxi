@@ -47,14 +47,26 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 	param->request.loginRequest = loginRequest;
 	param->request.requestType = QnART_LOGIN;
 
-	app->threadHandles.hQnARequests = CreateThread(
-		NULL,								//Security Attributes
-		0,									//Stack Size (0 = default)
-		Thread_SendQnARequests,				//Function
-		(LPVOID) param,						//Param
-		0,									//Creation Flag
-		&app->threadHandles.dwIdQnARequests //Thread ID
-	);
+	bool loopAgain = false;
+	do{
+		app->threadHandles.hQnARequests = CreateThread(
+			NULL,								//Security Attributes
+			0,									//Stack Size (0 = default)
+			Thread_SendQnARequests,				//Function
+			(LPVOID) param,						//Param
+			0,									//Creation Flag
+			&app->threadHandles.dwIdQnARequests //Thread ID
+		);
+
+		WaitForSingleObject(app->threadHandles.hQnARequests, INFINITE);
+
+		if(param->request.loginResponse.loginResponseType != LR_INVALID_FULL)
+			break;
+
+		loopAgain = Service_LoginQueue(app);
+	} while(loopAgain);
+
+	free(param);
 }
 bool Service_PosLoginSetup(Application* app){
 	if(!Service_ConnectToCentralNamedPipe(app)){
@@ -68,18 +80,35 @@ bool Service_PosLoginSetup(Application* app){
 	app->loggedInTaxi.taxiInfo.object.speedX = 1;
 	app->loggedInTaxi.taxiInfo.object.speedY = 0;
 	
-	TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
-	srParam->app = app;
-	app->threadHandles.hStepRoutine = CreateThread(
-		NULL,								//Security Attributes
-		0,									//Stack Size (0 = default)
-		Thread_StepRoutine,					//Function
-		(LPVOID) srParam,					//Param
-		0,									//Creation Flag
-		&app->threadHandles.dwIdStepRoutine //Thread ID
-	);
+	//TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
+	//srParam->app = app;
+	//app->threadHandles.hStepRoutine = CreateThread(
+	//	NULL,								//Security Attributes
+	//	0,									//Stack Size (0 = default)
+	//	Thread_StepRoutine,					//Function
+	//	(LPVOID) srParam,					//Param
+	//	0,									//Creation Flag
+	//	&app->threadHandles.dwIdStepRoutine //Thread ID
+	//);
 
 	return true;
+}
+bool Service_LoginQueue(Application* app){
+	_tprintf(TEXT("%sYou are now in queue to login into the central! Timeout after %d seconds..."), Utils_NewSubLine(), TIMEOUT_TaxiLoginQueue_Seconds);
+	
+	switch(WaitForSingleObject(app->syncHandles.hEvent_NewTaxiSpot, TIMEOUT_TaxiLoginQueue)){
+		case WAIT_OBJECT_0:
+			_tprintf(TEXT("%sA new spot to login was found!"), Utils_NewSubLine());
+			return true;
+		case WAIT_TIMEOUT:
+			_tprintf(TEXT("%sLogin queue was timed out..."), Utils_NewSubLine());
+			break;
+		default:
+			_tprintf(TEXT("%sSomething unexpected went wrong..."), Utils_NewSubLine());
+			break;
+	}
+
+	return false;
 }
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command){
 	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)

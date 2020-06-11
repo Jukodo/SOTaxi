@@ -7,16 +7,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
     switch (ul_reason_for_call)
     {
-    case DLL_PROCESS_ATTACH:
-        break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-    {
-        HINSTANCE hLib = LoadLibrary(DLLPATH);
-        FreeLibrary(hLib);
-    }
-        break;
+        case DLL_PROCESS_ATTACH:
+            hLib = LoadLibrary(DLLPATH);
+            break;
+        case DLL_THREAD_ATTACH:
+            break;
+        case DLL_THREAD_DETACH:
+            break;
+        case DLL_PROCESS_DETACH:
+            FreeLibrary(hLib);
+            break;
     }
     return TRUE;
 }

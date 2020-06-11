@@ -56,6 +56,13 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
+	syncHandles->hEvent_NewTaxiSpot = OpenEvent(//This event is already created with CenTaxi
+		EVENT_ALL_ACCESS,				//Desired access flag
+		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
+		NAME_EVENT_NewTaxiSpot			//Event name
+	);
+	Utils_DLL_Register(NAME_EVENT_NewTaxiSpot, DLL_TYPE_EVENT);
+
 	syncHandles->hSemaphore_HasTossRequest = OpenSemaphore(
 		SEMAPHORE_ALL_ACCESS,			//Security Attributes
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
@@ -69,6 +76,7 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
+		syncHandles->hEvent_NewTaxiSpot == NULL ||
 		syncHandles->hSemaphore_HasTossRequest == NULL);
 }
 

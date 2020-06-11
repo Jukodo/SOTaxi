@@ -113,6 +113,14 @@ bool Setup_OpenSyncHandles(Application* app){
 	);
 	Utils_DLL_Register(NAME_EVENT_NewTransportRequest, DLL_TYPE_EVENT);
 
+	app->syncHandles.hEvent_NewTaxiSpot = CreateEvent(
+		NULL,							//Security Attributes
+		FALSE,							//Manual Reset
+		TRUE,							//Initial State
+		NAME_EVENT_NewTaxiSpot			//Event Name
+	);
+	Utils_DLL_Register(NAME_EVENT_NewTaxiSpot, DLL_TYPE_EVENT);
+
 	app->syncHandles.hSemaphore_HasTossRequest = CreateSemaphore(
 		NULL,							//Security Attributes
 		0,								//Initial Count
@@ -132,6 +140,7 @@ bool Setup_OpenSyncHandles(Application* app){
 	return !(app->syncHandles.hEvent_QnARequest_Read == NULL ||
 		app->syncHandles.hEvent_QnARequest_Write == NULL ||
 		app->syncHandles.hEvent_Notify_T_NewTranspReq == NULL ||
+		app->syncHandles.hEvent_NewTaxiSpot == NULL ||
 		app->syncHandles.hSemaphore_HasTossRequest == NULL ||
 		app->syncHandles.hSemaphore_TaxiNPSpots == NULL);
 }
@@ -411,7 +420,7 @@ bool Delete_Taxi(Application* app, int index){
 		ReleaseSemaphore(app->syncHandles.hSemaphore_TaxiNPSpots, 1, NULL);
 		Utils_CloseNamedPipe(anchorTaxi->taxiNamedPipe);
 	}
-
+	SetEvent(app->syncHandles.hEvent_NewTaxiSpot);
 
 	return true;
 }
@@ -576,14 +585,20 @@ LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest
 	if(!app->settings.allowTaxiLogins)
 		return LR_INVALID_CLOSED;
 
-	if(isTaxiListFull(app))
-		return LR_INVALID_FULL;
-
 	if(!isValid_ObjectPosition(app, loginRequest->coordX, loginRequest->coordY))
 		return LR_INVALID_POSITION;
 
 	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
 		return LR_INVALID_EXISTS;
+
+	/*Recommened to be last invalid before adding
+	**For example:
+	** Taxi can already exit and spots are full
+	** It's recommended to feedback saying that there is already a taxi with same license plate
+	** Than placing taxi in queue only to be rejected after
+	*/
+	if(isTaxiListFull(app))
+		return LR_INVALID_FULL;
 
 	if(!Add_Taxi(app, loginRequest->licensePlate, loginRequest->coordX, loginRequest->coordY))
 		return LR_INVALID_UNDEFINED;

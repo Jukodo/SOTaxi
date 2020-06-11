@@ -47,6 +47,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 				break;
 		}
 
+		param->request.loginResponse.loginResponseType = shm->loginResponse.loginResponseType;
 		break;
 
 	case QnART_NT_INTEREST:
@@ -75,7 +76,12 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	ReleaseMutex(param->app->syncHandles.hMutex_QnARequest_CanAccess);
 	SetEvent(param->app->syncHandles.hEvent_QnARequest_Write);
 
-	free(param);
+	/*If the request type is LOGIN do not free param
+	**param will be used back at CTService.c Service_Login() and freed after use
+	*/
+	if(param->request.requestType != QnART_LOGIN)
+		free(param);
+
 	return 1;
 }
 

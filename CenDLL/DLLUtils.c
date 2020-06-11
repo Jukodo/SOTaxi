@@ -51,7 +51,6 @@ void Utils_DLL_Register(TCHAR* name, int type){
 	if(!ALLOW_PROF_DLL)
 		return;
 
-	HINSTANCE hLib = LoadLibrary(DLLPATH);
 	if(hLib == NULL){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;
@@ -70,8 +69,7 @@ void Utils_DLL_Log(TCHAR* text){
 	if(!ALLOW_PROF_DLL)
 		return;
 
-	HINSTANCE hLib = LoadLibrary(DLLPATH);
-	if(!hLib){
+	if(hLib == NULL){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;
 	}
@@ -89,8 +87,7 @@ void Utils_DLL_Test(){
 	if(!ALLOW_PROF_DLL)
 		return;
 
-	HINSTANCE hLib = LoadLibrary(DLLPATH);
-	if(!hLib){
+	if(hLib == NULL){
 		_tprintf(TEXT("%sLoadLibrary failed! Error: %d"), Utils_NewLine(), GetLastError());
 		return;
 	}
@@ -102,4 +99,12 @@ void Utils_DLL_Test(){
 	}
 
 	hLib_test();
+}
+
+void Utils_GenerateNewRand(){
+	srand(time(NULL));
+}
+
+TCHAR Utils_GetRandomLetter(){
+	return 'A' + (rand() % 26);
 }
