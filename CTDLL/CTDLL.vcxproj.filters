@@ -21,18 +21,15 @@
     <ClCompile Include="CTDLL.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CTDLLCommunication.c">
+    <ClCompile Include="CTDLLService.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CTDLLService.c">
+    <ClCompile Include="CTDLLThreads.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CTDLL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CTDLLCommunication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CTDLLService.h">
@@ -42,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CTDLLTaxi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CTDLLThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

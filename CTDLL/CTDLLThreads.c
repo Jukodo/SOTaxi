@@ -1,5 +1,5 @@
 #pragma once
-#include "CTDLLCommunication.h"
+#include "CTDLLThreads.h"
 
 DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	TParam_QnARequest* param = (TParam_QnARequest*) _param;

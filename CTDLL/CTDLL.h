@@ -15,5 +15,5 @@
 //Data
 #include "CTDLLSettings.h"
 #include "CTDLLTaxi.h"
-#include "CTDLLCommunication.h"
+#include "CTDLLThreads.h"
 #include "CTDLLService.h"

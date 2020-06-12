@@ -157,13 +157,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CTDLLCommunication.c" />
+    <ClCompile Include="CTDLLThreads.c" />
     <ClCompile Include="CTDLL.c" />
     <ClCompile Include="CTDLLService.c" />
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CTDLLCommunication.h" />
+    <ClInclude Include="CTDLLThreads.h" />
     <ClInclude Include="CTDLL.h" />
     <ClInclude Include="CTDLLService.h" />
     <ClInclude Include="CTDLLSettings.h" />
