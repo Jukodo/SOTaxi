@@ -3,7 +3,8 @@
 
 //Requests
 typedef struct QnARequest QnARequest;
-typedef struct LoginRequest LoginRequest;
+typedef struct TaxiLoginRequest TaxiLoginRequest;
+typedef struct PassLoginRequest PassLoginRequest;
 typedef struct NTInterestRequest NTInterestRequest;
 
 typedef struct TossRequest TossRequest;
@@ -12,8 +13,10 @@ typedef struct TossState TossState;
 typedef struct TossLogout TossLogout;
 
 //Responses
-typedef struct LoginResponse LoginResponse;
-typedef enum LoginResponseType LoginResponseType;
+typedef struct TaxiLoginResponse TaxiLoginResponse;
+typedef struct PassLoginResponse PassLoginResponse;
+typedef enum TaxiLoginResponseType TaxiLoginResponseType;
+typedef enum PassLoginResponseType PassLoginResponseType;
 typedef enum NTInterestResponse NTInterestResponse;
 
 //Other Enums
@@ -32,8 +35,14 @@ typedef struct CommsTC_Identity CommsTC_Identity;
 typedef struct CommsTC_Assign CommsTC_Assign;
 typedef struct CommsTC_Shutdown CommsTC_Shutdown;
 
-struct LoginRequest{
+struct TaxiLoginRequest{
 	TCHAR licensePlate[STRING_SMALL];
+	double coordX;
+	double coordY;
+};
+
+struct PassLoginRequest{
+	TCHAR id[STRING_SMALL];
 	double coordX;
 	double coordY;
 };
@@ -43,19 +52,33 @@ struct NTInterestRequest{
 	TCHAR idPassenger[STRING_SMALL];
 };
 
-struct LoginResponse{
-	LoginResponseType loginResponseType;
+struct TaxiLoginResponse{
+	TaxiLoginResponseType taxiLoginResponseType;
 	int mapWidth;
 	int mapHeight;
 };
 
-enum LoginResponseType{
-	LR_SUCCESS,
-	LR_INVALID_UNDEFINED,
-	LR_INVALID_CLOSED,
-	LR_INVALID_FULL,
-	LR_INVALID_POSITION,
-	LR_INVALID_EXISTS
+struct PassLoginResponse{
+	PassLoginResponseType loginResponseType;
+	int mapWidth;
+	int mapHeight;
+};
+
+enum TaxiLoginResponseType{
+	TLR_SUCCESS,
+	TLR_INVALID_UNDEFINED,
+	TLR_INVALID_CLOSED,
+	TLR_INVALID_FULL,
+	TLR_INVALID_POSITION,
+	TLR_INVALID_EXISTS
+};
+
+enum PassLoginResponseType{
+	PLR_SUCCESS,
+	PLR_INVALID_UNDEFINED,
+	PLR_INVALID_FULL,
+	PLR_INVALID_POSITION,
+	PLR_INVALID_EXISTS
 };
 
 enum NTInterestResponse{
@@ -67,12 +90,12 @@ enum NTInterestResponse{
 
 struct QnARequest{
 	union{
-		LoginRequest loginRequest;
+		TaxiLoginRequest taxiLoginRequest;
 		NTInterestRequest ntIntRequest;
 	};
 	QnARequestType requestType;
 	union{
-		LoginResponse loginResponse;
+		TaxiLoginResponse taxiLoginResponse;
 		NTInterestResponse ntIntResponse;
 	};
 };

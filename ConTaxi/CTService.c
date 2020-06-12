@@ -38,13 +38,13 @@ bool isValid_Coordinates(TCHAR* sCoordinates){
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
 	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
 
-	LoginRequest loginRequest;
-	_tcscpy_s(loginRequest.licensePlate, _countof(loginRequest.licensePlate), sLicensePlate);
-	loginRequest.coordX = (float) _tstof(sCoordinates_X);
-	loginRequest.coordY = (float) _tstof(sCoordinates_Y);
+	TaxiLoginRequest taxiLoginRequest;
+	_tcscpy_s(taxiLoginRequest.licensePlate, _countof(taxiLoginRequest.licensePlate), sLicensePlate);
+	taxiLoginRequest.coordX = (float) _tstof(sCoordinates_X);
+	taxiLoginRequest.coordY = (float) _tstof(sCoordinates_Y);
 
 	param->app = app;
-	param->request.loginRequest = loginRequest;
+	param->request.taxiLoginRequest = taxiLoginRequest;
 	param->request.requestType = QnART_LOGIN;
 
 	bool loopAgain = false;
@@ -60,7 +60,7 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 
 		WaitForSingleObject(app->threadHandles.hQnARequests, INFINITE);
 
-		if(param->request.loginResponse.loginResponseType != LR_INVALID_FULL)
+		if(param->request.taxiLoginResponse.taxiLoginResponseType != TLR_INVALID_FULL)
 			break;
 
 		loopAgain = Service_LoginQueue(app);

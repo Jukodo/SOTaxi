@@ -13,17 +13,17 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 			case QnART_LOGIN:
 			{
 				TCHAR log[STRING_XXL];
-				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %.2lf | Y: %.2lf"), shm->loginRequest.licensePlate, shm->loginRequest.coordX, shm->loginRequest.coordY);
+				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %.2lf | Y: %.2lf"), shm->taxiLoginRequest.licensePlate, shm->taxiLoginRequest.coordX, shm->taxiLoginRequest.coordY);
 				Utils_DLL_Log(log);
 
-				shm->loginResponse.loginResponseType = Service_LoginTaxi(param->app, &shm->loginRequest);
+				shm->taxiLoginResponse.taxiLoginResponseType = Service_LoginTaxi(param->app, &shm->taxiLoginRequest);
 
-				if(shm->loginResponse.loginResponseType == LR_INVALID_FULL){
+				if(shm->taxiLoginResponse.taxiLoginResponseType == TLR_INVALID_FULL){
 					ResetEvent(param->app->syncHandles.hEvent_NewTaxiSpot);
 				}
 
-				shm->loginResponse.mapWidth = param->app->map.width;
-				shm->loginResponse.mapHeight = param->app->map.height;
+				shm->taxiLoginResponse.mapWidth = param->app->map.width;
+				shm->taxiLoginResponse.mapHeight = param->app->map.height;
 			}
 				break;
 			case QnART_NT_INTEREST:

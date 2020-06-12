@@ -16,30 +16,30 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	switch(param->request.requestType){
 	case QnART_LOGIN:
 
-		switch(shm->loginResponse.loginResponseType){
-			case LR_SUCCESS:
+		switch(shm->taxiLoginResponse.taxiLoginResponseType){
+			case TLR_SUCCESS:
 				param->app->loggedInTaxi.taxiInfo.empty = false;
-				_tcscpy_s(param->app->loggedInTaxi.taxiInfo.LicensePlate, _countof(param->app->loggedInTaxi.taxiInfo.LicensePlate), param->request.loginRequest.licensePlate);
-				param->app->loggedInTaxi.taxiInfo.object.coordX = param->request.loginRequest.coordX;
-				param->app->loggedInTaxi.taxiInfo.object.coordY = param->request.loginRequest.coordY;
+				_tcscpy_s(param->app->loggedInTaxi.taxiInfo.LicensePlate, _countof(param->app->loggedInTaxi.taxiInfo.LicensePlate), param->request.taxiLoginRequest.licensePlate);
+				param->app->loggedInTaxi.taxiInfo.object.coordX = param->request.taxiLoginRequest.coordX;
+				param->app->loggedInTaxi.taxiInfo.object.coordY = param->request.taxiLoginRequest.coordY;
 
-				param->app->map.width = shm->loginResponse.mapWidth;
-				param->app->map.height = shm->loginResponse.mapHeight;
+				param->app->map.width = shm->taxiLoginResponse.mapWidth;
+				param->app->map.height = shm->taxiLoginResponse.mapHeight;
 				Service_GetMap(param->app);
 				break;
-			case LR_INVALID_UNDEFINED:
+			case TLR_INVALID_UNDEFINED:
 				_tprintf(TEXT("%sError... Please try again!"), Utils_NewSubLine());
 				break;
-			case LR_INVALID_CLOSED:
+			case TLR_INVALID_CLOSED:
 				_tprintf(TEXT("%sError... Central is not allowing taxi logins at the moment!"), Utils_NewSubLine());
 				break;
-			case LR_INVALID_FULL:
+			case TLR_INVALID_FULL:
 				_tprintf(TEXT("%sError... The application doesn't accept more taxis!"), Utils_NewSubLine());
 				break;
-			case LR_INVALID_POSITION:
+			case TLR_INVALID_POSITION:
 				_tprintf(TEXT("%sError... The position chosen is invalid!"), Utils_NewSubLine());
 				break;
-			case LR_INVALID_EXISTS:
+			case TLR_INVALID_EXISTS:
 				_tprintf(TEXT("%sError... The license plate chosen is already exists!"), Utils_NewSubLine());
 				break;
 			default:
@@ -47,7 +47,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 				break;
 		}
 
-		param->request.loginResponse.loginResponseType = shm->loginResponse.loginResponseType;
+		param->request.taxiLoginResponse.taxiLoginResponseType = shm->taxiLoginResponse.taxiLoginResponseType;
 		break;
 
 	case QnART_NT_INTEREST:

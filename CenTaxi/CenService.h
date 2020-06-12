@@ -116,7 +116,7 @@ bool isValid_ObjectPosition(Application* app, double coordX, double coordY);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
-LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest);
+TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 

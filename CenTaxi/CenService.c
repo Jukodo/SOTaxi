@@ -578,18 +578,18 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	return CC_UNDEFINED;
 }
 
-LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest){
+TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* loginRequest){
 	if(loginRequest == NULL || Utils_StringIsEmpty(loginRequest->licensePlate))
-		return LR_INVALID_UNDEFINED;
+		return TLR_INVALID_UNDEFINED;
 
 	if(!app->settings.allowTaxiLogins)
-		return LR_INVALID_CLOSED;
+		return TLR_INVALID_CLOSED;
 
 	if(!isValid_ObjectPosition(app, loginRequest->coordX, loginRequest->coordY))
-		return LR_INVALID_POSITION;
+		return TLR_INVALID_POSITION;
 
 	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
-		return LR_INVALID_EXISTS;
+		return TLR_INVALID_EXISTS;
 
 	/*Recommened to be last invalid before adding
 	**For example:
@@ -598,12 +598,12 @@ LoginResponseType Service_LoginTaxi(Application* app, LoginRequest* loginRequest
 	** Than placing taxi in queue only to be rejected after
 	*/
 	if(isTaxiListFull(app))
-		return LR_INVALID_FULL;
+		return TLR_INVALID_FULL;
 
 	if(!Add_Taxi(app, loginRequest->licensePlate, loginRequest->coordX, loginRequest->coordY))
-		return LR_INVALID_UNDEFINED;
+		return TLR_INVALID_UNDEFINED;
 
-	return LR_SUCCESS;
+	return TLR_SUCCESS;
 }
 bool Service_NewPassenger(Application* app, Passenger pass){
 	if(isPassengerListFull(app))
