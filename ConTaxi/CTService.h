@@ -2,8 +2,6 @@
 #include "CTDLL.h"
 
 bool isLoggedIn(Application* app);
-bool isValid_LicensePlate(TCHAR* sLicensePlate);
-bool isValid_Coordinates(TCHAR* sCoordinates);
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
 bool Service_PosLoginSetup(Application* app);

@@ -18,6 +18,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTDLL", "CTDLL\CTDLL.vcxproj", "{03AFC3A4-8812-489D-AD92-D0338EF9EDBF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConPass", "ConPass\ConPass.vcxproj", "{92F81FDC-621C-4D47-8DC1-EED80543C73D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA} = {141BB0F0-1C67-43C3-A5C4-E1ED20B19EEA}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

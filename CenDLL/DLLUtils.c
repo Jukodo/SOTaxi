@@ -36,6 +36,49 @@ void Utils_CleanStdin(){
 	while((c = fgetc(stdin)) != '\n' && c != EOF);
 }
 
+bool Utils_IsValid_LicensePlate(TCHAR* sLicensePlate){
+	if(_tcslen(sLicensePlate) != 8)
+		return false;
+
+	for(unsigned int i = 0; i < _tcslen(sLicensePlate); i++){
+		if((i+1)%3 == 0){ //every third character it is supposed to be a '-'
+			if(sLicensePlate[i] == '-')
+				continue;
+			else
+				return false;
+		}
+
+		if(!iswalpha(sLicensePlate[i]) && !iswdigit(sLicensePlate[i]))
+			return false;
+	}
+
+	return true;
+}
+
+bool Utils_IsValid_Id(TCHAR* sId){
+	if(_tcslen(sId) != 8)
+		return false;
+
+	for(unsigned int i = 0; i < _tcslen(sId); i++){
+		if(!iswalpha(sId[i]) && !iswdigit(sId[i]))
+			return false;
+	}
+
+	return true;
+}
+
+bool Utils_IsValid_Coordinates(TCHAR* sCoordinates){
+	if(_tcslen(sCoordinates) <= 0 || _tcslen(sCoordinates) > 2)
+		return false;
+
+	for(unsigned int i = 0; i < _tcslen(sCoordinates); i++){
+		if(!iswdigit(sCoordinates[i]))
+			return false;
+	}
+
+	return true;
+}
+
 bool Utils_CloseNamedPipe(HANDLE namedPipe){
 	if(namedPipe == NULL)
 		return false;

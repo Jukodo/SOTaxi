@@ -5,35 +5,6 @@
 bool isLoggedIn(Application* app){
 	return !app->loggedInTaxi.taxiInfo.empty;
 }
-bool isValid_LicensePlate(TCHAR* sLicensePlate){
-	if(_tcslen(sLicensePlate) != 8)
-		return false;
-
-	for(unsigned int i = 0; i < _tcslen(sLicensePlate); i++){
-		if((i+1)%3 == 0){ //every third character it is supposed to be a '-'
-			if(sLicensePlate[i] == '-')
-				continue;
-			else
-				return false;
-		}
-
-		if(!iswalpha(sLicensePlate[i]) && !iswdigit(sLicensePlate[i]))
-			return false;
-	}
-
-	return true;
-}
-bool isValid_Coordinates(TCHAR* sCoordinates){
-	if(_tcslen(sCoordinates) <= 0 || _tcslen(sCoordinates) > 2)
-		return false;
-
-	for(unsigned int i = 0; i < _tcslen(sCoordinates); i++){
-		if(!iswdigit(sCoordinates[i]))
-			return false;
-	}
-
-	return true;
-}
 
 void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
 	TParam_QnARequest* param = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));

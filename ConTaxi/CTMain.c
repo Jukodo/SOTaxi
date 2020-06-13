@@ -48,39 +48,39 @@ int _tmain(int argc, LPTSTR argv[]) {
 		ZeroMemory(opt, 2);
 		_tprintf(TEXT("%sLogin"), Utils_NewLine());
 
-		if(isValid_LicensePlate(sLicensePlate)){
+		if(Utils_IsValid_LicensePlate(sLicensePlate)){
 			_tprintf(TEXT("%sLicense plate: %s"),  Utils_NewSubLine(), sLicensePlate);
 		} else{
 			_tprintf(TEXT("%sPlease enter you license plate (XX-XX-XX)"), Utils_NewSubLine());
 			_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 			_tscanf_s(TEXT(" %[^\n]"), sLicensePlate, _countof(sLicensePlate));
 			Utils_CleanStdin();
-			if(!isValid_LicensePlate(sLicensePlate)){
+			if(!Utils_IsValid_LicensePlate(sLicensePlate)){
 				_tprintf(TEXT("%sLicense plate doesn't follow input rules..."), Utils_NewSubLine());
 				continue;
 			}
 		}
 
-		if(isValid_Coordinates(sCoordinates_X)){
+		if(Utils_IsValid_Coordinates(sCoordinates_X)){
 			_tprintf(TEXT("%sX coordinate: %s"), Utils_NewSubLine(), sCoordinates_X);
 		} else{
 			_tprintf(TEXT("%sPlease enter you starting X coordinates (XX)"), Utils_NewSubLine());
 			_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 			_tscanf_s(TEXT(" %[^\n]"), sCoordinates_X, _countof(sCoordinates_X));
 			Utils_CleanStdin();
-			if(!isValid_Coordinates(sCoordinates_X)){
+			if(!Utils_IsValid_Coordinates(sCoordinates_X)){
 				_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
 				continue;
 			}
 		}
-		if(isValid_Coordinates(sCoordinates_Y)){
+		if(Utils_IsValid_Coordinates(sCoordinates_Y)){
 			_tprintf(TEXT("%sY coordinate: %s"), Utils_NewSubLine(), sCoordinates_Y);
 		} else{
 			_tprintf(TEXT("%sPlease enter you starting Y coordinates (YY)"), Utils_NewSubLine());
 			_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 			_tscanf_s(TEXT(" %[^\n]"), sCoordinates_Y, _countof(sCoordinates_Y));
 			Utils_CleanStdin();
-			if(!isValid_Coordinates(sCoordinates_Y)){
+			if(!Utils_IsValid_Coordinates(sCoordinates_Y)){
 				_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
 				continue;
 			}
@@ -97,14 +97,14 @@ int _tmain(int argc, LPTSTR argv[]) {
 			ZeroMemory(sCoordinates_Y, sizeof(sCoordinates_Y));
 			continue;
 		} else {
-			_tprintf(TEXT("%sTrying to log in. Please wait..."), Utils_NewSubLine());
+			_tprintf(TEXT("%sTrying to login. Please wait..."), Utils_NewSubLine());
 			Service_Login(&app, sLicensePlate, sCoordinates_X, sCoordinates_Y);
 		}
 		flagLoginFailed = !isLoggedIn(&app);
 		flagLoginFailed = flagLoginFailed || !Service_PosLoginSetup(&app);
 
 		if(flagLoginFailed)
-			_tprintf(TEXT("%sLog in failed... Please try again!"), Utils_NewSubLine());
+			_tprintf(TEXT("%sLogin failed... Please try again!"), Utils_NewSubLine());
 	} while(flagLoginFailed);
 	_tprintf(TEXT("%sYou are now logged in... Welcome!"), Utils_NewSubLine());
 	#pragma endregion

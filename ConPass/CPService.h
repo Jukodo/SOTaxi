@@ -26,9 +26,19 @@ struct Application{
 #define TIMEOUT_TaxiLoginQueue SECOND_IN_MILI * TIMEOUT_TaxiLoginQueue_Seconds //30 seconds
 
 enum PassengerCommands{
-	TC_HELP,
-	TC_LOGIN,
-	TC_LIST_PASSENGERS,
-	TC_CLOSEAPP,
-	TC_UNDEFINED
+	PC_HELP,
+	PC_LOGIN,
+	PC_LIST_PASSENGERS,
+	PC_CLOSEAPP,
+	PC_UNDEFINED
 };
+
+bool Setup_Application(Application* app);
+bool Setup_OpenThreadHandles(ThreadHandles* threadHandles);
+void Setup_CloseAllHandles(Application* app);
+
+void Service_CloseApp(Application* app);
+PassengerCommands Service_UseCommand(Application* app, TCHAR* command);
+
+bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y);
+void Command_ListPassengers(Application* app);

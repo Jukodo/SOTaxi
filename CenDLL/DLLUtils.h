@@ -20,6 +20,9 @@ CENDLL_API bool Utils_StringIsEmpty(TCHAR* str);
 CENDLL_API TCHAR* Utils_NewLine();
 CENDLL_API TCHAR* Utils_NewSubLine();
 CENDLL_API void Utils_CleanStdin();
+CENDLL_API bool Utils_IsValid_LicensePlate(TCHAR* sLicensePlate);
+CENDLL_API bool Utils_IsValid_Id(TCHAR* sId);
+CENDLL_API bool Utils_IsValid_Coordinates(TCHAR* sCoordinates);
 CENDLL_API bool Utils_CloseNamedPipe(HANDLE namedPipe);
 
 CENDLL_API void Utils_DLL_Register(TCHAR* name, int type);
