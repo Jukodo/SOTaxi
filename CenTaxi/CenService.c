@@ -51,7 +51,7 @@ bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
 		PIPE_WAIT,							//Blocking mode
 		1,									//Max instances
 		0,									//Buffer size of output
-		sizeof(CommsPC),					//Buffer size of input
+		sizeof(CommsP2C),					//Buffer size of input
 		0,									//Client timeout
 		NULL);								//Security attributes
 
@@ -72,7 +72,7 @@ bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
 		PIPE_TYPE_MESSAGE |					//Message type
 		PIPE_WAIT,							//Blocking mode
 		1,									//Max instances
-		sizeof(CommsPC),					//Buffer size of output
+		sizeof(CommsC2P),					//Buffer size of output
 		0,									//Buffer size of input
 		0,									//Client timeout
 		NULL);								//Security attributes
@@ -739,18 +739,18 @@ bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passenger
 	if(app->taxiList[taxiIndex].taxiInfo.empty || app->passengerList[passengerIndex].passengerInfo.empty)
 		return false;
 
-	CommsTC sendNotification;
-	CommsTC_Assign assignComms;
+	CommsC2T sendNotification;
+	CommsC2T_Assign assignComms;
 	_tcscpy_s(assignComms.passId, _countof(assignComms.passId), app->passengerList[passengerIndex].passengerInfo.Id);
 	assignComms.coordX = app->passengerList[passengerIndex].passengerInfo.object.coordX;
 	assignComms.coordY = app->passengerList[passengerIndex].passengerInfo.object.coordY;
 	sendNotification.assignComm = assignComms;
-	sendNotification.commType = CTC_ASSIGNED;
+	sendNotification.commType = C2T_ASSIGNED;
 
 	WriteFile(
 		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
 		&sendNotification,						//Write from 
-		sizeof(CommsTC),						//Size being written
+		sizeof(CommsC2T),						//Size being written
 		NULL,									//Quantity Bytes written
 		NULL);									//Overlapped IO
 
@@ -772,8 +772,8 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 	if(anchorTaxi->taxiInfo.state == TS_WITH_PASS)
 		return false;
 
-	CommsTC sendNotification;
-	CommsTC_Shutdown shutdownComms;
+	CommsC2T sendNotification;
+	CommsC2T_Shutdown shutdownComms;
 	
 	if(Utils_StringIsEmpty(reason))
 		_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), TEXT("Undefined reason..."));
@@ -786,12 +786,12 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 		shutdownComms.shutdownType = ST_KICKED;
 	
 	sendNotification.shutdownComm = shutdownComms;
-	sendNotification.commType = CTC_SHUTDOWN;
+	sendNotification.commType = C2T_SHUTDOWN;
 
 	WriteFile(
 		anchorTaxi->taxiNamedPipe,	//Named pipe handle
 		&sendNotification,			//Write from 
-		sizeof(CommsTC),			//Size being written
+		sizeof(CommsC2T),			//Size being written
 		NULL,						//Quantity Bytes written
 		NULL);						//Overlapped IO
 
@@ -956,18 +956,18 @@ void Temp_AssignRandom(Application* app){
 	for(int i = 0; i < app->maxTaxis; i++){
 		if(!app->taxiList[i].taxiInfo.empty){
 			if(chosenTaxi == 0){
-				CommsTC sendNotification;
-				CommsTC_Assign assignComms;
+				CommsC2T sendNotification;
+				CommsC2T_Assign assignComms;
 				_tcscpy_s(assignComms.passId, _countof(assignComms.passId), TEXT("TestPass"));
 				assignComms.coordX = 6;
 				assignComms.coordY = 9;
 				sendNotification.assignComm = assignComms;
-				sendNotification.commType = CTC_ASSIGNED;
+				sendNotification.commType = C2T_ASSIGNED;
 
 				WriteFile(
 					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
 					&sendNotification,			//Write from 
-					sizeof(CommsTC), //Size being written
+					sizeof(CommsC2T), //Size being written
 					NULL,					//Quantity Bytes written
 					NULL);					//Overlapped IO
 				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
@@ -996,17 +996,17 @@ void Temp_ShutdownRandom(Application* app){
 	for(int i = 0; i < app->maxTaxis; i++){
 		if(!app->taxiList[i].taxiInfo.empty){
 			if(chosenTaxi == 0){
-				CommsTC sendNotification;
-				CommsTC_Shutdown shutdownComms;
+				CommsC2T sendNotification;
+				CommsC2T_Shutdown shutdownComms;
 				_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), TEXT("Kicked"));
 				shutdownComms.shutdownType = ST_KICKED;
 				sendNotification.shutdownComm = shutdownComms;
-				sendNotification.commType = CTC_SHUTDOWN;
+				sendNotification.commType = C2T_SHUTDOWN;
 
 				WriteFile(
 					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
 					&sendNotification,			//Write from 
-					sizeof(CommsTC), //Size being written
+					sizeof(CommsC2T), //Size being written
 					NULL,					//Quantity Bytes written
 					NULL);					//Overlapped IO
 				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);

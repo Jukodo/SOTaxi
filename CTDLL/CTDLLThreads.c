@@ -161,21 +161,21 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 	TParam_NotificationReceiver_NP* param = (TParam_NotificationReceiver_NP*) _param;
 
-	CommsTC notificationReceived;
+	CommsC2T notificationReceived;
 	while(param->app->keepRunning){
 		ReadFile(
 			param->app->loggedInTaxi.centralNamedPipe,	//Named pipe handle
 			&notificationReceived,						//Read into
-			sizeof(CommsTC),							//Size being read
+			sizeof(CommsC2T),							//Size being read
 			NULL,										//Quantity of bytes read
 			NULL);										//Overlapped IO
 
 		switch(notificationReceived.commType){
-			case CTC_ASSIGNED:
+			case C2T_ASSIGNED:
 				_tprintf(TEXT("%s[Remove Me] I've received a message that i've been assigned to [%s] at (%.2lf, %.2lf)!"), Utils_NewLine(), notificationReceived.assignComm.passId, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
 				Service_SetNewDestination(param->app, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
 				break;
-			case CTC_SHUTDOWN:
+			case C2T_SHUTDOWN:
 				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());
 				switch(notificationReceived.shutdownComm.shutdownType){
 					case ST_GLOBAL:

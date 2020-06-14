@@ -182,8 +182,8 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 			PIPE_TYPE_MESSAGE |					//Message type
 			PIPE_WAIT,							//Blocking mode
 			param->app->maxTaxis,				//Max instances
-			sizeof(CommsTC),					//Buffer size of output
-			sizeof(CommsTC_Identity),			//Buffer size of input
+			sizeof(CommsT2C),					//Buffer size of output
+			sizeof(CommsT2C_Identity),			//Buffer size of input
 			0,									//Client timeout
 			NULL);								//Security attributes
 
@@ -203,11 +203,11 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 			CloseHandle(hPipe);
 		}
 
-		CommsTC_Identity taxiIdentity;
+		CommsT2C_Identity taxiIdentity;
 		ReadFile(
 			hPipe,					//Named pipe handle
 			&taxiIdentity,			//Read into
-			sizeof(CommsTC_Identity), //Size being read
+			sizeof(CommsT2C_Identity), //Size being read
 			NULL,					//Quantity of bytes read
 			NULL);					//Overlapped IO
 
@@ -228,7 +228,6 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 DWORD WINAPI Thread_ReadingConPassNamedPipes(LPVOID _param){
 	TParam_ReadingConPassNamedPipes* param = (TParam_ReadingConPassNamedPipes*) _param;
 
-
 	//Waiting for a ConPass to connect
 	ConnectNamedPipe(param->app->namedPipeHandles.hRead, NULL);
 
@@ -237,9 +236,32 @@ DWORD WINAPI Thread_ReadingConPassNamedPipes(LPVOID _param){
 
 	_tprintf(TEXT("%s[ConPass] A ConPass has been connected!"), Utils_NewSubLine());
 
-	/*ToDo (TAG_TODO)
-	**Loop reading
-	*/
+	CommsP2C receivedComm;
+	while(param->app->keepRunning){
+		_tprintf(TEXT("%sWaiting for a message from ConPass"), Utils_NewSubLine());
+		ReadFile(
+			param->app->namedPipeHandles.hRead,	//Named pipe handle
+			&receivedComm,						//Read into
+			sizeof(CommsP2C),					//Size being read
+			NULL,								//Quantity of bytes read
+			NULL);								//Overlapped IO
+		_tprintf(TEXT("%sReceived a message from ConPass"), Utils_NewSubLine());
+
+		switch(receivedComm.commType){
+			case P2C_LOGIN:
+				_tprintf(TEXT("%s[ConPass] Login Comm"), Utils_NewSubLine());
+				break;
+			case P2C_REQMAXPASS:
+				_tprintf(TEXT("%s[ConPass] ReqMaxPass Comm"), Utils_NewSubLine());
+				break;
+			case P2C_DISCONNECT:
+				_tprintf(TEXT("%s[ConPass] Disconnect Comm"), Utils_NewSubLine());
+				break;
+			default:
+				_tprintf(TEXT("%s[ConPass] Wtf is this"), Utils_NewSubLine());
+		}
+	}
+	_tprintf(TEXT("%sClosing Thread"), Utils_NewSubLine());
 
 	free(param);
 	return 1;

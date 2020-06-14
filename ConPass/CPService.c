@@ -87,14 +87,39 @@ PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
 }
 
 void Service_CloseApp(Application* app){
+	CommsP2C commP2C;
+	commP2C.commType = P2C_DISCONNECT;
 
+	WriteFile(
+		app->namedPipeHandles.hWrite,	//Named pipe handle
+		&commP2C,							//Write from 
+		sizeof(CommsP2C),						//Size being written
+		NULL,									//Quantity Bytes written
+		NULL);									//Overlapped IO
 }
 
 bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
+	CommsP2C commP2C;
+	commP2C.commType = P2C_LOGIN;
 
-	return false;
+	WriteFile(
+		app->namedPipeHandles.hWrite,	//Named pipe handle
+		&commP2C,							//Write from 
+		sizeof(CommsP2C),						//Size being written
+		NULL,									//Quantity Bytes written
+		NULL);									//Overlapped IO
+
+	return true;
 }
 
 void Command_ListPassengers(Application* app){
+	CommsP2C commP2C;
+	commP2C.commType = P2C_REQMAXPASS;
 
+	WriteFile(
+		app->namedPipeHandles.hWrite,	//Named pipe handle
+		&commP2C,							//Write from 
+		sizeof(CommsP2C),						//Size being written
+		NULL,									//Quantity Bytes written
+		NULL);									//Overlapped IO
 }

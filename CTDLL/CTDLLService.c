@@ -269,13 +269,13 @@ bool Service_ConnectToCentralNamedPipe(Application* app){
 		return false;
 	}
 
-	CommsTC_Identity npctcIdentity;
+	CommsT2C_Identity npctcIdentity;
 	_tcscpy_s(npctcIdentity.licensePlate, _countof(npctcIdentity.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
 
 	WriteFile(
 		hPipe,					//Named pipe handle
 		&npctcIdentity,			//Write from 
-		sizeof(CommsTC_Identity), //Size being written
+		sizeof(CommsT2C_Identity), //Size being written
 		NULL,					//Quantity Bytes written
 		NULL);					//Overlapped IO
 

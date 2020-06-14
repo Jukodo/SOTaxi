@@ -1,5 +1,6 @@
 #pragma once
 #include "CenDLL.h"
+#include "CPThreads.h"
 
 typedef struct Application Application;
 typedef struct NamedPipeHandles NamedPipeHandles;

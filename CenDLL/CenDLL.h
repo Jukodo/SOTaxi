@@ -29,6 +29,7 @@
 #define STRING_XXL 255
 
 #define STRING_LICENSEPLATE 9
+#define STRING_ID 9
 
 #define SHUTDOWN_REASON_Undefined TEXT("Undefined Reason")
 #define SHUTDOWN_REASON_Global TEXT("Application is closing")

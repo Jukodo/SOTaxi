@@ -21,9 +21,15 @@
     <ClCompile Include="CPService.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPThreads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
