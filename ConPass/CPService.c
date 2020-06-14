@@ -7,9 +7,58 @@ bool Setup_Application(Application* app){
 
 
 	bool ret = true;
+	ret = ret && Setup_OpenNamedPipeHandles(&app->namedPipeHandles);
 	ret = ret && Setup_OpenThreadHandles(&app->threadHandles);
 
 	return ret;
+}
+
+bool Setup_OpenNamedPipeHandles(NamedPipeHandles* namedPipeHandles){
+	#pragma region ReadFromCentral
+	HANDLE hPipe_Read = CreateFile(
+		NAME_NAMEDPIPE_CommsPassCentral_C2P,//Named Pipe name
+		GENERIC_READ,						//Read Access
+		0,									//Doesn't share
+		NULL,								//Security attributes
+		OPEN_EXISTING,						//Open existing pipe 
+		0,									//Atributes
+		NULL);								//Template file 
+
+	if(hPipe_Read == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sSomething unexpected happened! Seems like a ConPass is already connected to the central..."), Utils_NewSubLine());
+
+		CloseHandle(hPipe_Read);
+		return false;
+	}
+
+	namedPipeHandles->hRead = hPipe_Read;
+	#pragma endregion
+
+	#pragma region WriteToCentral
+	HANDLE hPipe_Write = CreateFile(
+		NAME_NAMEDPIPE_CommsPassCentral_P2C,//Named Pipe name
+		GENERIC_WRITE,						//Read Access
+		0,									//Doesn't share
+		NULL,								//Security attributes
+		OPEN_EXISTING,						//Open existing pipe 
+		0,									//Atributes
+		NULL);								//Template file 
+
+	if(hPipe_Write == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sSomething unexpected happened! Seems like a ConPass is already connected to the central..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateFile failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		CloseHandle(hPipe_Write);
+		return false;
+	}
+
+	namedPipeHandles->hWrite = hPipe_Write;
+	#pragma endregion
+
+	return true;
 }
 
 bool Setup_OpenThreadHandles(ThreadHandles* threadHandles){

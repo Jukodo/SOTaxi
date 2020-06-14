@@ -2,10 +2,16 @@
 #include "CenDLL.h"
 
 typedef struct Application Application;
+typedef struct NamedPipeHandles NamedPipeHandles;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 
 typedef enum PassengerCommands PassengerCommands;
+
+struct NamedPipeHandles{
+	HANDLE hRead;
+	HANDLE hWrite;
+};
 
 struct ThreadHandles{
 	HANDLE hQnARequests;
@@ -13,6 +19,7 @@ struct ThreadHandles{
 };
 
 struct Application{
+	NamedPipeHandles namedPipeHandles;
 	ThreadHandles threadHandles;
 	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
 };
@@ -34,6 +41,7 @@ enum PassengerCommands{
 };
 
 bool Setup_Application(Application* app);
+bool Setup_OpenNamedPipeHandles(NamedPipeHandles* threadHandles);
 bool Setup_OpenThreadHandles(ThreadHandles* threadHandles);
 void Setup_CloseAllHandles(Application* app);
 

@@ -6,10 +6,16 @@
 #include "CenThreads.h"
 
 typedef struct Application Application;
+typedef struct NamedPipeHandles NamedPipeHandles;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
 typedef enum CentralCommands CentralCommands;
+
+struct NamedPipeHandles{
+	HANDLE hWrite;
+	HANDLE hRead;
+};
 
 struct ThreadHandles{
 	HANDLE hQnARequests;
@@ -18,6 +24,8 @@ struct ThreadHandles{
 	DWORD dwIdTossRequests;
 	HANDLE hConnectingTaxiPipes;
 	DWORD dwIdConnectingTaxiPipes;
+	HANDLE hReadConPassNamedPipe;
+	DWORD dwIdReadConPassNamedPipe;
 };
 
 struct SyncHandles{
@@ -45,6 +53,7 @@ struct Application{
 	CenTaxi* taxiList;
 	Map map;
 	CenPassenger* passengerList;
+	NamedPipeHandles namedPipeHandles;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
 	ShmHandles shmHandles;
@@ -87,6 +96,7 @@ enum CentralCommands{
 };
 
 bool Setup_Application(Application* app, int maxTaxis, int maxPassengers);
+bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles);
 bool Setup_OpenThreadHandles(Application* app);
 bool Setup_OpenSyncHandles(Application* app);
 bool Setup_OpenShmHandles(Application* app);

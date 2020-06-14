@@ -50,6 +50,8 @@
 #define NAME_SEMAPHORE_TaxiNPSpots TEXT("JUSO2TAXI_SEMAPHORE_TNPS")
 
 #define NAME_NAMEDPIPE_CommsTaxiCentral TEXT("\\\\.\\pipe\\JUSO2TAXI_NAMEDPIPE_CTC")
+#define NAME_NAMEDPIPE_CommsPassCentral_P2C TEXT("\\\\.\\pipe\\JUSO2TAXI_NAMEDPIPE_CPC_P2C")
+#define NAME_NAMEDPIPE_CommsPassCentral_C2P TEXT("\\\\.\\pipe\\JUSO2TAXI_NAMEDPIPE_CPC_C2P")
 
 //Main
 #include <stdio.h>

@@ -224,3 +224,23 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 	free(param);
 	return 1;
 }
+
+DWORD WINAPI Thread_ReadingConPassNamedPipes(LPVOID _param){
+	TParam_ReadingConPassNamedPipes* param = (TParam_ReadingConPassNamedPipes*) _param;
+
+
+	//Waiting for a ConPass to connect
+	ConnectNamedPipe(param->app->namedPipeHandles.hRead, NULL);
+
+	//Waiting for a ConPass to connect
+	ConnectNamedPipe(param->app->namedPipeHandles.hWrite, NULL);
+
+	_tprintf(TEXT("%s[ConPass] A ConPass has been connected!"), Utils_NewSubLine());
+
+	/*ToDo (TAG_TODO)
+	**Loop reading
+	*/
+
+	free(param);
+	return 1;
+}

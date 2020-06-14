@@ -4,7 +4,6 @@
 //Requests
 typedef struct QnARequest QnARequest;
 typedef struct TaxiLoginRequest TaxiLoginRequest;
-typedef struct PassLoginRequest PassLoginRequest;
 typedef struct NTInterestRequest NTInterestRequest;
 
 typedef struct TossRequest TossRequest;
@@ -14,15 +13,14 @@ typedef struct TossLogout TossLogout;
 
 //Responses
 typedef struct TaxiLoginResponse TaxiLoginResponse;
-typedef struct PassLoginResponse PassLoginResponse;
 typedef enum TaxiLoginResponseType TaxiLoginResponseType;
-typedef enum PassLoginResponseType PassLoginResponseType;
 typedef enum NTInterestResponse NTInterestResponse;
 
 //Other Enums
 typedef enum QnARequestType QnARequestType;
 typedef enum TossRequestType TossRequestType;
 typedef enum CommsTCType CommsTCType;
+typedef enum CommsPCType CommsPCType;
 typedef enum ShutdownType ShutdownType;
 
 //SHM
@@ -34,15 +32,10 @@ typedef struct CommsTC CommsTC;
 typedef struct CommsTC_Identity CommsTC_Identity;
 typedef struct CommsTC_Assign CommsTC_Assign;
 typedef struct CommsTC_Shutdown CommsTC_Shutdown;
+typedef struct CommsPC CommsPC;
 
 struct TaxiLoginRequest{
 	TCHAR licensePlate[STRING_SMALL];
-	double coordX;
-	double coordY;
-};
-
-struct PassLoginRequest{
-	TCHAR id[STRING_SMALL];
 	double coordX;
 	double coordY;
 };
@@ -58,12 +51,6 @@ struct TaxiLoginResponse{
 	int mapHeight;
 };
 
-struct PassLoginResponse{
-	PassLoginResponseType loginResponseType;
-	int mapWidth;
-	int mapHeight;
-};
-
 enum TaxiLoginResponseType{
 	TLR_SUCCESS,
 	TLR_INVALID_UNDEFINED,
@@ -71,14 +58,6 @@ enum TaxiLoginResponseType{
 	TLR_INVALID_FULL,
 	TLR_INVALID_POSITION,
 	TLR_INVALID_EXISTS
-};
-
-enum PassLoginResponseType{
-	PLR_SUCCESS,
-	PLR_INVALID_UNDEFINED,
-	PLR_INVALID_FULL,
-	PLR_INVALID_POSITION,
-	PLR_INVALID_EXISTS
 };
 
 enum NTInterestResponse{
@@ -172,6 +151,17 @@ struct CommsTC{
 		CommsTC_Shutdown shutdownComm;
 	};
 	CommsTCType commType;
+};
+
+enum CommsPCType{
+	PTC_LOGIN,
+	PTC_LISTPASS,
+	PTC_DISCONNECT
+};
+
+struct CommsPC{
+	
+	CommsPCType commType;
 };
 
 enum Shutdown_Type{

@@ -37,10 +37,60 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	ret = ret && Setup_OpenSyncHandles(app);
 	ret = ret && Setup_OpenShmHandles(app);
 	ret = ret && Setup_OpenMap(app);
+	ret = ret && Setup_OpenNamedPipes(&app->namedPipeHandles);
 	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
 
 	return ret;
 }
+
+bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
+	HANDLE hPipe_Read = CreateNamedPipe(
+		NAME_NAMEDPIPE_CommsPassCentral_P2C,//Named Pipe name
+		PIPE_ACCESS_INBOUND,				//Access to read and write
+		PIPE_TYPE_MESSAGE |					//Message type
+		PIPE_WAIT,							//Blocking mode
+		1,									//Max instances
+		0,									//Buffer size of output
+		sizeof(CommsPC),					//Buffer size of input
+		0,									//Client timeout
+		NULL);								//Security attributes
+
+	//If the CreateNamedPipe return invalid handle check if busy or unexpected error
+	if(hPipe_Read == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sFailed while trying to connect to ConPass! There is already one ConPass connected..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateNamedPipe failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		return false;
+	}
+	namedPipeHandles->hRead = hPipe_Read;
+
+	HANDLE hPipe_Write = CreateNamedPipe(
+		NAME_NAMEDPIPE_CommsPassCentral_C2P,//Named Pipe name
+		PIPE_ACCESS_OUTBOUND,				//Access to read and write
+		PIPE_TYPE_MESSAGE |					//Message type
+		PIPE_WAIT,							//Blocking mode
+		1,									//Max instances
+		sizeof(CommsPC),					//Buffer size of output
+		0,									//Buffer size of input
+		0,									//Client timeout
+		NULL);								//Security attributes
+
+	//If the CreateNamedPipe return invalid handle check if busy or unexpected error
+	if(hPipe_Write == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sFailed while trying to connect to ConPass! There is already one ConPass connected..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateNamedPipe failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		return false;
+	}
+	namedPipeHandles->hWrite = hPipe_Write;
+
+	return true;
+}
+
 bool Setup_OpenThreadHandles(Application* app){
 	#pragma region QnARequest
 	TParam_QnARequest* qnarParam = (TParam_QnARequest*) malloc(sizeof(TParam_QnARequest));
@@ -84,9 +134,24 @@ bool Setup_OpenThreadHandles(Application* app){
 	);
 	#pragma endregion
 
+	#pragma region ReadingConPassNamedPipe
+	TParam_ReadingConPassNamedPipes* rcpnpParam = (TParam_ReadingConPassNamedPipes*) malloc(sizeof(TParam_ReadingConPassNamedPipes));
+	rcpnpParam->app = app;
+
+	app->threadHandles.hReadConPassNamedPipe = CreateThread(
+		NULL,										//Security Attributes
+		0,											//Stack Size (0 = default)
+		Thread_ReadingConPassNamedPipes,			//Function
+		(LPVOID) rcpnpParam,						//Param
+		0,											//Creation flags
+		&app->threadHandles.dwIdReadConPassNamedPipe//Thread Id
+	);
+	#pragma endregion
+
 	return !(app->threadHandles.hQnARequests == NULL ||
 		app->threadHandles.hTossRequests == NULL ||
-		app->threadHandles.hConnectingTaxiPipes == NULL);
+		app->threadHandles.hConnectingTaxiPipes == NULL ||
+		app->threadHandles.hReadConPassNamedPipe == NULL);
 }
 bool Setup_OpenSyncHandles(Application* app){
 	app->syncHandles.hEvent_QnARequest_Read = CreateEvent(
