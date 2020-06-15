@@ -5,10 +5,23 @@ bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
 	app->keepRunning = true;
 
-
 	bool ret = true;
+
 	ret = ret && Setup_OpenNamedPipeHandles(&app->namedPipeHandles);
-	ret = ret && Setup_OpenThreadHandles(&app->threadHandles);
+	if(!ret)
+		return false;
+
+	ret = ret && Setup_OpenThreadHandles(app);
+	if(!ret)
+		return false;
+
+	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
+	if(!ret)
+		return false;
+
+	app->maxPass = -1;
+	Service_GetMaxPass(app);
+	ret = ret && (app->maxPass > 0 && app->maxPass <= TOPMAX_PASSENGERS);
 
 	return ret;
 }
@@ -16,13 +29,13 @@ bool Setup_Application(Application* app){
 bool Setup_OpenNamedPipeHandles(NamedPipeHandles* namedPipeHandles){
 	#pragma region ReadFromCentral
 	HANDLE hPipe_Read = CreateFile(
-		NAME_NAMEDPIPE_CommsPassCentral_C2P,//Named Pipe name
-		GENERIC_READ,						//Read Access
-		0,									//Doesn't share
-		NULL,								//Security attributes
-		OPEN_EXISTING,						//Open existing pipe 
-		0,									//Atributes
-		NULL);								//Template file 
+		NAME_NAMEDPIPE_CommsC2P,	//Named Pipe name
+		GENERIC_READ,				//Read Access
+		0,							//Doesn't share
+		NULL,						//Security attributes
+		OPEN_EXISTING,				//Open existing pipe 
+		0,							//Atributes
+		NULL);						//Template file 
 
 	if(hPipe_Read == INVALID_HANDLE_VALUE){
 		if(GetLastError() == ERROR_PIPE_BUSY)
@@ -37,13 +50,13 @@ bool Setup_OpenNamedPipeHandles(NamedPipeHandles* namedPipeHandles){
 
 	#pragma region WriteToCentral
 	HANDLE hPipe_Write = CreateFile(
-		NAME_NAMEDPIPE_CommsPassCentral_P2C,//Named Pipe name
-		GENERIC_WRITE,						//Read Access
-		0,									//Doesn't share
-		NULL,								//Security attributes
-		OPEN_EXISTING,						//Open existing pipe 
-		0,									//Atributes
-		NULL);								//Template file 
+		NAME_NAMEDPIPE_CommsP2C,	//Named Pipe name
+		GENERIC_WRITE,				//Write Access
+		0,							//Doesn't share
+		NULL,						//Security attributes
+		OPEN_EXISTING,				//Open existing pipe 
+		0,							//Atributes
+		NULL);						//Template file 
 
 	if(hPipe_Write == INVALID_HANDLE_VALUE){
 		if(GetLastError() == ERROR_PIPE_BUSY)
@@ -58,16 +71,106 @@ bool Setup_OpenNamedPipeHandles(NamedPipeHandles* namedPipeHandles){
 	namedPipeHandles->hWrite = hPipe_Write;
 	#pragma endregion
 
+	#pragma region QnAToCentral
+	HANDLE hPipe_QnA = CreateFile(
+		NAME_NAMEDPIPE_CommsPCQnA,	//Named Pipe name
+		GENERIC_READ |				//Read Access
+		GENERIC_WRITE,				//Write Access
+		0,							//Doesn't share
+		NULL,						//Security attributes
+		OPEN_EXISTING,				//Open existing pipe 
+		0,							//Atributes
+		NULL);						//Template file 
+
+	if(hPipe_QnA == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sSomething unexpected happened! Seems like a ConPass is already connected to the central..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateFile failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		CloseHandle(hPipe_QnA);
+		return false;
+	}
+
+	namedPipeHandles->hQnA = hPipe_QnA;
+	#pragma endregion
+
 	return true;
 }
 
-bool Setup_OpenThreadHandles(ThreadHandles* threadHandles){
+bool Setup_OpenThreadHandles(Application* app){
+	#pragma region Notification Receiver from Central Named Pipe
+	TParam_NotificationReceiver_NamedPipe* nrnpParam = (TParam_NotificationReceiver_NamedPipe*) malloc(sizeof(TParam_NotificationReceiver_NamedPipe));
+	nrnpParam->app = app;
 
-	return true;
+	app->threadHandles.hNotificationReceiver_NamedPipe = CreateThread(
+		NULL,													//Security Attributes
+		0,														//Stack Size (0 = default)
+		Thread_NotificationReceiver_NamedPipe,					//Function
+		(LPVOID) nrnpParam,										//Param
+		0,														//Creation flags
+		&app->threadHandles.dwIdNotificationReceiver_NamedPipe	//Thread Id
+	);
+	#pragma endregion
+
+	return !(app->threadHandles.hNotificationReceiver_NamedPipe == NULL);
+}
+
+bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
+	syncHandles->hMutex_QnA = CreateMutex(
+		NULL,				//Security attributes
+		FALSE,				//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_CommQnA	//Mutex name
+	);
+
+	syncHandles->hMutex_Toss = CreateMutex(
+		NULL,				//Security attributes
+		FALSE,				//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_CommToss	//Mutex name
+	);
+
+	return !(syncHandles->hMutex_QnA == NULL ||
+		syncHandles->hMutex_Toss == NULL);
 }
 
 void Setup_CloseAllHandles(Application* app){
+	Setup_CloseNamedPipeHandles(&app->namedPipeHandles);
+	Setup_CloseSyncHandles(&app->syncHandles);
+}
 
+void Setup_CloseNamedPipeHandles(NamedPipeHandles* namedPipeHandles){
+	CloseHandle(namedPipeHandles->hQnA);
+	CloseHandle(namedPipeHandles->hRead);
+	CloseHandle(namedPipeHandles->hWrite);
+}
+
+void Setup_CloseSyncHandles(SyncHandles* syncHandles){
+	CloseHandle(syncHandles->hMutex_QnA);
+	CloseHandle(syncHandles->hMutex_Toss);
+}
+
+void Service_GetMaxPass(Application* app){
+	TParam_SendCommQnA* qnaParam = (TParam_SendCommQnA*) malloc(sizeof(TParam_SendCommQnA));
+	if(qnaParam == NULL){
+		_tprintf(TEXT("%sMalloc error: %d"), Utils_NewLine(), GetLastError());
+		return;
+	}
+
+	CommsP2C sendComm;
+	sendComm.commType = P2C_REQMAXPASS;
+
+	qnaParam->app = app;
+	qnaParam->commPC = sendComm;
+
+	HANDLE hThread = CreateThread(
+		NULL,				//Security Attributes
+		0,					//Stack Size (0 = default)
+		Thread_SendCommQnA,	//Function
+		(LPVOID) qnaParam,	//Param
+		0,					//Creation flags
+		NULL);				//Thread Id
+
+	WaitForSingleObject(hThread, INFINITE);
 }
 
 PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
@@ -87,39 +190,73 @@ PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
 }
 
 void Service_CloseApp(Application* app){
-	CommsP2C commP2C;
-	commP2C.commType = P2C_DISCONNECT;
+	TParam_SendCommToss* tossParam = (TParam_SendCommToss*) malloc(sizeof(TParam_SendCommToss));
+	if(tossParam == NULL){
+		_tprintf(TEXT("%sMalloc error: %d"), Utils_NewLine(), GetLastError());
+		return false;
+	}
 
-	WriteFile(
-		app->namedPipeHandles.hWrite,	//Named pipe handle
-		&commP2C,							//Write from 
-		sizeof(CommsP2C),						//Size being written
-		NULL,									//Quantity Bytes written
-		NULL);									//Overlapped IO
+	CommsP2C sendComm;
+	sendComm.commType = P2C_DISCONNECT;
+
+	tossParam->app = app;
+	tossParam->commPC = sendComm;
+
+	HANDLE hThread = CreateThread(
+		NULL,				//Security Attributes
+		0,					//Stack Size (0 = default)
+		Thread_SendCommToss,//Function
+		(LPVOID) tossParam,	//Param
+		0,					//Creation flags
+		NULL);				//Thread Id
+
+	WaitForSingleObject(hThread, INFINITE);
+
+	Setup_CloseAllHandles(app);
+	exit(1);
 }
 
-bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sCoordinates_X, TCHAR* sCoordinates_Y){
-	CommsP2C commP2C;
-	commP2C.commType = P2C_LOGIN;
+bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sAtY, TCHAR* sDestinyX, TCHAR* sDestinyY){
+	if(Utils_StringIsEmpty(sId) ||
+		Utils_StringIsEmpty(sAtX) ||
+		Utils_StringIsEmpty(sAtY) ||
+		Utils_StringIsEmpty(sDestinyX) ||
+		Utils_StringIsEmpty(sDestinyY))
+		return false;
 
-	WriteFile(
-		app->namedPipeHandles.hWrite,	//Named pipe handle
-		&commP2C,							//Write from 
-		sizeof(CommsP2C),						//Size being written
-		NULL,									//Quantity Bytes written
-		NULL);									//Overlapped IO
+	if(!(Utils_StringIsNumber(sAtX) &&
+		Utils_StringIsNumber(sAtY) &&
+		Utils_StringIsNumber(sDestinyX) &&
+		Utils_StringIsNumber(sDestinyY)))
+		return false;
+	
+	TParam_SendCommQnA* qnaParam = (TParam_SendCommQnA*) malloc(sizeof(TParam_SendCommQnA));
+	if(qnaParam == NULL){
+		_tprintf(TEXT("%sMalloc error: %d"), Utils_NewLine(), GetLastError());
+		return false;
+	}
+
+	CommsP2C sendComm;
+	sendComm.commType = P2C_LOGIN;
+	_tcscpy_s(sendComm.loginComm.id, _countof(sendComm.loginComm.id), sId);
+	sendComm.loginComm.xAt = _ttoi(sAtX);
+	sendComm.loginComm.yAt = _ttoi(sAtY);
+	sendComm.loginComm.xDestiny = _ttoi(sDestinyX);
+	sendComm.loginComm.yDestiny = _ttoi(sDestinyY);
+	
+	qnaParam->app = app;
+	qnaParam->commPC = sendComm;
+
+	CreateThread(
+		NULL,				//Security Attributes
+		0,					//Stack Size (0 = default)
+		Thread_SendCommQnA,	//Function
+		(LPVOID) qnaParam,	//Param
+		0,					//Creation flags
+		NULL);				//Thread Id
 
 	return true;
 }
 
 void Command_ListPassengers(Application* app){
-	CommsP2C commP2C;
-	commP2C.commType = P2C_REQMAXPASS;
-
-	WriteFile(
-		app->namedPipeHandles.hWrite,	//Named pipe handle
-		&commP2C,							//Write from 
-		sizeof(CommsP2C),						//Size being written
-		NULL,									//Quantity Bytes written
-		NULL);									//Overlapped IO
 }

@@ -80,7 +80,7 @@ bool Utils_IsValid_Coordinates(TCHAR* sCoordinates){
 }
 
 bool Utils_CloseNamedPipe(HANDLE namedPipe){
-	if(namedPipe == NULL)
+	if(namedPipe == NULL || namedPipe == INVALID_HANDLE_VALUE)
 		return false;
 
 	FlushFileBuffers(namedPipe); //Flush the pipe to allow the client to read the pipe's contents before disconnecting. 

@@ -249,7 +249,7 @@ bool Service_ConnectToCentralNamedPipe(Application* app){
 	WaitForSingleObject(app->syncHandles.hMutex_CommsTaxiCentral_CanAccess, INFINITE);
 
 	HANDLE hPipe = CreateFile(
-		NAME_NAMEDPIPE_CommsTaxiCentral,   //Named Pipe name
+		NAME_NAMEDPIPE_CommsC2T,   //Named Pipe name
 		GENERIC_READ |  //Read Access
 		GENERIC_WRITE,	//Write Access
 		0,              //Doesn't share

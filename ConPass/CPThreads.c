@@ -1,21 +1,99 @@
 #pragma once
 #include "CPThreads.h"
 
-DWORD WINAPI Thread_ReadComms(LPVOID _param){
-	TParam_ReadComms* param = (TParam_ReadComms*) _param;
+DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
+	TParam_NotificationReceiver_NamedPipe* param = (TParam_NotificationReceiver_NamedPipe*) _param;
 
-	/*ToDo (TAG_TODO)
-	**Loop reading incoming comms from central
-	*/
+	CommsC2P receivedComm;
+	while(param->app->keepRunning){
+		ReadFile(param->app->namedPipeHandles.hRead,	//Named pipe handle
+			&receivedComm,								//Read into
+			sizeof(CommsC2P),							//Size being read
+			NULL,										//Quantity of bytes read
+			NULL);										//Overlapped IO
+
+		switch(receivedComm.commType){
+			case C2P_ASSIGNED:
+				_tprintf(TEXT("%sReceived an Assigned Comm"), Utils_NewSubLine());
+				break;
+			case C2P_SHUTDOWN:
+				_tprintf(TEXT("%sReceived a Shutdown Comm"), Utils_NewSubLine());
+				break;
+		}
+	}
 
 	free(param);
 	return 1;
 }
 
-DWORD WINAPI Thread_SendComm(LPVOID _param){
-	TParam_SendComm* param = (TParam_SendComm*) _param;
-
+DWORD WINAPI Thread_SendCommQnA(LPVOID _param){
+	TParam_SendCommQnA* param = (TParam_SendCommQnA*) _param;
 	
+	WaitForSingleObject(param->app->syncHandles.hMutex_QnA, INFINITE);
+
+	WriteFile(
+		param->app->namedPipeHandles.hQnA,	//Named pipe handle
+		&param->commPC,						//Write from 
+		sizeof(CommsP2C),					//Size being written
+		NULL,								//Quantity Bytes written
+		NULL);								//Overlapped IO
+
+	CommsC2P responseComm;
+	ReadFile(param->app->namedPipeHandles.hQnA,	//Named pipe handle
+		&responseComm,							//Read into
+		sizeof(CommsC2P),						//Size being read
+		NULL,									//Quantity of bytes read
+		NULL);									//Overlapped IO
+
+	switch(responseComm.commType){
+		case C2P_RESP_LOGIN:
+			switch(responseComm.loginRespComm){
+			case PLR_SUCCESS:
+				_tprintf(TEXT("%sSuccess! [%s] login has been registered successfully!%sTransport of the passenger is being taken care of!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine(), Utils_NewSubLine());
+				break;
+			case PLR_INVALID_UNDEFINED:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sPlease try again!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			case PLR_INVALID_FULL:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe application doesn't accept more passengers!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			case PLR_INVALID_POSITION:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe position chosen is invalid!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			case PLR_INVALID_EXISTS:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe id chosen is already exists!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			default:
+				_tprintf(TEXT("%sOh no! [%s] login has been rejected!%sThis error was unexpected! Error: %d"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine(), GetLastError());
+				break;
+			}
+			break;
+		case C2P_RESP_MAXPASS:
+			param->app->maxPass = responseComm.maxPassRespComm.maxPass;
+			break;
+		default:
+			_tprintf(TEXT("%sQnA Response Wtf is this"), Utils_NewSubLine());
+	}
+
+	ReleaseMutex(param->app->syncHandles.hMutex_QnA);
+	
+	free(param);
+	return 1;
+}
+
+DWORD WINAPI Thread_SendCommToss(LPVOID _param){
+	TParam_SendCommToss* param = (TParam_SendCommToss*) _param;
+
+	WaitForSingleObject(param->app->syncHandles.hMutex_Toss, INFINITE);
+
+	WriteFile(
+		param->app->namedPipeHandles.hWrite,//Named pipe handle
+		&param->commPC,						//Write from 
+		sizeof(CommsP2C),					//Size being written
+		NULL,								//Quantity Bytes written
+		NULL);								//Overlapped IO
+
+	ReleaseMutex(param->app->syncHandles.hMutex_Toss);
 
 	free(param);
 	return 1;

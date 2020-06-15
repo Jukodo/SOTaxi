@@ -45,15 +45,15 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 
 bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
 	HANDLE hPipe_Read = CreateNamedPipe(
-		NAME_NAMEDPIPE_CommsPassCentral_P2C,//Named Pipe name
-		PIPE_ACCESS_INBOUND,				//Access to read and write
-		PIPE_TYPE_MESSAGE |					//Message type
-		PIPE_WAIT,							//Blocking mode
-		1,									//Max instances
-		0,									//Buffer size of output
-		sizeof(CommsP2C),					//Buffer size of input
-		0,									//Client timeout
-		NULL);								//Security attributes
+		NAME_NAMEDPIPE_CommsP2C,	//Named Pipe name
+		PIPE_ACCESS_INBOUND,		//Access to read
+		PIPE_TYPE_MESSAGE |			//Message type
+		PIPE_WAIT,					//Blocking mode
+		1,							//Max instances
+		0,							//Buffer size of output
+		sizeof(CommsP2C),			//Buffer size of input
+		0,							//Client timeout
+		NULL);						//Security attributes
 
 	//If the CreateNamedPipe return invalid handle check if busy or unexpected error
 	if(hPipe_Read == INVALID_HANDLE_VALUE){
@@ -64,18 +64,18 @@ bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
 
 		return false;
 	}
-	namedPipeHandles->hRead = hPipe_Read;
+	namedPipeHandles->hCPRead = hPipe_Read;
 
 	HANDLE hPipe_Write = CreateNamedPipe(
-		NAME_NAMEDPIPE_CommsPassCentral_C2P,//Named Pipe name
-		PIPE_ACCESS_OUTBOUND,				//Access to read and write
-		PIPE_TYPE_MESSAGE |					//Message type
-		PIPE_WAIT,							//Blocking mode
-		1,									//Max instances
-		sizeof(CommsC2P),					//Buffer size of output
-		0,									//Buffer size of input
-		0,									//Client timeout
-		NULL);								//Security attributes
+		NAME_NAMEDPIPE_CommsC2P,	//Named Pipe name
+		PIPE_ACCESS_OUTBOUND,		//Access to write
+		PIPE_TYPE_MESSAGE |			//Message type
+		PIPE_WAIT,					//Blocking mode
+		1,							//Max instances
+		sizeof(CommsC2P),			//Buffer size of output
+		0,							//Buffer size of input
+		0,							//Client timeout
+		NULL);						//Security attributes
 
 	//If the CreateNamedPipe return invalid handle check if busy or unexpected error
 	if(hPipe_Write == INVALID_HANDLE_VALUE){
@@ -86,7 +86,29 @@ bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
 
 		return false;
 	}
-	namedPipeHandles->hWrite = hPipe_Write;
+	namedPipeHandles->hCPWrite = hPipe_Write;
+
+	HANDLE hPipe_QnA = CreateNamedPipe(
+		NAME_NAMEDPIPE_CommsPCQnA,	//Named Pipe name
+		PIPE_ACCESS_DUPLEX,			//Access to read and write
+		PIPE_TYPE_MESSAGE |			//Message type
+		PIPE_WAIT,					//Blocking mode
+		1,							//Max instances
+		sizeof(CommsC2P),			//Buffer size of output
+		0,							//Buffer size of input
+		0,							//Client timeout
+		NULL);						//Security attributes
+
+	//If the CreateNamedPipe return invalid handle check if busy or unexpected error
+	if(hPipe_QnA == INVALID_HANDLE_VALUE){
+		if(GetLastError() == ERROR_PIPE_BUSY)
+			_tprintf(TEXT("%sFailed while trying to connect to ConPass! There is already one ConPass connected..."), Utils_NewSubLine());
+		else
+			_tprintf(TEXT("%sCreateNamedPipe failed! Error: %d"), Utils_NewSubLine(), GetLastError());
+
+		return false;
+	}
+	namedPipeHandles->hCPQnA = hPipe_QnA;
 
 	return true;
 }
@@ -134,24 +156,39 @@ bool Setup_OpenThreadHandles(Application* app){
 	);
 	#pragma endregion
 
-	#pragma region ReadingConPassNamedPipe
-	TParam_ReadingConPassNamedPipes* rcpnpParam = (TParam_ReadingConPassNamedPipes*) malloc(sizeof(TParam_ReadingConPassNamedPipes));
-	rcpnpParam->app = app;
+	#pragma region ReadingConPassNamedPipeQnA
+	TParam_ReadConPassNPQnA* qnaParam = (TParam_ReadConPassNPQnA*) malloc(sizeof(TParam_ReadConPassNPQnA));
+	qnaParam->app = app;
 
-	app->threadHandles.hReadConPassNamedPipe = CreateThread(
+	app->threadHandles.hReadConPassNPQnA = CreateThread(
 		NULL,										//Security Attributes
 		0,											//Stack Size (0 = default)
-		Thread_ReadingConPassNamedPipes,			//Function
-		(LPVOID) rcpnpParam,						//Param
+		Thread_ReadConPassNPQnA,					//Function
+		(LPVOID) qnaParam,							//Param
 		0,											//Creation flags
-		&app->threadHandles.dwIdReadConPassNamedPipe//Thread Id
+		&app->threadHandles.dwIdReadConPassNPQnA	//Thread Id
+	);
+	#pragma endregion
+
+	#pragma region ReadingConPassNamedPipeToss
+	TParam_ReadConPassNPToss* tossParam = (TParam_ReadConPassNPToss*) malloc(sizeof(TParam_ReadConPassNPToss));
+	tossParam->app = app;
+
+	app->threadHandles.hReadConPassNPToss = CreateThread(
+		NULL,										//Security Attributes
+		0,											//Stack Size (0 = default)
+		Thread_ReadConPassNPToss,					//Function
+		(LPVOID) tossParam,							//Param
+		0,											//Creation flags
+		&app->threadHandles.dwIdReadConPassNPToss	//Thread Id
 	);
 	#pragma endregion
 
 	return !(app->threadHandles.hQnARequests == NULL ||
 		app->threadHandles.hTossRequests == NULL ||
 		app->threadHandles.hConnectingTaxiPipes == NULL ||
-		app->threadHandles.hReadConPassNamedPipe == NULL);
+		app->threadHandles.hReadConPassNPQnA == NULL ||
+		app->threadHandles.hReadConPassNPToss == NULL);
 }
 bool Setup_OpenSyncHandles(Application* app){
 	app->syncHandles.hEvent_QnARequest_Read = CreateEvent(
@@ -453,7 +490,6 @@ bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coord
 	if(anchorTaxi == NULL)
 		return false;
 
-
 	_tprintf(TEXT("%s[Taxi Login] %s at (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		licensePlate,
@@ -547,6 +583,36 @@ CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY){
 	return NULL;
 }
 
+bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double xDestiny, double yDestiny){
+	/*No need for more validation...
+	**Since it is assumed that this function is only called at Service_LoginPass, which validates everything
+	*/
+
+	CenPassenger* anchorPass = &app->passengerList[Get_FreeIndexPassengerList(app)];
+	if(anchorPass == NULL)
+		return false;
+
+	_tprintf(TEXT("%s[Passenger Login] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
+		Utils_NewSubLine(),
+		id,
+		xAt,
+		yAt,
+		xDestiny,
+		yDestiny);
+
+	/*ToDo (TAG_TODO)
+	**WRITE code to insert passenger to list
+	**CREATE a new transport request to xDestiny and yDestiny for current passenger
+	**REMOVE Service_NewPassenger
+	*/
+	return true;
+}
+bool Delete_Passenger(Application* app, int index){
+	/*ToDo (TAG_TODO)
+	**WRITE code to remove passenger to list
+	*/
+	return true;
+}
 int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
@@ -658,7 +724,7 @@ TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* logi
 
 	/*Recommened to be last invalid before adding
 	**For example:
-	** Taxi can already exit and spots are full
+	** Taxi can already exist and spots are full
 	** It's recommended to feedback saying that there is already a taxi with same license plate
 	** Than placing taxi in queue only to be rejected after
 	*/
@@ -669,6 +735,29 @@ TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* logi
 		return TLR_INVALID_UNDEFINED;
 
 	return TLR_SUCCESS;
+}
+CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginRequest){
+	if(loginRequest == NULL ||
+		Utils_StringIsEmpty(loginRequest->id))
+		return PLR_INVALID_UNDEFINED;
+
+	if(!isValid_ObjectPosition(app, loginRequest->xAt, loginRequest->yAt)) //Current position is an invalid cell
+		return PLR_INVALID_POSITION;
+
+	if(!isValid_ObjectPosition(app, loginRequest->xDestiny, loginRequest->yDestiny) || //Destiny has an invalid cell
+		(loginRequest->xAt == loginRequest->xDestiny && loginRequest->yAt == loginRequest->yDestiny)) //Destiny is same as actual position
+		return PLR_INVALID_DESTINY;
+
+	if(Get_PassengerIndex(app, loginRequest->id) != -1)
+		return PLR_INVALID_EXISTS;
+
+	if(isPassengerListFull(app))
+		return PLR_INVALID_FULL;
+
+	if(!Add_Passenger(app, loginRequest->id, loginRequest->xAt, loginRequest->yAt, loginRequest->xDestiny, loginRequest->yDestiny))
+		return PLR_INVALID_UNDEFINED;
+
+	return PLR_SUCCESS;
 }
 bool Service_NewPassenger(Application* app, Passenger pass){
 	if(isPassengerListFull(app))
@@ -739,20 +828,38 @@ bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passenger
 	if(app->taxiList[taxiIndex].taxiInfo.empty || app->passengerList[passengerIndex].passengerInfo.empty)
 		return false;
 
-	CommsC2T sendNotification;
-	CommsC2T_Assign assignComms;
-	_tcscpy_s(assignComms.passId, _countof(assignComms.passId), app->passengerList[passengerIndex].passengerInfo.Id);
-	assignComms.coordX = app->passengerList[passengerIndex].passengerInfo.object.coordX;
-	assignComms.coordY = app->passengerList[passengerIndex].passengerInfo.object.coordY;
-	sendNotification.assignComm = assignComms;
-	sendNotification.commType = C2T_ASSIGNED;
+	CommsC2T sendTaxiNotification;
+	CommsC2T_Assign assignTaxiComms;
+	_tcscpy_s(assignTaxiComms.passId, _countof(assignTaxiComms.passId), app->passengerList[passengerIndex].passengerInfo.Id);
+	assignTaxiComms.coordX = app->passengerList[passengerIndex].passengerInfo.object.coordX;
+	assignTaxiComms.coordY = app->passengerList[passengerIndex].passengerInfo.object.coordY;
+	sendTaxiNotification.assignComm = assignTaxiComms;
+	sendTaxiNotification.commType = C2T_ASSIGNED;
 
 	WriteFile(
 		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
-		&sendNotification,						//Write from 
+		&sendTaxiNotification,						//Write from 
 		sizeof(CommsC2T),						//Size being written
 		NULL,									//Quantity Bytes written
 		NULL);									//Overlapped IO
+
+	CommsC2P sendPassNotification;
+	CommsC2P_Assign assignPassComms;
+	_tcscpy_s(assignPassComms.passId, _countof(assignPassComms.passId), app->passengerList[passengerIndex].passengerInfo.Id);
+	_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo.LicensePlate);
+	/*ToDo (TAG_TODO)
+	**Calculate estimated time for taxi to arrive to passenger and set to var
+	**assignPassComms.estimatedWaitTime = X;
+	*/
+	sendPassNotification.assignComm = assignPassComms;
+	sendPassNotification.commType = C2P_ASSIGNED;
+
+	WriteFile(
+		app->namedPipeHandles.hCPWrite,	//Named pipe handle
+		&sendPassNotification,			//Write from 
+		sizeof(CommsC2P),				//Size being written
+		NULL,							//Quantity Bytes written
+		NULL);							//Overlapped IO
 
 	return true;
 }
@@ -807,6 +914,19 @@ void Service_CloseApp(Application* app){
 
 		Service_KickTaxi(app, app->taxiList[i].taxiInfo.LicensePlate, SHUTDOWN_REASON_Global, true);
 	}
+
+	CommsC2P sendPassNotification;
+	CommsC2P_Shutdown shutdownPassComms;
+	_tcscpy_s(shutdownPassComms.message, _countof(shutdownPassComms.message), SHUTDOWN_REASON_Global);
+	sendPassNotification.shutdownComm = shutdownPassComms;
+	sendPassNotification.commType = C2P_SHUTDOWN;
+
+	WriteFile(
+		app->namedPipeHandles.hCPWrite,	//Named pipe handle
+		&sendPassNotification,			//Write from 
+		sizeof(CommsC2P),				//Size being written
+		NULL,							//Quantity Bytes written
+		NULL);							//Overlapped IO
 
 	Setup_CloseAllHandles(app);
 	/*ToDo (TAG_TODO)
@@ -966,10 +1086,10 @@ void Temp_AssignRandom(Application* app){
 
 				WriteFile(
 					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
-					&sendNotification,			//Write from 
-					sizeof(CommsC2T), //Size being written
-					NULL,					//Quantity Bytes written
-					NULL);					//Overlapped IO
+					&sendNotification,				//Write from 
+					sizeof(CommsC2T),				//Size being written
+					NULL,							//Quantity Bytes written
+					NULL);							//Overlapped IO
 				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
 				break;
 			}

@@ -13,8 +13,9 @@ typedef struct ShmHandles ShmHandles;
 typedef enum CentralCommands CentralCommands;
 
 struct NamedPipeHandles{
-	HANDLE hWrite;
-	HANDLE hRead;
+	HANDLE hCPWrite;
+	HANDLE hCPRead;
+	HANDLE hCPQnA;
 };
 
 struct ThreadHandles{
@@ -24,8 +25,10 @@ struct ThreadHandles{
 	DWORD dwIdTossRequests;
 	HANDLE hConnectingTaxiPipes;
 	DWORD dwIdConnectingTaxiPipes;
-	HANDLE hReadConPassNamedPipe;
-	DWORD dwIdReadConPassNamedPipe;
+	HANDLE hReadConPassNPQnA;
+	DWORD dwIdReadConPassNPQnA;
+	HANDLE hReadConPassNPToss;
+	DWORD dwIdReadConPassNPToss;
 };
 
 struct SyncHandles{
@@ -77,6 +80,8 @@ struct Application{
 #define CMD_SHUTDOWN_RANDOM TEXT("/shutdownRandom")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
+#define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
+
 enum CentralCommands{
 	CC_HELP,
 	CC_LIST_TAXIS,
@@ -107,18 +112,20 @@ void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseShmHandles(ShmHandles* shmHandles);
 
-bool isTaxiListFull(Application* app);
 bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY);
 bool Delete_Taxi(Application* app, int index);
 int Get_QuantLoggedInTaxis(Application* app);
+bool isTaxiListFull(Application* app);
 int Get_FreeIndexTaxiList(Application* app);
 int Get_TaxiIndex(Application* app, TCHAR* licensePlate);
 CenTaxi* Get_Taxi(Application* app, int index);
 CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY);
 
+bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double xDestiny, double yDestiny);
+bool Delete_Passenger(Application* app, int index);
+int Get_QuantLoggedInPassengers(Application* app);
 bool isPassengerListFull(Application* app);
-int Get_QuantLoggedInTaxis(Application* app);
-int Get_FreeIndexTaxiList(Application* app);
+int Get_FreeIndexPassengerList(Application* app);
 int Get_PassengerIndex(Application* app, TCHAR* Id);
 CenPassenger* Get_Passenger(Application* app, int index);
 
@@ -127,6 +134,7 @@ bool isValid_ObjectPosition(Application* app, double coordX, double coordY);
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
 TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* loginRequest);
+CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginRequest);
 bool Service_NewPassenger(Application* app, Passenger pass);
 NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 

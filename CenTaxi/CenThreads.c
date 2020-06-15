@@ -177,7 +177,7 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		WaitForSingleObject(param->app->syncHandles.hSemaphore_TaxiNPSpots, INFINITE);
 
 		hPipe = CreateNamedPipe(
-			NAME_NAMEDPIPE_CommsTaxiCentral,	//Named Pipe name
+			NAME_NAMEDPIPE_CommsC2T,	//Named Pipe name
 			PIPE_ACCESS_DUPLEX,					//Access to read and write
 			PIPE_TYPE_MESSAGE |					//Message type
 			PIPE_WAIT,							//Blocking mode
@@ -225,40 +225,82 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 	return 1;
 }
 
-DWORD WINAPI Thread_ReadingConPassNamedPipes(LPVOID _param){
-	TParam_ReadingConPassNamedPipes* param = (TParam_ReadingConPassNamedPipes*) _param;
+DWORD WINAPI Thread_ReadConPassNPQnA(LPVOID _param){
+	TParam_ReadConPassNPQnA* param = (TParam_ReadConPassNPQnA*) _param;
 
 	//Waiting for a ConPass to connect
-	ConnectNamedPipe(param->app->namedPipeHandles.hRead, NULL);
+	ConnectNamedPipe(param->app->namedPipeHandles.hCPQnA, NULL);
 
-	//Waiting for a ConPass to connect
-	ConnectNamedPipe(param->app->namedPipeHandles.hWrite, NULL);
-
-	_tprintf(TEXT("%s[ConPass] A ConPass has been connected!"), Utils_NewSubLine());
-
+	_tprintf(TEXT("%s[ConPass] Connected to QnA!"), Utils_NewSubLine());
 	CommsP2C receivedComm;
+	CommsC2P sendResponse;
 	while(param->app->keepRunning){
-		_tprintf(TEXT("%sWaiting for a message from ConPass"), Utils_NewSubLine());
-		ReadFile(
-			param->app->namedPipeHandles.hRead,	//Named pipe handle
-			&receivedComm,						//Read into
-			sizeof(CommsP2C),					//Size being read
-			NULL,								//Quantity of bytes read
-			NULL);								//Overlapped IO
-		_tprintf(TEXT("%sReceived a message from ConPass"), Utils_NewSubLine());
+		ReadFile(param->app->namedPipeHandles.hCPQnA,	//Named pipe handle
+			&receivedComm,							//Read into
+			sizeof(CommsP2C),						//Size being read
+			NULL,									//Quantity of bytes read
+			NULL);									//Overlapped IO
 
 		switch(receivedComm.commType){
 			case P2C_LOGIN:
-				_tprintf(TEXT("%s[ConPass] Login Comm"), Utils_NewSubLine());
+				sendResponse.loginRespComm = Service_LoginPass(param->app, &receivedComm.loginComm);
+				sendResponse.commType = C2P_RESP_LOGIN;
 				break;
 			case P2C_REQMAXPASS:
-				_tprintf(TEXT("%s[ConPass] ReqMaxPass Comm"), Utils_NewSubLine());
-				break;
-			case P2C_DISCONNECT:
-				_tprintf(TEXT("%s[ConPass] Disconnect Comm"), Utils_NewSubLine());
+				sendResponse.maxPassRespComm.maxPass = param->app->maxPassengers;
+				sendResponse.commType = C2P_RESP_MAXPASS;
 				break;
 			default:
-				_tprintf(TEXT("%s[ConPass] Wtf is this"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[ConPass] QnA - Wtf is this"), Utils_NewSubLine());
+		}
+
+		WriteFile(
+			param->app->namedPipeHandles.hCPQnA,//Named pipe handle
+			&sendResponse,						//Write from 
+			sizeof(CommsC2P),					//Size being written
+			NULL,								//Quantity Bytes written
+			NULL);								//Overlapped IO
+	}
+
+	free(param);
+	return 1;
+}
+
+DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
+	TParam_ReadConPassNPToss* param = (TParam_ReadConPassNPToss*) _param;
+
+	//Waiting for a ConPass to connect
+	ConnectNamedPipe(param->app->namedPipeHandles.hCPRead, NULL);
+
+	//Waiting for a ConPass to connect
+	ConnectNamedPipe(param->app->namedPipeHandles.hCPWrite, NULL);
+
+	_tprintf(TEXT("%s[ConPass] Connected to Toss!"), Utils_NewSubLine());
+
+	CommsP2C receivedComm;
+	while(param->app->keepRunning){
+		ReadFile(
+			param->app->namedPipeHandles.hCPRead,	//Named pipe handle
+			&receivedComm,							//Read into
+			sizeof(CommsP2C),						//Size being read
+			NULL,									//Quantity of bytes read
+			NULL);									//Overlapped IO
+
+		switch(receivedComm.commType){
+			case P2C_DISCONNECT:
+				_tprintf(TEXT("%s[ConPass] Disconnected!"), Utils_NewSubLine());
+				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPQnA);
+				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPRead);
+				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPWrite);
+
+				/*Both QnA and Toss Threads have no use now and will end
+				*/
+				DWORD exitCode;
+				GetExitCodeThread(param->app->threadHandles.hReadConPassNPQnA, &exitCode);
+				ExitThread(exitCode);
+				return 1;
+			default:
+				_tprintf(TEXT("%s[ConPass] Toss - Wtf is this"), Utils_NewSubLine());
 		}
 	}
 	_tprintf(TEXT("%sClosing Thread"), Utils_NewSubLine());

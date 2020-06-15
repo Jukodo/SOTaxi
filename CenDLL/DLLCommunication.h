@@ -50,6 +50,8 @@ typedef struct CommsT2C_Identity CommsT2C_Identity;
 //CommsC2P Variants
 typedef struct CommsC2P_Assign CommsC2P_Assign;
 typedef struct CommsC2P_Shutdown CommsC2P_Shutdown;
+typedef struct CommsC2P_Resp_MaxPass CommsC2P_Resp_MaxPass;
+typedef enum CommsC2P_Resp_Login CommsC2P_Resp_Login;
 
 //CommsP2C Variants
 typedef struct CommsP2C_Login CommsP2C_Login;
@@ -178,12 +180,23 @@ struct CommsT2C_Identity{
 
 //CommsC2P Variants
 struct CommsC2P_Assign{
-	TCHAR id[STRING_ID];
+	TCHAR passId[STRING_ID];
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	int estimatedWaitTime;
 };
 struct CommsC2P_Shutdown{
 	TCHAR message[STRING_LARGE];
+};
+struct CommsC2P_Resp_MaxPass{
+	int maxPass;
+};
+enum CommsC2P_Resp_Login{
+	PLR_SUCCESS,
+	PLR_INVALID_UNDEFINED,
+	PLR_INVALID_FULL,
+	PLR_INVALID_POSITION,
+	PLR_INVALID_DESTINY,
+	PLR_INVALID_EXISTS
 };
 
 //CommsP2C Variants
@@ -204,7 +217,9 @@ enum CommsT2CType{
 	T2C_IDENTITY
 };
 enum CommsC2PType{
-	C2P_ASSIGN,
+	C2P_ASSIGNED,
+	C2P_RESP_LOGIN,
+	C2P_RESP_MAXPASS,
 	C2P_SHUTDOWN
 };
 enum CommsP2CType{
@@ -231,6 +246,8 @@ struct CommsC2P{
 	union{
 		CommsC2P_Assign assignComm;
 		CommsC2P_Shutdown shutdownComm;
+		CommsC2P_Resp_Login loginRespComm;
+		CommsC2P_Resp_MaxPass maxPassRespComm;
 	};
 	CommsC2PType commType;
 };

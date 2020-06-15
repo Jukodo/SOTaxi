@@ -69,8 +69,22 @@ int _tmain(int argc, LPTSTR argv[]){
 				Utils_GetRandomLetter(),
 				rand()%10,
 				rand()%10);
-			TCHAR sCoordinates_X[3] = TEXT("0");
-			TCHAR sCoordinates_Y[3] = TEXT("48");
+			TCHAR xAt[3];
+			swprintf(xAt, 3, TEXT("%d%d"),
+				rand()%50,
+				rand()%50);
+			TCHAR yAt[3];
+			swprintf(yAt, 3, TEXT("%d%d"),
+				rand()%50,
+				rand()%50);
+			TCHAR xDestiny[3];
+			swprintf(xDestiny, 3, TEXT("%d%d"),
+				rand()%50,
+				rand()%50);
+			TCHAR yDestiny[3];
+			swprintf(yDestiny, 3, TEXT("%d%d"),
+				rand()%50,
+				rand()%50);
 			TCHAR opt[2];
 			bool flagLoginFailed = true;
 			do{
@@ -90,26 +104,50 @@ int _tmain(int argc, LPTSTR argv[]){
 					}
 				}
 
-				if(Utils_IsValid_Coordinates(sCoordinates_X)){
-					_tprintf(TEXT("%sX coordinate: %s"), Utils_NewSubLine(), sCoordinates_X);
+				if(Utils_IsValid_Coordinates(xAt)){
+					_tprintf(TEXT("%sX coordinate: %s"), Utils_NewSubLine(), xAt);
 				} else{
-					_tprintf(TEXT("%sPlease enter you starting X coordinates (XX)"), Utils_NewSubLine());
+					_tprintf(TEXT("%sPlease enter your current X coordinates (XX)"), Utils_NewSubLine());
 					_tprintf(TEXT("%s-> "), Utils_NewSubLine());
-					_tscanf_s(TEXT(" %[^\n]"), sCoordinates_X, _countof(sCoordinates_X));
+					_tscanf_s(TEXT(" %[^\n]"), xAt, _countof(xAt));
 					Utils_CleanStdin();
-					if(!Utils_IsValid_Coordinates(sCoordinates_X)){
+					if(!Utils_IsValid_Coordinates(xAt)){
 						_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
 						continue;
 					}
 				}
-				if(Utils_IsValid_Coordinates(sCoordinates_Y)){
-					_tprintf(TEXT("%sY coordinate: %s"), Utils_NewSubLine(), sCoordinates_Y);
+				if(Utils_IsValid_Coordinates(yAt)){
+					_tprintf(TEXT("%sY coordinate: %s"), Utils_NewSubLine(), yAt);
 				} else{
-					_tprintf(TEXT("%sPlease enter you starting Y coordinates (YY)"), Utils_NewSubLine());
+					_tprintf(TEXT("%sPlease enter your current Y coordinates (YY)"), Utils_NewSubLine());
 					_tprintf(TEXT("%s-> "), Utils_NewSubLine());
-					_tscanf_s(TEXT(" %[^\n]"), sCoordinates_Y, _countof(sCoordinates_Y));
+					_tscanf_s(TEXT(" %[^\n]"), yAt, _countof(yAt));
 					Utils_CleanStdin();
-					if(!Utils_IsValid_Coordinates(sCoordinates_Y)){
+					if(!Utils_IsValid_Coordinates(yAt)){
+						_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
+						continue;
+					}
+				}
+				if(Utils_IsValid_Coordinates(xDestiny)){
+					_tprintf(TEXT("%sX coordinate: %s"), Utils_NewSubLine(), xDestiny);
+				} else{
+					_tprintf(TEXT("%sPlease enter your destiny X coordinates (XX)"), Utils_NewSubLine());
+					_tprintf(TEXT("%s-> "), Utils_NewSubLine());
+					_tscanf_s(TEXT(" %[^\n]"), xDestiny, _countof(xDestiny));
+					Utils_CleanStdin();
+					if(!Utils_IsValid_Coordinates(xDestiny)){
+						_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
+						continue;
+					}
+				}
+				if(Utils_IsValid_Coordinates(yDestiny)){
+					_tprintf(TEXT("%sY coordinate: %s"), Utils_NewSubLine(), yDestiny);
+				} else{
+					_tprintf(TEXT("%sPlease enter your destiny Y coordinates (YY)"), Utils_NewSubLine());
+					_tprintf(TEXT("%s-> "), Utils_NewSubLine());
+					_tscanf_s(TEXT(" %[^\n]"), yDestiny, _countof(yDestiny));
+					Utils_CleanStdin();
+					if(!Utils_IsValid_Coordinates(yDestiny)){
 						_tprintf(TEXT("%sCoordinates don't follow input rules..."), Utils_NewSubLine());
 						continue;
 					}
@@ -122,19 +160,19 @@ int _tmain(int argc, LPTSTR argv[]){
 
 				if(_tolower(opt[0]) == 'y' || opt[0] == 'y'){
 					ZeroMemory(sId, sizeof(sId));
-					ZeroMemory(sCoordinates_X, sizeof(sCoordinates_X));
-					ZeroMemory(sCoordinates_Y, sizeof(sCoordinates_Y));
+					ZeroMemory(xAt, sizeof(xAt));
+					ZeroMemory(yAt, sizeof(yAt));
+					ZeroMemory(xDestiny, sizeof(xDestiny));
+					ZeroMemory(yDestiny, sizeof(yDestiny));
 					continue;
 				}
 
 				_tprintf(TEXT("%sTrying to login. Please wait..."), Utils_NewSubLine());
-				if(Command_LoginPassenger(&app, sId, sCoordinates_X, sCoordinates_Y)){
-					_tprintf(TEXT("%sLogin successful! Transport of the passenger is being taken care of!"), Utils_NewSubLine());
+				if(Command_LoginPassenger(&app, sId, xAt, yAt, xDestiny, yDestiny))
 					break;
-				}
 
 				ZeroMemory(opt, 2);
-				_tprintf(TEXT("%sLogin failed... Do you wish to try again? (Y/n)"), Utils_NewSubLine());
+				_tprintf(TEXT("%sInformation is invalid... Do you wish to try again? (Y/n)"), Utils_NewSubLine());
 				_tprintf(TEXT("%s-> "), Utils_NewSubLine());
 				_tscanf_s(TEXT(" %[^\n]"), opt, _countof(opt));
 				Utils_CleanStdin();
