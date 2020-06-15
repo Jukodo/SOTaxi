@@ -287,6 +287,8 @@ DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
 			NULL);									//Overlapped IO
 
 		switch(receivedComm.commType){
+			default:
+				_tprintf(TEXT("%s[ConPass] Unexpected request... Disconnecting for everyone's safety!"), Utils_NewSubLine());
 			case P2C_DISCONNECT:
 				_tprintf(TEXT("%s[ConPass] Disconnected!"), Utils_NewSubLine());
 				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPQnA);
@@ -299,8 +301,7 @@ DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
 				GetExitCodeThread(param->app->threadHandles.hReadConPassNPQnA, &exitCode);
 				ExitThread(exitCode);
 				return 1;
-			default:
-				_tprintf(TEXT("%s[ConPass] Toss - Wtf is this"), Utils_NewSubLine());
+			
 		}
 	}
 	_tprintf(TEXT("%sClosing Thread"), Utils_NewSubLine());
