@@ -32,5 +32,8 @@
     <ClInclude Include="CPThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPPassenger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

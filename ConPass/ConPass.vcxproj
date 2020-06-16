@@ -149,6 +149,7 @@
     <ClCompile Include="CPThreads.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CPPassenger.h" />
     <ClInclude Include="CPService.h" />
     <ClInclude Include="CPThreads.h" />
   </ItemGroup>

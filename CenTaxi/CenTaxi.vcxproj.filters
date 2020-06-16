@@ -41,5 +41,8 @@
     <ClInclude Include="CenThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CenTransportBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -22,6 +22,16 @@ bool Setup_Application(Application* app){
 	app->maxPass = -1;
 	Service_GetMaxPass(app);
 	ret = ret && (app->maxPass > 0 && app->maxPass <= TOPMAX_PASSENGERS);
+	if(!ret)
+		return false;
+
+	app->passengerList = calloc(app->maxPass, sizeof(Passenger));
+	ret = ret && app->passengerList != NULL;
+	if(!ret)
+		return false;
+
+	for(int i = 0; i < app->maxPass; i++)
+		app->passengerList[i].empty = true;
 
 	return ret;
 }
@@ -173,22 +183,6 @@ void Service_GetMaxPass(Application* app){
 	WaitForSingleObject(hThread, INFINITE);
 }
 
-PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
-	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)
-		return PC_HELP;
-	} else if(_tcscmp(command, CMD_LOGIN) == 0){ //Continues on Main (asking for new Passenger ID and XY coords)
-		return PC_LOGIN;
-	} else if(_tcscmp(command, CMD_LIST_PASSENGERS) == 0){
-		Command_ListPassengers(app);
-		return PC_LIST_PASSENGERS;
-	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
-		Service_CloseApp(app);
-		return PC_CLOSEAPP;
-	}
-
-	return PC_UNDEFINED;
-}
-
 void Service_CloseApp(Application* app){
 	TParam_SendCommToss* tossParam = (TParam_SendCommToss*) malloc(sizeof(TParam_SendCommToss));
 	if(tossParam == NULL){
@@ -214,6 +208,90 @@ void Service_CloseApp(Application* app){
 
 	Setup_CloseAllHandles(app);
 	exit(1);
+}
+
+PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
+	if(_tcscmp(command, CMD_HELP) == 0){ //Continues on Main (listing commands)
+		return PC_HELP;
+	} else if(_tcscmp(command, CMD_LOGIN) == 0){ //Continues on Main (asking for new Passenger ID and XY coords)
+		return PC_LOGIN;
+	} else if(_tcscmp(command, CMD_LIST_PASSENGERS) == 0){
+		Command_ListPassengers(app);
+		return PC_LIST_PASSENGERS;
+	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
+		Service_CloseApp(app);
+		return PC_CLOSEAPP;
+	}
+
+	return PC_UNDEFINED;
+}
+
+bool Add_Passenger(Application* app, CommsP2C_Login* loginComm){
+	/*No need for more validation...
+	**Since it is assumed that this function is only called at Thread_SendCommQnA, which sends comm to Central which validates everything
+	*/
+
+	CPPassenger* anchorPass = &app->passengerList[Get_FreeIndexPassengerList(app)];
+	if(anchorPass == NULL)
+		return false;
+
+	anchorPass->passengerInfo.empty = false;
+	_tcscpy_s(anchorPass->passengerInfo.Id, _countof(anchorPass->passengerInfo.Id), loginComm->id);
+	anchorPass->passengerInfo.object.coordX = loginComm->xAt;
+	anchorPass->passengerInfo.object.coordY = loginComm->yAt;
+	anchorPass->xDestiny = loginComm->xDestiny;
+	anchorPass->yDestiny = loginComm->yDestiny;
+	return true;
+}
+bool Delete_Passenger(Application* app, int index){
+	/*ToDo (TAG_TODO)
+	**WRITE code to remove passenger from list
+	*/
+	return true;
+}
+int Get_QuantLoggedInPassengers(Application* app){
+	int quantLoggedInPassengers = 0;
+
+	for(int i = 0; i < app->maxPass; i++){
+		if(!app->passengerList[i].empty)
+			quantLoggedInPassengers++;
+	}
+
+	return quantLoggedInPassengers;
+}
+bool isPassengerListFull(Application* app){
+	return Get_QuantLoggedInPassengers(app) >= app->maxPass;
+}
+int Get_FreeIndexPassengerList(Application* app){
+	if(isPassengerListFull(app))
+		return -1;
+
+	for(int i = 0; i < app->maxPass; i++){
+		if(app->passengerList[i].empty)
+			return i;
+	}
+
+	return -1;
+}
+int Get_PassengerIndex(Application* app, TCHAR* Id){
+	if(app->passengerList == NULL)
+		return -1;
+
+	for(int i = 0; i < app->maxPass; i++){
+		if(_tcscmp(app->passengerList[i].Id, Id) == 0 && !app->passengerList[i].empty)
+			return i;
+	}
+
+	return -1;
+}
+Passenger* Get_Passenger(Application* app, int index){
+	if(app->passengerList == NULL)
+		return NULL;
+
+	if(!app->passengerList[index].empty)
+		return &app->passengerList[index];
+
+	return NULL;
 }
 
 bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sAtY, TCHAR* sDestinyX, TCHAR* sDestinyY){

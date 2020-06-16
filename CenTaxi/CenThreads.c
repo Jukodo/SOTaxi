@@ -45,7 +45,12 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 
 DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	TParam_TaxiAssignment* param = (TParam_TaxiAssignment*) _param;
-	CenPassenger* myPassenger = Get_Passenger(param->app, param->myIndex);
+
+	CenTransportRequest* cenBuffer = param->app->transportList;//List that contains information about interested taxis
+	TransportBuffer* shmBuffer = param->app->shmHandles.lpSHM_NTBuffer;//List that contains information about the transport request
+
+	CenTransportRequest* myRequestTech = &cenBuffer[param->myIndex];//Item of list that contains information about interested taxis
+	TransportRequest* myRequestInfo = &shmBuffer->transportRequests[param->myIndex];//Item of list that contains information about the transport request
 
 	HANDLE hAssignTimeout = CreateWaitableTimer(
 		NULL,	//Security Attributes
@@ -72,26 +77,23 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 
 	int numIntTaxis = 0;
 	for(int i = 0; i < param->app->maxTaxis; i++){
-		if(myPassenger->interestedTaxis[i] != -1){
+		if(myRequestTech->interestedTaxis[i] != -1){
 			numIntTaxis++;
 		}
 	}
 
+	_tprintf(TEXT("%s[Taxi Assignment] Analysis:"), Utils_NewSubLine(), myRequestInfo->passId);
 	if(numIntTaxis == 0){//No interested taxis
-		_tprintf(TEXT("%sNo taxi has shown interest towards %s!"), Utils_NewSubLine(), myPassenger->passengerInfo.Id);
+		_tprintf(TEXT("%s\tNo taxi has shown interest towards %s's transport!"), Utils_NewSubLine(), myRequestInfo->passId);
 		return 1;
 	}
 
-	_tprintf(TEXT("%sQuantity of interested taxis = %d"), Utils_NewSubLine(), numIntTaxis);
+	_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
 	int chosenTaxi = (rand() % numIntTaxis);
 
-	_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), Get_Taxi(param->app, myPassenger->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
-	Service_AssignTaxi2Passenger(param->app, myPassenger->interestedTaxis[chosenTaxi], param->myIndex);
-	/*TAG_TODO
-	**Notify Taxi that he has been chosen and assigned to respective passenger *CHECK*
-	**Notify Passenger that he has been assigned to respective taxi
-	*/
-
+	_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
+	Service_AssignTaxi2Passenger(param->app, myRequestTech->interestedTaxis[chosenTaxi], param->myIndex);
+	
 	free(param);
 	return 1;
 }
@@ -288,7 +290,7 @@ DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
 
 		switch(receivedComm.commType){
 			default:
-				_tprintf(TEXT("%s[ConPass] Unexpected request... Disconnecting for everyone's safety!"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[ConPass] Lost connection... Disconnecting!"), Utils_NewSubLine());
 			case P2C_DISCONNECT:
 				_tprintf(TEXT("%s[ConPass] Disconnected!"), Utils_NewSubLine());
 				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPQnA);

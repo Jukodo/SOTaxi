@@ -16,6 +16,9 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 			case C2P_ASSIGNED:
 				_tprintf(TEXT("%sReceived an Assigned Comm"), Utils_NewSubLine());
 				break;
+			case C2P_PASS_ARRIVED:
+				_tprintf(TEXT("%sReceived a Pass Arrived Comm"), Utils_NewSubLine());
+				break;
 			case C2P_SHUTDOWN:
 				_tprintf(TEXT("%sReceived a Shutdown Comm"), Utils_NewSubLine());
 				break;
@@ -50,9 +53,14 @@ DWORD WINAPI Thread_SendCommQnA(LPVOID _param){
 			switch(responseComm.loginRespComm){
 			case PLR_SUCCESS:
 				_tprintf(TEXT("%sSuccess! [%s] login has been registered successfully!%sTransport of the passenger is being taken care of!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine(), Utils_NewSubLine());
+				if(!Add_Passenger(param->app, &param->commPC.loginComm))
+					_tprintf(TEXT("%sSomething unexpected happened! Maybe local passList is full and tried to add more..."), Utils_NewSubLine());
 				break;
 			case PLR_INVALID_UNDEFINED:
 				_tprintf(TEXT("%sError... [%s] login has been rejected!%sPlease try again!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			case PLR_INVALID_TRANSPBUFFER_FULL:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sTransport buffer is full! Try again later..."), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
 				break;
 			case PLR_INVALID_FULL:
 				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe application doesn't accept more passengers!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());

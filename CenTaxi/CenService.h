@@ -2,6 +2,7 @@
 #include "CenDLL.h"
 #include "CenTaxi.h"
 #include "CenPassenger.h"
+#include "CenTransportBuffer.h"
 #include "CenSettings.h"
 #include "CenThreads.h"
 
@@ -53,9 +54,17 @@ struct ShmHandles{
 
 struct Application{
 	Settings settings;
-	CenTaxi* taxiList;
 	Map map;
+	CenTaxi* taxiList;
 	CenPassenger* passengerList;
+
+	/*Shared list is on shared memory
+	**This list contains "NTBUFFER_MAX" items
+	**Each item contains a list of interested taxis, up to app->maxTaxis
+	**	Also contains handle and id of thread to assign the transport to a taxi
+	**Both lists are linked by using the same index
+	*/CenTransportRequest* transportList;
+
 	NamedPipeHandles namedPipeHandles;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
@@ -67,11 +76,11 @@ struct Application{
 
 #define CMD_HELP TEXT("/help")
 #define CMD_LIST_TAXIS TEXT("/listTaxis")
+#define CMD_LIST_PASS TEXT("/listPass")
 #define CMD_SET_TIMEOUT TEXT("/setTimeout")
 #define CMD_TAXI_LOGIN_ON TEXT("/taxiLoginOn")
 #define CMD_TAXI_LOGIN_OFF TEXT("/taxiLoginOff")
 #define CMD_KICK_TAXI TEXT("/kickTaxi")
-#define CMD_SIMULATE_NTR TEXT("/simulateNTR")
 #define CMD_SHOW_MAP TEXT("/showMap")
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
@@ -85,11 +94,11 @@ struct Application{
 enum CentralCommands{
 	CC_HELP,
 	CC_LIST_TAXIS,
+	CC_LIST_PASS,
 	CC_SET_TIMEOUT,
 	CC_TAXI_LOGIN_ON,
 	CC_TAXI_LOGIN_OFF,
 	CC_KICK_TAXI,
-	CC_SIMULATE_NTR,
 	CC_SHOW_MAP,
 	CC_SAVE_REGISTRY,
 	CC_LOAD_REGISTRY,
@@ -129,14 +138,17 @@ int Get_FreeIndexPassengerList(Application* app);
 int Get_PassengerIndex(Application* app, TCHAR* Id);
 CenPassenger* Get_Passenger(Application* app, int index);
 
+int Get_TransportIndex(Application* app, TCHAR* idPassenger);
+TransportRequest Get_TransportRequest(Application* app, int index);
+
 bool isValid_ObjectPosition(Application* app, double coordX, double coordY);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
 TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* loginRequest);
 CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginRequest);
-bool Service_NewPassenger(Application* app, Passenger pass);
-NTInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
+bool Service_NewTransportRequest(Application* app, TransportRequest transportReq);
+TransportInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 
 bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex);
 bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global);
@@ -149,7 +161,6 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 ** Remove the following after
 ** Only used to develop and test few features
 */
-void Simulate_NewTransport(Application* app);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);

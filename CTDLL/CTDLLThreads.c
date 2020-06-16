@@ -87,26 +87,30 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 
 DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 	TParam_NotificationReceiver_NT* param = (TParam_NotificationReceiver_NT*) _param;
-	NewTransportBuffer* buffer;
+	TransportBuffer* buffer;
 
 	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hEvent_Notify_T_NewTranspReq, INFINITE);
-		buffer = (NewTransportBuffer*) param->app->shmHandles.lpSHM_NTBuffer;
+		buffer = (TransportBuffer*) param->app->shmHandles.lpSHM_NTBuffer;
 
 		while(buffer->head != param->app->NTBuffer_Tail){
-			buffer->transportRequests[param->app->NTBuffer_Tail];
+			/*Make sure it doesn't read empty transport requests
+			*/
+			if(!buffer->transportRequests[param->app->NTBuffer_Tail].empty){
+				Utils_DLL_Log(TEXT("ConTaxi received a notification from CenTaxi using Manual Event triggered on CenService.c (Service_NotifyTaxisNewTransport)"));
 
-			Utils_DLL_Log(TEXT("ConTaxi received a notification from CenTaxi using Manual Event triggered on CenService.c (Service_NotifyTaxisNewTransport)"));
-
-			_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2f, %.2f) for a taxi!%sPlease use \"%s\" if you are interested!%s"), 
-				Utils_NewSubLine(), 
-				Utils_NewSubLine(),
-				buffer->transportRequests[param->app->NTBuffer_Tail].Id,
-				buffer->transportRequests[param->app->NTBuffer_Tail].object.coordX,
-				buffer->transportRequests[param->app->NTBuffer_Tail].object.coordY,
-				Utils_NewSubLine(),
-				CMD_REQUEST_INTEREST,
-				Utils_NewSubLine());
+				_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2lf, %.2lf) for a taxi to transport them to (%.2lf, %.2lf)!%sPlease use \"%s\" if you are interested!%s"),
+					Utils_NewSubLine(),
+					Utils_NewSubLine(),
+					buffer->transportRequests[param->app->NTBuffer_Tail].passId,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xAt,
+					buffer->transportRequests[param->app->NTBuffer_Tail].yAt,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xDestiny,
+					buffer->transportRequests[param->app->NTBuffer_Tail].yDestiny,
+					Utils_NewSubLine(),
+					CMD_REQUEST_INTEREST,
+					Utils_NewSubLine());
+			}
 
 			param->app->NTBuffer_Tail = (param->app->NTBuffer_Tail + 1) % NTBUFFER_MAX;
 		}
@@ -172,8 +176,15 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 
 		switch(notificationReceived.commType){
 			case C2T_ASSIGNED:
-				_tprintf(TEXT("%s[Remove Me] I've received a message that i've been assigned to [%s] at (%.2lf, %.2lf)!"), Utils_NewLine(), notificationReceived.assignComm.passId, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
-				Service_SetNewDestination(param->app, notificationReceived.assignComm.coordX, notificationReceived.assignComm.coordY);
+				_tprintf(TEXT("%s[CenTaxi] You have been assigned to transport %s from (%.2lf, %.2lf) to (%.2lf, %.2lf)!"), 
+					Utils_NewLine(), 
+					notificationReceived.assignComm.passId, 
+					notificationReceived.assignComm.xAt, 
+					notificationReceived.assignComm.yAt,
+					notificationReceived.assignComm.xDestiny,
+					notificationReceived.assignComm.yDestiny);
+
+				Service_SetNewDestination(param->app, notificationReceived.assignComm.xDestiny, notificationReceived.assignComm.yDestiny);
 				break;
 			case C2T_SHUTDOWN:
 				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());

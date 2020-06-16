@@ -71,11 +71,11 @@ int _tmain(int argc, LPTSTR argv[]) {
 			case CC_HELP:
 				_tprintf(TEXT("%s%s:\t\tShows a list of available commands"), Utils_NewSubLine(), CMD_HELP);
 				_tprintf(TEXT("%s%s:\tShows list of logged in taxis"), Utils_NewSubLine(), CMD_LIST_TAXIS);
+				_tprintf(TEXT("%s%s:\tShows list of logged in passengers"), Utils_NewSubLine(), CMD_LIST_PASS);
 				_tprintf(TEXT("%s%s:\tChange timeout of taxi assignment to a transport request"), Utils_NewSubLine(), CMD_SET_TIMEOUT);
 				_tprintf(TEXT("%s%s:\tAllow taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_ON);
 				_tprintf(TEXT("%s%s:\tDeny taxi logins"), Utils_NewSubLine(), CMD_TAXI_LOGIN_OFF);
 				_tprintf(TEXT("%s%s:\tKick a specific taxi"), Utils_NewSubLine(), CMD_KICK_TAXI);
-				_tprintf(TEXT("%s%s:\tSimulate a new transport request notification"), Utils_NewSubLine(), CMD_SIMULATE_NTR);
 				_tprintf(TEXT("%s%s:\tShow map [temp]"), Utils_NewSubLine(), CMD_SHOW_MAP);
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
@@ -88,12 +88,28 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%sLogged Taxis List:"), Utils_NewSubLine());
 				for(int i = 0; i < app.maxTaxis; i++){
 					if(!app.taxiList[i].taxiInfo.empty)
-						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf)"), 
-							Utils_NewSubLine(), 
+						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf)"),
+							Utils_NewSubLine(),
 							i+1,
 							app.taxiList[i].taxiInfo.LicensePlate,
 							app.taxiList[i].taxiInfo.object.coordX,
 							app.taxiList[i].taxiInfo.object.coordY);
+					else
+						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
+				}
+				break;
+			case CC_LIST_PASS:
+				_tprintf(TEXT("%sLogged Passengers List:"), Utils_NewSubLine());
+				for(int i = 0; i < app.maxPassengers; i++){
+					if(!app.passengerList[i].passengerInfo.empty)
+						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
+							Utils_NewSubLine(),
+							i+1,
+							app.passengerList[i].passengerInfo.Id,
+							app.passengerList[i].passengerInfo.object.coordX,
+							app.passengerList[i].passengerInfo.object.coordY,
+							app.passengerList[i].xDestiny,
+							app.passengerList[i].yDestiny);
 					else
 						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 				}

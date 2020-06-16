@@ -11,7 +11,7 @@ typedef struct NTInterestRequest NTInterestRequest;
 //QnARequest Responses Variants
 typedef struct TaxiLoginResponse TaxiLoginResponse;
 typedef enum TaxiLoginResponseType TaxiLoginResponseType;
-typedef enum NTInterestResponse NTInterestResponse;
+typedef enum TransportInterestResponse TransportInterestResponse;
 
 //QnARequest Types Enums
 typedef enum QnARequestType QnARequestType;
@@ -28,8 +28,11 @@ typedef enum TossRequestType TossRequestType;
 typedef struct QnARequest QnARequest;
 typedef struct TossRequest TossRequest;
 
+//Aditional Structs
+typedef struct TransportRequest TransportRequest;
+
 //Circular Buffers
-typedef struct NewTransportBuffer NewTransportBuffer;
+typedef struct TransportBuffer TransportBuffer;
 typedef struct TossRequestsBuffer TossRequestsBuffer;
 #pragma endregion
 
@@ -49,6 +52,7 @@ typedef struct CommsT2C_Identity CommsT2C_Identity;
 
 //CommsC2P Variants
 typedef struct CommsC2P_Assign CommsC2P_Assign;
+typedef struct CommsC2P_PassArrived CommsC2P_PassArrived;
 typedef struct CommsC2P_Shutdown CommsC2P_Shutdown;
 typedef struct CommsC2P_Resp_MaxPass CommsC2P_Resp_MaxPass;
 typedef enum CommsC2P_Resp_Login CommsC2P_Resp_Login;
@@ -137,7 +141,7 @@ struct QnARequest{
 	QnARequestType requestType;
 	union{
 		TaxiLoginResponse taxiLoginResponse;
-		NTInterestResponse ntIntResponse;
+		TransportInterestResponse ntIntResponse;
 	};
 };
 struct TossRequest{
@@ -149,9 +153,19 @@ struct TossRequest{
 	TossRequestType tossType;
 };
 
+//Additional Structs
+struct TransportRequest{
+	bool empty;
+	TCHAR passId[STRING_ID];
+	double xAt;
+	double yAt;
+	double xDestiny;
+	double yDestiny;
+};
+
 //Circular Buffers
-struct NewTransportBuffer{
-	Passenger transportRequests[NTBUFFER_MAX];
+struct TransportBuffer{
+	TransportRequest transportRequests[NTBUFFER_MAX];
 	int head;
 };
 struct TossRequestsBuffer{
@@ -165,8 +179,10 @@ struct TossRequestsBuffer{
 //CommsC2T Variants
 struct CommsC2T_Assign{
 	TCHAR passId[STRING_SMALL];
-	double coordX;
-	double coordY;
+	double xAt;
+	double yAt;
+	double xDestiny;
+	double yDestiny;
 };
 struct CommsC2T_Shutdown{
 	ShutdownType shutdownType;
@@ -184,6 +200,9 @@ struct CommsC2P_Assign{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	int estimatedWaitTime;
 };
+struct CommsC2P_PassArrived{
+	TCHAR passId[STRING_ID];
+};
 struct CommsC2P_Shutdown{
 	TCHAR message[STRING_LARGE];
 };
@@ -193,6 +212,7 @@ struct CommsC2P_Resp_MaxPass{
 enum CommsC2P_Resp_Login{
 	PLR_SUCCESS,
 	PLR_INVALID_UNDEFINED,
+	PLR_INVALID_TRANSPBUFFER_FULL,
 	PLR_INVALID_FULL,
 	PLR_INVALID_POSITION,
 	PLR_INVALID_DESTINY,
@@ -218,6 +238,7 @@ enum CommsT2CType{
 };
 enum CommsC2PType{
 	C2P_ASSIGNED,
+	C2P_PASS_ARRIVED,
 	C2P_RESP_LOGIN,
 	C2P_RESP_MAXPASS,
 	C2P_SHUTDOWN

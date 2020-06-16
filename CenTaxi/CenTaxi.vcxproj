@@ -154,6 +154,7 @@
     <ClInclude Include="CenService.h" />
     <ClInclude Include="CenSettings.h" />
     <ClInclude Include="CenTaxi.h" />
+    <ClInclude Include="CenTransportBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -118,7 +118,7 @@ bool Setup_OpenSmhHandles(Application* app){
 		FILE_MAP_READ,					//Desired access flag
 		0,								//DWORD high-order of the file offset where the view begins
 		0,								//DWORD low-order of the file offset where the view begins
-		sizeof(NewTransportBuffer)		//Number of bytes to map
+		sizeof(TransportBuffer)		//Number of bytes to map
 	);
 	Utils_DLL_Register(NAME_SHM_TransportRequestBuffer, DLL_TYPE_MAPVIEWOFFILE);
 	if(app->shmHandles.lpSHM_NTBuffer == NULL)

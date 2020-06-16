@@ -45,7 +45,7 @@ bool Service_PosLoginSetup(Application* app){
 		return false;
 	}
 
-	app->NTBuffer_Tail = ((NewTransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
+	app->NTBuffer_Tail = ((TransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
 	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
 	ResumeThread(app->threadHandles.hNotificationReceiver_NamedPipe); //Allows NamedPipe notifications to start popping up
 	app->loggedInTaxi.taxiInfo.object.speedX = 1;

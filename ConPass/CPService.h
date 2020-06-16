@@ -1,6 +1,7 @@
 #pragma once
 #include "CenDLL.h"
 #include "CPThreads.h"
+#include "CPPassenger.h"
 
 typedef struct Application Application;
 typedef struct NamedPipeHandles NamedPipeHandles;
@@ -29,6 +30,7 @@ struct Application{
 	NamedPipeHandles namedPipeHandles;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
+	Passenger* passengerList;
 	int maxPass;
 	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
 };
@@ -63,6 +65,14 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Service_GetMaxPass(Application* app);
 void Service_CloseApp(Application* app);
 PassengerCommands Service_UseCommand(Application* app, TCHAR* command);
+
+bool Add_Passenger(Application* app, CommsP2C_Login* loginComm);
+bool Delete_Passenger(Application* app, int index);
+int Get_QuantLoggedInPassengers(Application* app);
+bool isPassengerListFull(Application* app);
+int Get_FreeIndexPassengerList(Application* app);
+int Get_PassengerIndex(Application* app, TCHAR* Id);
+Passenger* Get_Passenger(Application* app, int index);
 
 bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sAtY, TCHAR* sDestinyX, TCHAR* sDestinyY);
 void Command_ListPassengers(Application* app);
