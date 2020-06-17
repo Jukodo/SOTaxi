@@ -183,6 +183,22 @@ int _tmain(int argc, LPTSTR argv[]){
 			} while(true);
 		}
 			break;
+		case PC_LIST_PASSENGERS:
+			_tprintf(TEXT("%sLogged Passengers List:"), Utils_NewSubLine());
+			for(int i = 0; i < app.maxPass; i++){
+				if(!app.passengerList[i].passengerInfo.empty)
+					_tprintf(TEXT("%s[%02d] - %s starting from (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
+						Utils_NewSubLine(),
+						i+1,
+						app.passengerList[i].passengerInfo.Id,
+						app.passengerList[i].passengerInfo.object.coordX,
+						app.passengerList[i].passengerInfo.object.coordY,
+						app.passengerList[i].xDestiny,
+						app.passengerList[i].yDestiny);
+				else
+					_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
+			}
+			break;
 		case PC_UNDEFINED:
 			_tprintf(TEXT("%sCommand doesn't follow input rules or doesn't exist..."), Utils_NewSubLine());
 			continue;

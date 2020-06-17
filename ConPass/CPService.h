@@ -30,7 +30,7 @@ struct Application{
 	NamedPipeHandles namedPipeHandles;
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
-	Passenger* passengerList;
+	CPPassenger* passengerList;
 	int maxPass;
 	bool keepRunning; //Used to identify if app should keep running, when FALSE threads that are infinitely looping will end
 };
@@ -72,7 +72,6 @@ int Get_QuantLoggedInPassengers(Application* app);
 bool isPassengerListFull(Application* app);
 int Get_FreeIndexPassengerList(Application* app);
 int Get_PassengerIndex(Application* app, TCHAR* Id);
-Passenger* Get_Passenger(Application* app, int index);
+CPPassenger* Get_Passenger(Application* app, int index);
 
 bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sAtY, TCHAR* sDestinyX, TCHAR* sDestinyY);
-void Command_ListPassengers(Application* app);

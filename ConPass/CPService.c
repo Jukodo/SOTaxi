@@ -31,7 +31,7 @@ bool Setup_Application(Application* app){
 		return false;
 
 	for(int i = 0; i < app->maxPass; i++)
-		app->passengerList[i].empty = true;
+		app->passengerList[i].passengerInfo.empty = true;
 
 	return ret;
 }
@@ -187,7 +187,7 @@ void Service_CloseApp(Application* app){
 	TParam_SendCommToss* tossParam = (TParam_SendCommToss*) malloc(sizeof(TParam_SendCommToss));
 	if(tossParam == NULL){
 		_tprintf(TEXT("%sMalloc error: %d"), Utils_NewLine(), GetLastError());
-		return false;
+		return;
 	}
 
 	CommsP2C sendComm;
@@ -215,8 +215,7 @@ PassengerCommands Service_UseCommand(Application* app, TCHAR* command){
 		return PC_HELP;
 	} else if(_tcscmp(command, CMD_LOGIN) == 0){ //Continues on Main (asking for new Passenger ID and XY coords)
 		return PC_LOGIN;
-	} else if(_tcscmp(command, CMD_LIST_PASSENGERS) == 0){
-		Command_ListPassengers(app);
+	} else if(_tcscmp(command, CMD_LIST_PASSENGERS) == 0){ //Continues on Main (listing logged in passengers)
 		return PC_LIST_PASSENGERS;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
@@ -244,16 +243,30 @@ bool Add_Passenger(Application* app, CommsP2C_Login* loginComm){
 	return true;
 }
 bool Delete_Passenger(Application* app, int index){
-	/*ToDo (TAG_TODO)
-	**WRITE code to remove passenger from list
-	*/
+	if(index < 0 || index >= app->maxPass)
+		return false;
+
+	CPPassenger* anchorPassenger = Get_Passenger(app, index);
+	if(anchorPassenger == NULL)
+		return false;
+
+	_tprintf(TEXT("%s[Passenger Logout] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
+		Utils_NewSubLine(),
+		anchorPassenger->passengerInfo.Id,
+		anchorPassenger->passengerInfo.object.coordX,
+		anchorPassenger->passengerInfo.object.coordY,
+		anchorPassenger->xDestiny,
+		anchorPassenger->yDestiny);
+
+	anchorPassenger->passengerInfo.empty = true;
+
 	return true;
 }
 int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
 	for(int i = 0; i < app->maxPass; i++){
-		if(!app->passengerList[i].empty)
+		if(!app->passengerList[i].passengerInfo.empty)
 			quantLoggedInPassengers++;
 	}
 
@@ -267,7 +280,7 @@ int Get_FreeIndexPassengerList(Application* app){
 		return -1;
 
 	for(int i = 0; i < app->maxPass; i++){
-		if(app->passengerList[i].empty)
+		if(app->passengerList[i].passengerInfo.empty)
 			return i;
 	}
 
@@ -278,17 +291,17 @@ int Get_PassengerIndex(Application* app, TCHAR* Id){
 		return -1;
 
 	for(int i = 0; i < app->maxPass; i++){
-		if(_tcscmp(app->passengerList[i].Id, Id) == 0 && !app->passengerList[i].empty)
+		if(_tcscmp(app->passengerList[i].passengerInfo.Id, Id) == 0 && !app->passengerList[i].passengerInfo.empty)
 			return i;
 	}
 
 	return -1;
 }
-Passenger* Get_Passenger(Application* app, int index){
+CPPassenger* Get_Passenger(Application* app, int index){
 	if(app->passengerList == NULL)
 		return NULL;
 
-	if(!app->passengerList[index].empty)
+	if(!app->passengerList[index].passengerInfo.empty)
 		return &app->passengerList[index];
 
 	return NULL;
@@ -334,7 +347,4 @@ bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sA
 		NULL);				//Thread Id
 
 	return true;
-}
-
-void Command_ListPassengers(Application* app){
 }

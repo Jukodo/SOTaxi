@@ -177,7 +177,7 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 		switch(notificationReceived.commType){
 			case C2T_ASSIGNED:
 				_tprintf(TEXT("%s[CenTaxi] You have been assigned to transport %s from (%.2lf, %.2lf) to (%.2lf, %.2lf)!"), 
-					Utils_NewLine(), 
+					Utils_NewSubLine(), 
 					notificationReceived.assignComm.passId, 
 					notificationReceived.assignComm.xAt, 
 					notificationReceived.assignComm.yAt,

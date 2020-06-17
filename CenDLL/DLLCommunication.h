@@ -52,6 +52,7 @@ typedef struct CommsT2C_Identity CommsT2C_Identity;
 
 //CommsC2P Variants
 typedef struct CommsC2P_Assign CommsC2P_Assign;
+typedef struct CommsC2P_PassRemoval CommsC2P_PassRemoval;
 typedef struct CommsC2P_PassArrived CommsC2P_PassArrived;
 typedef struct CommsC2P_Shutdown CommsC2P_Shutdown;
 typedef struct CommsC2P_Resp_MaxPass CommsC2P_Resp_MaxPass;
@@ -200,6 +201,9 @@ struct CommsC2P_Assign{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	int estimatedWaitTime;
 };
+struct CommsC2P_PassRemoval{
+	TCHAR passId[STRING_ID];
+};
 struct CommsC2P_PassArrived{
 	TCHAR passId[STRING_ID];
 };
@@ -238,6 +242,8 @@ enum CommsT2CType{
 };
 enum CommsC2PType{
 	C2P_ASSIGNED,
+	C2P_ASSIGNED_FAILED,
+	C2P_PASS_REMOVAL,
 	C2P_PASS_ARRIVED,
 	C2P_RESP_LOGIN,
 	C2P_RESP_MAXPASS,
@@ -266,6 +272,8 @@ struct CommsT2C{
 struct CommsC2P{
 	union{
 		CommsC2P_Assign assignComm;
+		CommsC2P_PassRemoval removeComm;
+		CommsC2P_PassArrived arrivedComm;
 		CommsC2P_Shutdown shutdownComm;
 		CommsC2P_Resp_Login loginRespComm;
 		CommsC2P_Resp_MaxPass maxPassRespComm;

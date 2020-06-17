@@ -150,7 +150,9 @@ CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginReq
 bool Service_NewTransportRequest(Application* app, TransportRequest transportReq);
 TransportInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 
-bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex);
+void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex);
+void Service_NotifyTaxi(Application* app, TransportRequest* myRequestInfo, int taxiIndex);
+void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, int taxiIndex);
 bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global);
 void Service_CloseApp(Application* app);
 

@@ -82,17 +82,18 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		}
 	}
 
-	_tprintf(TEXT("%s[Taxi Assignment] Analysis:"), Utils_NewSubLine(), myRequestInfo->passId);
+	int chosenTaxiIndex;
+	_tprintf(TEXT("%s[Taxi Assignment] Analysis:"), Utils_NewSubLine());
 	if(numIntTaxis == 0){//No interested taxis
 		_tprintf(TEXT("%s\tNo taxi has shown interest towards %s's transport!"), Utils_NewSubLine(), myRequestInfo->passId);
-		return 1;
+		chosenTaxiIndex = -1;
+	} else{
+		int chosenTaxi = (rand() % numIntTaxis);
+		_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
+		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
+		chosenTaxiIndex = myRequestTech->interestedTaxis[chosenTaxi];
 	}
-
-	_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
-	int chosenTaxi = (rand() % numIntTaxis);
-
-	_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
-	Service_AssignTaxi2Passenger(param->app, myRequestTech->interestedTaxis[chosenTaxi], param->myIndex);
+	Service_AssignTaxi2Passenger(param->app, chosenTaxiIndex, param->myIndex);
 	
 	free(param);
 	return 1;

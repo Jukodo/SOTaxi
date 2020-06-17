@@ -628,16 +628,38 @@ bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double x
 	anchorPass->xDestiny = xDestiny;
 	anchorPass->yDestiny = yDestiny;
 
-	/*ToDo (TAG_TODO)
-	**CREATE a new transport request to xDestiny and yDestiny for current passenger
-	**REMOVE Service_NewPassenger
-	*/
 	return true;
 }
 bool Delete_Passenger(Application* app, int index){
-	/*ToDo (TAG_TODO)
-	**WRITE code to remove passenger to list
-	*/
+	if(index < 0 || index >= app->maxPassengers)
+		return false;
+
+	CenPassenger* anchorPassenger = Get_Passenger(app, index);
+	if(anchorPassenger == NULL)
+		return false;
+
+	_tprintf(TEXT("%s[Passenger Logout] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
+		Utils_NewSubLine(),
+		anchorPassenger->passengerInfo.Id,
+		anchorPassenger->passengerInfo.object.coordX,
+		anchorPassenger->passengerInfo.object.coordY,
+		anchorPassenger->xDestiny,
+		anchorPassenger->yDestiny);
+
+	anchorPassenger->passengerInfo.empty = true;
+
+	CommsC2P sendPassNotification;
+	CommsC2P_PassRemoval removalPassComms;
+	sendPassNotification.commType = C2P_PASS_REMOVAL;
+	_tcscpy_s(removalPassComms.passId, _countof(removalPassComms.passId), anchorPassenger->passengerInfo.Id);
+	sendPassNotification.removeComm = removalPassComms;
+
+	WriteFile(
+		app->namedPipeHandles.hCPWrite,	//Named pipe handle
+		&sendPassNotification,			//Write from 
+		sizeof(CommsC2P),				//Size being written
+		NULL,							//Quantity Bytes written
+		NULL);							//Overlapped IO
 	return true;
 }
 int Get_QuantLoggedInPassengers(Application* app){
@@ -716,7 +738,7 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 		return CC_HELP;
 	} else if(_tcscmp(command, CMD_LIST_TAXIS) == 0){ //Continues on Main (listing logged in taxis)
 		return CC_LIST_TAXIS;
-	} else if(_tcscmp(command, CMD_LIST_PASS) == 0){ //Continues on Main (listing logged in taxis)
+	} else if(_tcscmp(command, CMD_LIST_PASS) == 0){ //Continues on Main (listing logged in passengers)
 		return CC_LIST_PASS;
 	} else if(_tcscmp(command, CMD_SET_TIMEOUT) == 0){ //Continues on Main (asking for a value)
 		return CC_SET_TIMEOUT;
@@ -878,45 +900,79 @@ void Service_NotifyTaxisNewTransport(Application* app){
 	/*for(int i = 0; i < Get_QuantLoggedInTaxis(app); i++)
 		SetEvent(app->syncHandles.hEvent_Notify_T_NP);*/
 }
-bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int transportIndex){
-	if(taxiIndex < 0 || taxiIndex >= app->maxTaxis || transportIndex < 0 || transportIndex >= NTBUFFER_MAX)
-		return false;
-	
-	TransportBuffer* shmBuffer = app->shmHandles.lpSHM_NTBuffer;//List that contains information about the transport request
-	TransportRequest* myRequestInfo = &shmBuffer->transportRequests[transportIndex];//Item of list that contains information about the transport request
+void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int transportIndex){
+	//First: check if transport index is valid, if not, the transport request cannot be accessed (never supposed to happen)
+	if(transportIndex < 0 || transportIndex >= NTBUFFER_MAX){
+		_tprintf(TEXT("%s[Taxi Assignment] This wasn't supposed to happen! Transport Request cannot be accessed on Service_AssignTaxi2Passenger at CenService.c"), Utils_NewLine());
+	} else{
+		TransportBuffer* shmBuffer = app->shmHandles.lpSHM_NTBuffer;//List that contains information about the transport request
+		TransportRequest* myRequestInfo = &shmBuffer->transportRequests[transportIndex];//Item of list that contains information about the transport request
 
-	if(app->taxiList[taxiIndex].taxiInfo.empty || myRequestInfo->empty){
-		_tprintf(TEXT("%s[Taxi Assignment] Cannot notify both parties since one of them seems to be invalid!"), Utils_NewSubLine);
-		return false;
+		if(taxiIndex == -1){
+			_tprintf(TEXT("%s[Taxi Assignment] Communicating with ConPass informing that Passenger %s doesn't have any taxi assigned... Also logout passenger..."), Utils_NewSubLine(), myRequestInfo->passId);
+
+			Service_NotifyPassenger(app, myRequestInfo, -1/*-1 Means that it failed*/);
+			Delete_Passenger(app, Get_PassengerIndex(app, myRequestInfo->passId));
+		} else if(taxiIndex < 0 ||
+			taxiIndex >= app->maxTaxis ||
+			app->taxiList[taxiIndex].taxiInfo.empty ||
+			myRequestInfo->empty){
+			_tprintf(TEXT("%s[Taxi Assignment] Cannot notify both parties since one of them seems to be invalid!"), Utils_NewSubLine());
+		} else{
+			Service_NotifyTaxi(app, myRequestInfo, taxiIndex);
+			Service_NotifyPassenger(app, myRequestInfo, taxiIndex);
+		}
+
+		/*ZeroMemory on the assigned request
+		**Only zero memory inside this condition since it can only access the request if index is valid
+		*/
+		ZeroMemory(myRequestInfo, sizeof(TransportRequest));
+		myRequestInfo->empty = true;
 	}
-
+}
+void Service_NotifyTaxi(Application* app, TransportRequest* myRequestInfo, int taxiIndex){
 	CommsC2T sendTaxiNotification;
 	CommsC2T_Assign assignTaxiComms;
+
 	_tcscpy_s(assignTaxiComms.passId, _countof(assignTaxiComms.passId), myRequestInfo->passId);
 	assignTaxiComms.xAt = myRequestInfo->xAt;
 	assignTaxiComms.yAt = myRequestInfo->yAt;
 	assignTaxiComms.xDestiny = myRequestInfo->xDestiny;
 	assignTaxiComms.yDestiny = myRequestInfo->yDestiny;
+
 	sendTaxiNotification.assignComm = assignTaxiComms;
 	sendTaxiNotification.commType = C2T_ASSIGNED;
 
 	WriteFile(
 		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
-		&sendTaxiNotification,						//Write from 
+		&sendTaxiNotification,					//Write from 
 		sizeof(CommsC2T),						//Size being written
 		NULL,									//Quantity Bytes written
 		NULL);									//Overlapped IO
+}
 
+void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, int taxiIndex){
 	CommsC2P sendPassNotification;
 	CommsC2P_Assign assignPassComms;
+
+	/*IF no taxi sent interest for transport request
+	**THEN Service_NotifyPassenger will received -1 as taxiIndex
+	**THEN instead of sending C2P_ASSIGNED it sends C2P_ASSIGNED_FAILED
+	**MEANING ConPass will receive a notification saying that the passenger was not assigned to any taxi
+	*/
+	if(taxiIndex == -1)
+		sendPassNotification.commType = C2P_ASSIGNED_FAILED;
+	else{
+		sendPassNotification.commType = C2P_ASSIGNED;
+		_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo.LicensePlate);
+	}
 	_tcscpy_s(assignPassComms.passId, _countof(assignPassComms.passId), myRequestInfo->passId);
-	_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo.LicensePlate);
+	
 	/*ToDo (TAG_TODO)
 	**Calculate estimated time for taxi to arrive to passenger and set to var
 	**assignPassComms.estimatedWaitTime = X;
 	*/assignPassComms.estimatedWaitTime = 420;
 	sendPassNotification.assignComm = assignPassComms;
-	sendPassNotification.commType = C2P_ASSIGNED;
 
 	WriteFile(
 		app->namedPipeHandles.hCPWrite,	//Named pipe handle
@@ -924,9 +980,8 @@ bool Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int transport
 		sizeof(CommsC2P),				//Size being written
 		NULL,							//Quantity Bytes written
 		NULL);							//Overlapped IO
-
-	return true;
 }
+
 bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global){
 	if(Utils_StringIsEmpty(licensePlate))
 		return false;
