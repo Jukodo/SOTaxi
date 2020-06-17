@@ -14,13 +14,19 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 
 		switch(receivedComm.commType){
 			case C2P_ASSIGNED:
-				_tprintf(TEXT("%sReceived an Assigned Comm"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[Taxi Assignment] Passenger %s has been assigned to Taxi %s and is estimated to take %d seconds till arrival..."), 
+					Utils_NewSubLine(),
+					receivedComm.assignComm.passId,
+					receivedComm.assignComm.licensePlate,
+					receivedComm.assignComm.estimatedWaitTime);
 				break;
 			case C2P_PASS_REMOVAL:
 				Delete_Passenger(param->app, Get_PassengerIndex(param->app, receivedComm.removeComm.passId));
 				break;
 			case C2P_PASS_ARRIVED:
-				_tprintf(TEXT("%sReceived a Pass Arrived Comm"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[Taxi Arrival] Passenger %s has arrived to its destination!"),
+					Utils_NewSubLine(),
+					receivedComm.arrivedComm.passId);
 				break;
 			case C2P_SHUTDOWN:
 				_tprintf(TEXT("%sReceived a Shutdown Comm"), Utils_NewSubLine());
