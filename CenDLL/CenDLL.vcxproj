@@ -157,6 +157,7 @@
     <ClInclude Include="DLLPassenger.h" />
     <ClInclude Include="DLLTaxi.h" />
     <ClInclude Include="DLLUtils.h" />
+    <ClInclude Include="Node.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CenDLL.c" />
