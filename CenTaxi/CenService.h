@@ -85,6 +85,7 @@ struct Application{
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
 #define CMD_DLL_LOG TEXT("/createDllLog")
+#define CMD_CREATE_PATH TEXT("/createPath")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 #define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
@@ -101,6 +102,7 @@ enum CentralCommands{
 	CC_SAVE_REGISTRY,
 	CC_LOAD_REGISTRY,
 	CC_DLL_LOG,
+	CC_CREATE_PATH,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };
@@ -162,3 +164,4 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);
+void Temp_CreatePath(Application* app);

@@ -1,16 +1,14 @@
 #pragma once
 #include "CenDLL.h"
-
-#define DEFAULT_SEEN_SIZE 50
+#include "DLLMap.h"
 
 typedef struct Node Node;
 typedef struct Path Path;
 
 struct Node{
-	int x;
-	int y;
-
+	XY xyPosition;
 	Node* parent;
+	int depth;
 };
 
 struct Path{

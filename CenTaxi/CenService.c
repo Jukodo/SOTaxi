@@ -757,6 +757,9 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
 		Utils_DLL_Test();
 		return CC_DLL_LOG;
+	} else if(_tcscmp(command, CMD_CREATE_PATH) == 0){
+		Temp_CreatePath(app);
+		return CC_CREATE_PATH;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -1157,4 +1160,40 @@ void Temp_LoadRegistry(Application* app){
 
 	RegCloseKey(hRegKey);
 
+}
+
+void Temp_CreatePath(Application* app){
+	//TCHAR xAt[3];
+	//swprintf(xAt, 3, TEXT("%d%d"),
+	//	rand()%50,
+	//	rand()%50);
+	//TCHAR yAt[3];
+	//swprintf(yAt, 3, TEXT("%d%d"),
+	//	rand()%50,
+	//	rand()%50);
+	//TCHAR xDestiny[3];
+	//swprintf(xDestiny, 3, TEXT("%d%d"),
+	//	rand()%50,
+	//	rand()%50);
+	//TCHAR yDestiny[3];
+	//swprintf(yDestiny, 3, TEXT("%d%d"),
+	//	rand()%50,
+	//	rand()%50);
+
+	XY xyStartingPosition;
+	XY xyDestination;
+
+	//xyStartingPosition.x = _ttoi(xAt);
+	//xyStartingPosition.y = _ttoi(yAt);
+	//xyDestination.x = _ttoi(xDestiny);
+	//xyDestination.y = _ttoi(yDestiny);
+
+	xyStartingPosition.x = 1;
+	xyStartingPosition.y = 1;
+	xyDestination.x = 48;
+	xyDestination.y = 48;
+
+	if(Utils_GetPath(&app->map, xyStartingPosition, xyDestination)==NULL){
+		_tprintf(TEXT("THIING FAILED"));
+	}
 }

@@ -153,14 +153,16 @@
   <ItemGroup>
     <ClInclude Include="CenDLL.h" />
     <ClInclude Include="DLLCommunication.h" />
+    <ClInclude Include="DLLNodeList.h" />
     <ClInclude Include="DLLMap.h" />
     <ClInclude Include="DLLPassenger.h" />
     <ClInclude Include="DLLTaxi.h" />
     <ClInclude Include="DLLUtils.h" />
-    <ClInclude Include="Node.h" />
+    <ClInclude Include="DLLPath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CenDLL.c" />
+    <ClCompile Include="DLLNodeList.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="DLLUtils.c" />
   </ItemGroup>

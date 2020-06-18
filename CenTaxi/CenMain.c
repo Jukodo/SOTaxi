@@ -80,6 +80,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
 				_tprintf(TEXT("%s%s:\tCreate DLL log [temp]"), Utils_NewSubLine(), CMD_DLL_LOG);
+				_tprintf(TEXT("%s%s:\tCreate a path from A to B [temp]"), Utils_NewSubLine(), CMD_CREATE_PATH);
 				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 				break;
 			case CC_LIST_TAXIS:

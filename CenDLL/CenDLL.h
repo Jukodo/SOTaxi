@@ -16,6 +16,8 @@
 
 #define ALLOW_PROF_DLL true
 
+#define MAX_NEIGHBORS 4
+
 #define NTBUFFER_MAX 5
 #define TOSSBUFFER_MAX 20
 #define TOPMAX_TAXI 50
@@ -63,11 +65,12 @@
 #include <tchar.h>
 #include <fcntl.h>
 //Data
+#include "DLLPath.h"
+#include "DLLNodeList.h"
 #include "DLLMap.h"
 #include "DLLTaxi.h"
 #include "DLLUtils.h"
 #include "DLLPassenger.h"
 #include "DLLCommunication.h"
-#include "DLLPath.h"
 
 HINSTANCE hLib;
