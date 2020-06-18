@@ -13,7 +13,13 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 			case QnART_LOGIN:
 			{
 				TCHAR log[STRING_XXL];
-				swprintf(log, STRING_XXL, TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %.2lf | Y: %.2lf"), shm->taxiLoginRequest.licensePlate, shm->taxiLoginRequest.coordX, shm->taxiLoginRequest.coordY);
+				swprintf(
+					log, 
+					STRING_XXL, 
+					TEXT("ConTaxi sent a request to CenTaxi to Login, sending: LicensePlate: %s | X: %.2lf | Y: %.2lf"), 
+					shm->taxiLoginRequest.licensePlate, 
+					shm->taxiLoginRequest.xyStartingPosition.x, 
+					shm->taxiLoginRequest.xyStartingPosition.y);
 				Utils_DLL_Log(log);
 
 				shm->taxiLoginResponse.taxiLoginResponseType = Service_LoginTaxi(param->app, &shm->taxiLoginRequest);
@@ -114,15 +120,14 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 						TCHAR log[STRING_XXL];
 						swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewX: %.2lf | NewY: %.2lf"),
 							buffer->tossRequests[buffer->tail].tossPosition.licensePlate,
-							buffer->tossRequests[buffer->tail].tossPosition.newX,
-							buffer->tossRequests[buffer->tail].tossPosition.newY);
+							buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.x,
+							buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.y);
 						Utils_DLL_Log(log);
 
 						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
 						
 						if(updatingTaxi != NULL){
-							updatingTaxi->taxiInfo.object.coordX = buffer->tossRequests[buffer->tail].tossPosition.newX;
-							updatingTaxi->taxiInfo.object.coordY = buffer->tossRequests[buffer->tail].tossPosition.newY;
+							updatingTaxi->taxiInfo.object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
 						}
 					}
 					break;

@@ -11,8 +11,8 @@ void Service_Login(Application* app, TCHAR* sLicensePlate, TCHAR* sCoordinates_X
 
 	TaxiLoginRequest taxiLoginRequest;
 	_tcscpy_s(taxiLoginRequest.licensePlate, _countof(taxiLoginRequest.licensePlate), sLicensePlate);
-	taxiLoginRequest.coordX = (float) _tstof(sCoordinates_X);
-	taxiLoginRequest.coordY = (float) _tstof(sCoordinates_Y);
+	taxiLoginRequest.xyStartingPosition.x = _tstof(sCoordinates_X);
+	taxiLoginRequest.xyStartingPosition.y = _tstof(sCoordinates_Y);
 
 	param->app = app;
 	param->request.taxiLoginRequest = taxiLoginRequest;
@@ -48,8 +48,8 @@ bool Service_PosLoginSetup(Application* app){
 	app->NTBuffer_Tail = ((TransportBuffer*) app->shmHandles.lpSHM_NTBuffer)->head; //Makes sure taxi starts its NewTransport buffer queue from current start (head)
 	ResumeThread(app->threadHandles.hNotificationReceiver_NewTransport); //Allows NewTransport notifications to start popping up
 	ResumeThread(app->threadHandles.hNotificationReceiver_NamedPipe); //Allows NamedPipe notifications to start popping up
-	app->loggedInTaxi.taxiInfo.object.speedX = 1;
-	app->loggedInTaxi.taxiInfo.object.speedY = 0;
+	app->loggedInTaxi.taxiInfo.object.speed.x = 1;
+	app->loggedInTaxi.taxiInfo.object.speed.y = 0;
 	
 	//TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
 	//srParam->app = app;
@@ -156,13 +156,12 @@ void Service_CloseApp(Application* app){
 	**Close handles
 	*/
 }
-void Service_NewPosition(Application* app, double newX, double newY){
+void Service_NewPosition(Application* app, XY xyNewPosition){
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
 	TossPosition tossPosition;
 	_tcscpy_s(tossPosition.licensePlate, _countof(tossPosition.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
-	tossPosition.newX = newX;
-	tossPosition.newY = newY;
+	tossPosition.xyNewPosition = xyNewPosition;
 
 	param->app = app;
 	param->tossRequest.tossPosition = tossPosition;
@@ -244,13 +243,16 @@ void Command_AutoResp(Application* app, bool autoResp){
 }
 
 bool Movement_NextRandomStep(Application* app, XYObject* object){
-	if((object->speedX * object->speedY) != 0){ //Doesn't allow diagonal movement
-		_tprintf(TEXT("%sTrying to move diagonally SpeedX:%.2lf SpeedY:%.2lf"), Utils_NewSubLine(), object->speedX, object->speedY);
+	if((object->speed.x * object->speed.y) != 0){ //Doesn't allow diagonal movement
+		_tprintf(TEXT("%sTrying to move diagonally SpeedX:%.2lf SpeedY:%.2lf"), 
+			Utils_NewSubLine(),
+			object->speed.x, 
+			object->speed.y);
 		return false;
 	}
 
-	double nextX = object->coordX + (object->speedX * object->speedMultiplier);
-	double nextY = object->coordY + (object->speedY * object->speedMultiplier);
+	double nextX = object->xyPosition.x + (object->speed.x * object->speedMultiplier);
+	double nextY = object->xyPosition.y + (object->speed.y * object->speedMultiplier);
 	if(nextX < 0 || nextX >= app->map.width){
 		_tprintf(TEXT("%sX out of bounds X:%.2lf MaxX:%d"), Utils_NewSubLine(), nextX, app->map.width-1);
 		return false;
@@ -260,8 +262,8 @@ bool Movement_NextRandomStep(Application* app, XYObject* object){
 		return false;
 	}
 
-	object->coordX = nextX;
-	object->coordY = nextY;
+	object->xyPosition.x = nextX;
+	object->xyPosition.y = nextY;
 	return true;
 }
 

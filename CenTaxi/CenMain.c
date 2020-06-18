@@ -80,8 +80,6 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
 				_tprintf(TEXT("%s%s:\tCreate DLL log [temp]"), Utils_NewSubLine(), CMD_DLL_LOG);
-				_tprintf(TEXT("%s%s:\tAssign random taxi [temp]"), Utils_NewSubLine(), CMD_SHUTDOWN_RANDOM);
-				_tprintf(TEXT("%s%s:\tShutdown random taxi [temp]"), Utils_NewSubLine(), CMD_SHUTDOWN_RANDOM);
 				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 				break;
 			case CC_LIST_TAXIS:
@@ -92,8 +90,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 							Utils_NewSubLine(),
 							i+1,
 							app.taxiList[i].taxiInfo.LicensePlate,
-							app.taxiList[i].taxiInfo.object.coordX,
-							app.taxiList[i].taxiInfo.object.coordY);
+							app.taxiList[i].taxiInfo.object.xyPosition.x,
+							app.taxiList[i].taxiInfo.object.xyPosition.y);
 					else
 						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 				}
@@ -106,10 +104,10 @@ int _tmain(int argc, LPTSTR argv[]) {
 							Utils_NewSubLine(),
 							i+1,
 							app.passengerList[i].passengerInfo.Id,
-							app.passengerList[i].passengerInfo.object.coordX,
-							app.passengerList[i].passengerInfo.object.coordY,
-							app.passengerList[i].xDestiny,
-							app.passengerList[i].yDestiny);
+							app.passengerList[i].passengerInfo.object.xyPosition.x,
+							app.passengerList[i].passengerInfo.object.xyPosition.y,
+							app.passengerList[i].xyDestination.x,
+							app.passengerList[i].xyDestination.y);
 					else
 						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 				}

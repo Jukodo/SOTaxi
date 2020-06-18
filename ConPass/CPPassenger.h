@@ -5,6 +5,5 @@ typedef struct CPPassenger CPPassenger;
 
 struct CPPassenger{
 	Passenger passengerInfo;
-	double xDestiny;
-	double yDestiny;
+	XY xyDestination;
 };

@@ -13,7 +13,7 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 		CTTaxi* loggedInTaxi = &param->app->loggedInTaxi;
 		if(param->app->loggedInTaxi.taxiInfo.state == TS_EMPTY){
 			if(Movement_NextRandomStep(param->app, &loggedInTaxi->taxiInfo.object)){
-				Service_NewPosition(param->app, loggedInTaxi->taxiInfo.object.coordX, loggedInTaxi->taxiInfo.object.coordY);
+				Service_NewPosition(param->app, loggedInTaxi->taxiInfo.object.xyPosition);
 			} else{
 				CancelWaitableTimer(param->app->taxiMovementRoutine);
 			}

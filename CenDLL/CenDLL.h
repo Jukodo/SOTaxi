@@ -68,5 +68,6 @@
 #include "DLLUtils.h"
 #include "DLLPassenger.h"
 #include "DLLCommunication.h"
+#include "DLLPath.h"
 
 HINSTANCE hLib;

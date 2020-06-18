@@ -77,8 +77,7 @@ enum Shutdown_Type{
 //QnARequest Requests Variants
 struct TaxiLoginRequest{
 	TCHAR licensePlate[STRING_SMALL];
-	double coordX;
-	double coordY;
+	XY xyStartingPosition;
 };
 struct NTInterestRequest{
 	TCHAR licensePlate[STRING_SMALL];
@@ -115,8 +114,7 @@ enum QnARequestType{ //Types of QnA requests
 //TossRequest Variants
 struct TossPosition{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
-	double newX;
-	double newY;
+	XY xyNewPosition;
 };
 struct TossState{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
@@ -158,10 +156,8 @@ struct TossRequest{
 struct TransportRequest{
 	bool empty;
 	TCHAR passId[STRING_ID];
-	double xAt;
-	double yAt;
-	double xDestiny;
-	double yDestiny;
+	XY xyStartingPosition;
+	XY xyDestination;
 };
 
 //Circular Buffers
@@ -180,10 +176,8 @@ struct TossRequestsBuffer{
 //CommsC2T Variants
 struct CommsC2T_Assign{
 	TCHAR passId[STRING_SMALL];
-	double xAt;
-	double yAt;
-	double xDestiny;
-	double yDestiny;
+	XY xyStartingPosition;
+	XY xyDestination;
 };
 struct CommsC2T_Shutdown{
 	ShutdownType shutdownType;
@@ -226,10 +220,8 @@ enum CommsC2P_Resp_Login{
 //CommsP2C Variants
 struct CommsP2C_Login{
 	TCHAR id[STRING_ID];
-	double xAt;
-	double yAt;
-	double xDestiny;
-	double yDestiny;
+	XY xyStartingPosition;
+	XY xyDestination;
 };
 
 //Comm Types Enums

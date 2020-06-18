@@ -491,7 +491,7 @@ void Setup_CloseShmHandles(ShmHandles* shmHandles){
 	#pragma endregion
 }
 
-bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY){
+bool Add_Taxi(Application* app, TCHAR* licensePlate, XY xyStartingPosition){
 	/*No need for more validation...
 	**Since it is assumed that this function is only called at Service_LoginTaxi, which validates everything
 	*/
@@ -503,13 +503,12 @@ bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coord
 	_tprintf(TEXT("%s[Taxi Login] %s at (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		licensePlate,
-		coordX,
-		coordY);
+		xyStartingPosition.x,
+		xyStartingPosition.y);
 
 	anchorTaxi->taxiInfo.empty = false;
 	_tcscpy_s(anchorTaxi->taxiInfo.LicensePlate, _countof(anchorTaxi->taxiInfo.LicensePlate), licensePlate);
-	anchorTaxi->taxiInfo.object.coordX = coordX;
-	anchorTaxi->taxiInfo.object.coordY = coordY;
+	anchorTaxi->taxiInfo.object.xyPosition = xyStartingPosition;
 	return true;
 }
 bool Delete_Taxi(Application* app, int index){
@@ -523,8 +522,8 @@ bool Delete_Taxi(Application* app, int index){
 	_tprintf(TEXT("%s[Taxi Logout] %s at (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		anchorTaxi->taxiInfo.LicensePlate,
-		anchorTaxi->taxiInfo.object.coordX,
-		anchorTaxi->taxiInfo.object.coordY);
+		anchorTaxi->taxiInfo.object.xyPosition.x,
+		anchorTaxi->taxiInfo.object.xyPosition.y);
 
 	anchorTaxi->taxiInfo.empty = true;
 	if(anchorTaxi->taxiNamedPipe != NULL){
@@ -579,21 +578,21 @@ CenTaxi* Get_Taxi(Application* app, int index){
 
 	return NULL;
 }
-CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY){
+CenTaxi* Get_TaxiAt(Application* app, XY xyPosition){
 	if(app->taxiList == NULL)
 		return NULL;
 
 	for(int i = 0; i < app->maxTaxis; i++){
 		if(!app->taxiList[i].taxiInfo.empty &&
-			((int) app->taxiList[i].taxiInfo.object.coordX) == coordX &&
-			((int) app->taxiList[i].taxiInfo.object.coordY) == coordY)
+			((int) app->taxiList[i].taxiInfo.object.xyPosition.x) == xyPosition.x &&
+			((int) app->taxiList[i].taxiInfo.object.xyPosition.y) == xyPosition.y)
 			return &app->taxiList[i];
 	}
 
 	return NULL;
 }
 
-bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double xDestiny, double yDestiny){
+bool Add_Passenger(Application* app, TCHAR* id, XY xyStartingPosition, XY xyDestination){
 	/*No need for more validation...
 	**Since it is assumed that this function is only called at Service_LoginPass, which validates everything
 	*/
@@ -605,10 +604,8 @@ bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double x
 	TransportRequest newTR;
 	newTR.empty = false;
 	_tcscpy_s(newTR.passId, _countof(newTR.passId), id);
-	newTR.xAt = xAt;
-	newTR.yAt = yAt;
-	newTR.xDestiny = xDestiny;
-	newTR.yDestiny = yDestiny;
+	newTR.xyStartingPosition = xyStartingPosition;
+	newTR.xyDestination = xyDestination;
 
 	if(!Service_NewTransportRequest(app, newTR))
 		return false;
@@ -616,17 +613,15 @@ bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double x
 	_tprintf(TEXT("%s[Passenger Login] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		id,
-		xAt,
-		yAt,
-		xDestiny,
-		yDestiny);
+		xyStartingPosition.x,
+		xyStartingPosition.y,
+		xyDestination.x,
+		xyDestination.y);
 
 	anchorPass->passengerInfo.empty = false;
 	_tcscpy_s(anchorPass->passengerInfo.Id, _countof(anchorPass->passengerInfo.Id), id);
-	anchorPass->passengerInfo.object.coordX = xAt;
-	anchorPass->passengerInfo.object.coordY = yAt;
-	anchorPass->xDestiny = xDestiny;
-	anchorPass->yDestiny = yDestiny;
+	anchorPass->passengerInfo.object.xyPosition = xyStartingPosition;
+	anchorPass->xyDestination = xyDestination;
 
 	return true;
 }
@@ -641,10 +636,10 @@ bool Delete_Passenger(Application* app, int index){
 	_tprintf(TEXT("%s[Passenger Logout] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		anchorPassenger->passengerInfo.Id,
-		anchorPassenger->passengerInfo.object.coordX,
-		anchorPassenger->passengerInfo.object.coordY,
-		anchorPassenger->xDestiny,
-		anchorPassenger->yDestiny);
+		anchorPassenger->passengerInfo.object.xyPosition.x,
+		anchorPassenger->passengerInfo.object.xyPosition.y,
+		anchorPassenger->xyDestination.x,
+		anchorPassenger->xyDestination.y);
 
 	anchorPassenger->passengerInfo.empty = true;
 
@@ -726,8 +721,8 @@ TransportRequest Get_TransportRequest(Application* app, int index){
 	return buffer->transportRequests[index];
 }
 
-bool isValid_ObjectPosition(Application* app, double coordX, double coordY){
-	if(coordX < 0 || coordX >= app->map.width || coordY < 0 || coordY >= app->map.height)
+bool isValid_ObjectPosition(Application* app, XY xyPosition){
+	if(xyPosition.x < 0 || xyPosition.x >= app->map.width || xyPosition.y < 0 || xyPosition.y >= app->map.height)
 		return false;
 
 	return true;
@@ -762,12 +757,6 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
 		Utils_DLL_Test();
 		return CC_DLL_LOG;
-	} else if(_tcscmp(command, CMD_ASSIGN_RANDOM) == 0){
-		Temp_AssignRandom(app);
-		return CC_ASSIGN_RANDOM;
-	} else if(_tcscmp(command, CMD_SHUTDOWN_RANDOM) == 0){
-		Temp_ShutdownRandom(app);
-		return CC_SHUTDOWN_RANDOM;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -783,7 +772,7 @@ TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* logi
 	if(!app->settings.allowTaxiLogins)
 		return TLR_INVALID_CLOSED;
 
-	if(!isValid_ObjectPosition(app, loginRequest->coordX, loginRequest->coordY))
+	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition))
 		return TLR_INVALID_POSITION;
 
 	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
@@ -798,7 +787,7 @@ TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* logi
 	if(isTaxiListFull(app))
 		return TLR_INVALID_FULL;
 
-	if(!Add_Taxi(app, loginRequest->licensePlate, loginRequest->coordX, loginRequest->coordY))
+	if(!Add_Taxi(app, loginRequest->licensePlate, loginRequest->xyStartingPosition))
 		return TLR_INVALID_UNDEFINED;
 
 	return TLR_SUCCESS;
@@ -808,11 +797,12 @@ CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginReq
 		Utils_StringIsEmpty(loginRequest->id))
 		return PLR_INVALID_UNDEFINED;
 
-	if(!isValid_ObjectPosition(app, loginRequest->xAt, loginRequest->yAt)) //Current position is an invalid cell
+	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition)) //Current position is an invalid cell
 		return PLR_INVALID_POSITION;
 
-	if(!isValid_ObjectPosition(app, loginRequest->xDestiny, loginRequest->yDestiny) || //Destiny has an invalid cell
-		(loginRequest->xAt == loginRequest->xDestiny && loginRequest->yAt == loginRequest->yDestiny)) //Destiny is same as actual position
+	if(!isValid_ObjectPosition(app, loginRequest->xyDestination) || //Destiny has an invalid cell
+		(loginRequest->xyStartingPosition.x == loginRequest->xyDestination.x && 
+			loginRequest->xyStartingPosition.y == loginRequest->xyDestination.y)) //Destiny is same as actual position
 		return PLR_INVALID_DESTINY;
 
 	if(Get_PassengerIndex(app, loginRequest->id) != -1)
@@ -821,7 +811,7 @@ CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginReq
 	if(isPassengerListFull(app))
 		return PLR_INVALID_FULL;
 
-	if(!Add_Passenger(app, loginRequest->id, loginRequest->xAt, loginRequest->yAt, loginRequest->xDestiny, loginRequest->yDestiny))
+	if(!Add_Passenger(app, loginRequest->id, loginRequest->xyStartingPosition, loginRequest->xyDestination))
 		return PLR_INVALID_TRANSPBUFFER_FULL;
 
 	return PLR_SUCCESS;
@@ -935,10 +925,8 @@ void Service_NotifyTaxi(Application* app, TransportRequest* myRequestInfo, int t
 	CommsC2T_Assign assignTaxiComms;
 
 	_tcscpy_s(assignTaxiComms.passId, _countof(assignTaxiComms.passId), myRequestInfo->passId);
-	assignTaxiComms.xAt = myRequestInfo->xAt;
-	assignTaxiComms.yAt = myRequestInfo->yAt;
-	assignTaxiComms.xDestiny = myRequestInfo->xDestiny;
-	assignTaxiComms.yDestiny = myRequestInfo->yDestiny;
+	assignTaxiComms.xyStartingPosition = myRequestInfo->xyStartingPosition;
+	assignTaxiComms.xyDestination = myRequestInfo->xyDestination;
 
 	sendTaxiNotification.assignComm = assignTaxiComms;
 	sendTaxiNotification.commType = C2T_ASSIGNED;
@@ -1091,7 +1079,10 @@ void Temp_ShowMap(Application* app){
 		if(iColumn == 0)
 			_tprintf(TEXT("\n"));
 
-		CenTaxi* taxiFound = Get_TaxiAt(app, iColumn, iLine);
+		XY tempPos;
+		tempPos.x = iColumn;
+		tempPos.y = iLine;
+		CenTaxi* taxiFound = Get_TaxiAt(app, tempPos);
 		if(taxiFound != NULL){
 			_tprintf(TEXT("T"));
 			continue;
@@ -1166,83 +1157,4 @@ void Temp_LoadRegistry(Application* app){
 
 	RegCloseKey(hRegKey);
 
-}
-
-void Temp_AssignRandom(Application* app){
-	int loggedTaxi = 0;
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty)
-			loggedTaxi++;
-	}
-
-	if(loggedTaxi == 0){
-		_tprintf(TEXT("%sNo taxis logged in!"), Utils_NewSubLine());
-		return;
-	}
-
-	int chosenTaxi = rand() % loggedTaxi;
-	loggedTaxi = 0;
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty){
-			if(chosenTaxi == 0){
-				CommsC2T sendNotification;
-				CommsC2T_Assign assignComms;
-				_tcscpy_s(assignComms.passId, _countof(assignComms.passId), TEXT("TestPass"));
-				assignComms.xAt = 6;
-				assignComms.yAt = 9;
-				sendNotification.assignComm = assignComms;
-				sendNotification.commType = C2T_ASSIGNED;
-
-				WriteFile(
-					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
-					&sendNotification,				//Write from 
-					sizeof(CommsC2T),				//Size being written
-					NULL,							//Quantity Bytes written
-					NULL);							//Overlapped IO
-				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
-				break;
-			}
-
-			chosenTaxi--;
-		}
-	}
-}
-
-void Temp_ShutdownRandom(Application* app){
-	int loggedTaxi = 0;
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty)
-			loggedTaxi++;
-	}
-
-	if(loggedTaxi == 0){
-		_tprintf(TEXT("%sNo taxis logged in!"), Utils_NewSubLine());
-		return;
-	}
-
-	int chosenTaxi = rand() % loggedTaxi;
-	loggedTaxi = 0;
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty){
-			if(chosenTaxi == 0){
-				CommsC2T sendNotification;
-				CommsC2T_Shutdown shutdownComms;
-				_tcscpy_s(shutdownComms.message, _countof(shutdownComms.message), TEXT("Kicked"));
-				shutdownComms.shutdownType = ST_KICKED;
-				sendNotification.shutdownComm = shutdownComms;
-				sendNotification.commType = C2T_SHUTDOWN;
-
-				WriteFile(
-					app->taxiList[i].taxiNamedPipe,	//Named pipe handle
-					&sendNotification,			//Write from 
-					sizeof(CommsC2T), //Size being written
-					NULL,					//Quantity Bytes written
-					NULL);					//Overlapped IO
-				_tprintf(TEXT("%sChosen taxi is %s"), Utils_NewSubLine(), app->taxiList[i].taxiInfo.LicensePlate);
-				break;
-			}
-
-			chosenTaxi--;
-		}
-	}
 }

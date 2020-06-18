@@ -20,8 +20,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 			case TLR_SUCCESS:
 				param->app->loggedInTaxi.taxiInfo.empty = false;
 				_tcscpy_s(param->app->loggedInTaxi.taxiInfo.LicensePlate, _countof(param->app->loggedInTaxi.taxiInfo.LicensePlate), param->request.taxiLoginRequest.licensePlate);
-				param->app->loggedInTaxi.taxiInfo.object.coordX = param->request.taxiLoginRequest.coordX;
-				param->app->loggedInTaxi.taxiInfo.object.coordY = param->request.taxiLoginRequest.coordY;
+				param->app->loggedInTaxi.taxiInfo.object.xyPosition = param->request.taxiLoginRequest.xyStartingPosition;
 
 				param->app->map.width = shm->taxiLoginResponse.mapWidth;
 				param->app->map.height = shm->taxiLoginResponse.mapHeight;
@@ -103,10 +102,10 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 					Utils_NewSubLine(),
 					Utils_NewSubLine(),
 					buffer->transportRequests[param->app->NTBuffer_Tail].passId,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xAt,
-					buffer->transportRequests[param->app->NTBuffer_Tail].yAt,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xDestiny,
-					buffer->transportRequests[param->app->NTBuffer_Tail].yDestiny,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.x,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.y,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.x,
+					buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.y,
 					Utils_NewSubLine(),
 					CMD_REQUEST_INTEREST,
 					Utils_NewSubLine());
@@ -148,8 +147,8 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	TCHAR log[STRING_XXL];
 	swprintf(log, STRING_XXL, TEXT("Taxi changed position... LicensePlate: %s | X: %.2lf | Y: %.2lf | Passenger: ToDo | State: %s | Speed: %.2lf | CDN: %d"),
 		param->app->loggedInTaxi.taxiInfo.LicensePlate,
-		param->app->loggedInTaxi.taxiInfo.object.coordX,
-		param->app->loggedInTaxi.taxiInfo.object.coordY,
+		param->app->loggedInTaxi.taxiInfo.object.xyPosition.x,
+		param->app->loggedInTaxi.taxiInfo.object.xyPosition.y,
 		state,
 		param->app->loggedInTaxi.taxiInfo.object.speedMultiplier,
 		param->app->settings.CDN);
@@ -179,12 +178,12 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 				_tprintf(TEXT("%s[CenTaxi] You have been assigned to transport %s from (%.2lf, %.2lf) to (%.2lf, %.2lf)!"), 
 					Utils_NewSubLine(), 
 					notificationReceived.assignComm.passId, 
-					notificationReceived.assignComm.xAt, 
-					notificationReceived.assignComm.yAt,
-					notificationReceived.assignComm.xDestiny,
-					notificationReceived.assignComm.yDestiny);
+					notificationReceived.assignComm.xyStartingPosition.x, 
+					notificationReceived.assignComm.xyStartingPosition.y,
+					notificationReceived.assignComm.xyDestination.x,
+					notificationReceived.assignComm.xyDestination.y);
 
-				Service_SetNewDestination(param->app, notificationReceived.assignComm.xDestiny, notificationReceived.assignComm.yDestiny);
+				Service_SetNewDestination(param->app, notificationReceived.assignComm.xyDestination);
 				break;
 			case C2T_SHUTDOWN:
 				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());

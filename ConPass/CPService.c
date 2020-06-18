@@ -236,10 +236,8 @@ bool Add_Passenger(Application* app, CommsP2C_Login* loginComm){
 
 	anchorPass->passengerInfo.empty = false;
 	_tcscpy_s(anchorPass->passengerInfo.Id, _countof(anchorPass->passengerInfo.Id), loginComm->id);
-	anchorPass->passengerInfo.object.coordX = loginComm->xAt;
-	anchorPass->passengerInfo.object.coordY = loginComm->yAt;
-	anchorPass->xDestiny = loginComm->xDestiny;
-	anchorPass->yDestiny = loginComm->yDestiny;
+	anchorPass->passengerInfo.object.xyPosition = loginComm->xyStartingPosition;
+	anchorPass->xyDestination = loginComm->xyDestination;
 	return true;
 }
 bool Delete_Passenger(Application* app, int index){
@@ -253,10 +251,10 @@ bool Delete_Passenger(Application* app, int index){
 	_tprintf(TEXT("%s[Passenger Logout] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
 		anchorPassenger->passengerInfo.Id,
-		anchorPassenger->passengerInfo.object.coordX,
-		anchorPassenger->passengerInfo.object.coordY,
-		anchorPassenger->xDestiny,
-		anchorPassenger->yDestiny);
+		anchorPassenger->passengerInfo.object.xyPosition.x,
+		anchorPassenger->passengerInfo.object.xyPosition.y,
+		anchorPassenger->xyDestination.x,
+		anchorPassenger->xyDestination.y);
 
 	anchorPassenger->passengerInfo.empty = true;
 
@@ -330,10 +328,10 @@ bool Command_LoginPassenger(Application* app, TCHAR* sId, TCHAR* sAtX, TCHAR* sA
 	CommsP2C sendComm;
 	sendComm.commType = P2C_LOGIN;
 	_tcscpy_s(sendComm.loginComm.id, _countof(sendComm.loginComm.id), sId);
-	sendComm.loginComm.xAt = _ttoi(sAtX);
-	sendComm.loginComm.yAt = _ttoi(sAtY);
-	sendComm.loginComm.xDestiny = _ttoi(sDestinyX);
-	sendComm.loginComm.yDestiny = _ttoi(sDestinyY);
+	sendComm.loginComm.xyStartingPosition.x = _ttoi(sAtX);
+	sendComm.loginComm.xyStartingPosition.y = _ttoi(sAtY);
+	sendComm.loginComm.xyDestination.x = _ttoi(sDestinyX);
+	sendComm.loginComm.xyDestination.y = _ttoi(sDestinyY);
 	
 	qnaParam->app = app;
 	qnaParam->commPC = sendComm;

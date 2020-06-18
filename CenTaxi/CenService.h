@@ -85,8 +85,6 @@ struct Application{
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
 #define CMD_DLL_LOG TEXT("/createDllLog")
-#define CMD_ASSIGN_RANDOM TEXT("/assignRandom")
-#define CMD_SHUTDOWN_RANDOM TEXT("/shutdownRandom")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 #define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
@@ -104,8 +102,6 @@ enum CentralCommands{
 	CC_LOAD_REGISTRY,
 	CC_DLL_LOG,
 	CC_CLOSEAPP,
-	CC_ASSIGN_RANDOM,
-	CC_SHUTDOWN_RANDOM,
 	CC_UNDEFINED
 };
 
@@ -121,16 +117,16 @@ void Setup_CloseAllHandles(Application* app);
 void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseShmHandles(ShmHandles* shmHandles);
 
-bool Add_Taxi(Application* app, TCHAR* licensePlate, double coordX, double coordY);
+bool Add_Taxi(Application* app, TCHAR* licensePlate, XY xyStartingPosition);
 bool Delete_Taxi(Application* app, int index);
 int Get_QuantLoggedInTaxis(Application* app);
 bool isTaxiListFull(Application* app);
 int Get_FreeIndexTaxiList(Application* app);
 int Get_TaxiIndex(Application* app, TCHAR* licensePlate);
 CenTaxi* Get_Taxi(Application* app, int index);
-CenTaxi* Get_TaxiAt(Application* app, int coordX, int coordY);
+CenTaxi* Get_TaxiAt(Application* app, XY xyPosition);
 
-bool Add_Passenger(Application* app, TCHAR* id, double xAt, double yAt, double xDestiny, double yDestiny);
+bool Add_Passenger(Application* app, TCHAR* id, XY xyStartingPosition, XY xyDestination);
 bool Delete_Passenger(Application* app, int index);
 int Get_QuantLoggedInPassengers(Application* app);
 bool isPassengerListFull(Application* app);
@@ -141,7 +137,7 @@ CenPassenger* Get_Passenger(Application* app, int index);
 int Get_TransportIndex(Application* app, TCHAR* idPassenger);
 TransportRequest Get_TransportRequest(Application* app, int index);
 
-bool isValid_ObjectPosition(Application* app, double coordX, double coordY);
+bool isValid_ObjectPosition(Application* app, XY position);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
@@ -166,5 +162,3 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);
-void Temp_AssignRandom(Application* app);
-void Temp_ShutdownRandom(Application* app);

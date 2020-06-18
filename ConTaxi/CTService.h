@@ -9,7 +9,7 @@ bool Service_LoginQueue(Application* app);
 TaxiCommands Service_UseCommand(Application* app, TCHAR* command);
 void Service_RegisterInterest(Application* app, TCHAR* idPassenger);
 void Service_CloseApp(Application* app);
-void Service_NewPosition(Application* app, double newX, double newY);
+void Service_NewPosition(Application* app, XY xyNewPosition);
 void Service_NewState(Application* app, TaxiState newState);
 
 bool Command_DefineCDN(Application* app, TCHAR* value);

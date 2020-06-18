@@ -191,10 +191,10 @@ int _tmain(int argc, LPTSTR argv[]){
 						Utils_NewSubLine(),
 						i+1,
 						app.passengerList[i].passengerInfo.Id,
-						app.passengerList[i].passengerInfo.object.coordX,
-						app.passengerList[i].passengerInfo.object.coordY,
-						app.passengerList[i].xDestiny,
-						app.passengerList[i].yDestiny);
+						app.passengerList[i].passengerInfo.object.xyPosition.x,
+						app.passengerList[i].passengerInfo.object.xyPosition.y,
+						app.passengerList[i].xyDestination.x,
+						app.passengerList[i].xyDestination.y);
 				else
 					_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 			}
