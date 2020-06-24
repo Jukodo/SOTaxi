@@ -81,7 +81,7 @@ DWORD WINAPI Thread_SendQnARequests(LPVOID _param){
 	if(param->request.requestType != QnART_LOGIN)
 		free(param);
 
-	return 1;
+	return 101;
 }
 
 DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
@@ -116,7 +116,7 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 102;
 }
 
 DWORD WINAPI Thread_TossRequest(LPVOID _param){
@@ -158,7 +158,7 @@ DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	ReleaseMutex(param->app->syncHandles.hMutex_TossRequest_CanAccess);
 
 	free(param);
-	return 1;
+	return 103;
 }
 
 DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
@@ -207,5 +207,5 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 104;
 }

@@ -11,10 +11,16 @@ bool Setup_Application(Application* app){
 	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NULL);
 	Utils_DLL_Register(TEXT("UnnamedWTimer:line4:CTDLLService.c"), DLL_TYPE_WAITABLETIMER);
 
-	return (app->taxiMovementRoutine != NULL &&
-		Setup_OpenSyncHandles(&app->syncHandles) &&
-		Setup_OpenSmhHandles(app) &&
-		Setup_OpenThreadHandles(app));
+	if(app->taxiMovementRoutine == NULL)
+		return false;
+	if(!Setup_OpenSyncHandles(&app->syncHandles))
+		return false;
+	if(!Setup_OpenSmhHandles(app))
+		return false;
+	if(!Setup_OpenThreadHandles(app))
+		return false;
+
+	return true;
 }
 
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){

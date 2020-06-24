@@ -168,5 +168,5 @@ int _tmain(int argc, LPTSTR argv[]) {
 	Setup_CloseAllHandles(&app);
 	#pragma endregion
 
-	return 0;
+	return true;
 }

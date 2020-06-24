@@ -206,7 +206,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 	if(map->cellArray[(map->width * (int) pointA.y) + (int) pointA.x] == MAP_STRUCTURE_CHAR ||
 		map->cellArray[(map->width * (int) pointB.y) + (int) pointB.x] == MAP_STRUCTURE_CHAR){
 
-		_tprintf(TEXT("%sPointA (X:%.2lf Y:%.2lf) or PointB (X:%.2lf Y:%.2lf) are on a structure!"),
+		_tprintf(TEXT("%s[Path Finding] PointA (X:%.2lf Y:%.2lf) or PointB (X:%.2lf Y:%.2lf) are coordinates of a building!"),
 			Utils_NewSubLine(),
 			pointA.x,
 			pointA.y,
@@ -217,7 +217,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 
 	//PointA and PointB cannot be the same
 	if(pointA.x == pointB.x && pointA.y == pointB.y){
-		_tprintf(TEXT("%sOrigin (X:%.2lf Y:%.2lf) is same as destination (X:%.2lf Y:%.2lf)!"),
+		_tprintf(TEXT("%s[Path Finding] Origin (X:%.2lf Y:%.2lf) is same as destination (X:%.2lf Y:%.2lf)!"),
 			Utils_NewSubLine(),
 			pointA.x,
 			pointA.y,
@@ -229,43 +229,22 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 	NodeList* nlNodesSeen = List_Init(DEFAULT_SEEN_SIZE);
 	NodeList* nlNodesQueue = List_Init(DEFAULT_QUEUE_SIZE);
 	NodeList* nlNodesNewQueue = List_Init(DEFAULT_QUEUE_SIZE);
-	
-	_tprintf(TEXT("%sQuant items%snlNS:%d%snlNQ:%d%snlNNQ:%d\n"),
-		Utils_NewSubLine(),
-		Utils_NewSubLine(),
-		nlNodesSeen->quantItems,
-		Utils_NewSubLine(),
-		nlNodesQueue->quantItems,
-		Utils_NewSubLine(), 
-		nlNodesNewQueue->quantItems);
 
 	Node* root = malloc(sizeof(Node));
 	root->xyPosition = pointA;
-	root->depth = 1;
-
+	root->depth = 0;
 	List_Add(nlNodesQueue, root);
-	_tprintf(TEXT("%s[Create Path] Added [X:%.2lf Y:%.2lf] as a queue item"), 
-		Utils_NewSubLine(),
-		root->xyPosition.x,
-		root->xyPosition.y);
 
 	XY* neighbors4;
 	Node* newNode;
-
-	//remove later and following prints
-	bool print = false;
+	Path* returnPath = NULL;
 
 	bool keepRunning = true;
 	Node* finalNode = NULL;
 	while(keepRunning){
-		if(print)
-			_tprintf(TEXT("%sStarting to read nlNodesQueue with %d nodes"), Utils_NewSubLine(), nlNodesQueue->quantItems);
 		for(int i = 0; i < nlNodesQueue->quantItems; i++){
-			if(nlNodesQueue->itemList[i] == NULL){
-				if(print)
-					_tprintf(TEXT("%snlNodesQueue item #%d is NULL"), Utils_NewSubLine(), i);
+			if(nlNodesQueue->itemList[i] == NULL)
 				break;
-			}
 
 			if(List_Contains(nlNodesSeen, nlNodesQueue->itemList[i]))
 				continue;
@@ -273,47 +252,18 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 			//Add item being checked into seen items list
 			List_Add(nlNodesSeen, nlNodesQueue->itemList[i]);
 
-			if(print)
-				_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] Reading as a queue item"),
-				Utils_NewSubLine(), 
-				nlNodesQueue->itemList[i]->xyPosition.x,
-				nlNodesQueue->itemList[i]->xyPosition.y);
-
 			neighbors4 = Utils_GetNeighbors4(map, nlNodesQueue->itemList[i]->xyPosition);
-			if(neighbors4 == NULL){
-				if(print)
-					_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] Does not have any valid neighbors"),
-					Utils_NewSubLine(),
-					nlNodesQueue->itemList[i]->xyPosition.x,
-					nlNodesQueue->itemList[i]->xyPosition.y);
+			if(neighbors4 == NULL)//If cell does not have any neighbors, skip to next step
 				continue;
-			}
 
 			for(int n = 0; n < MAX_NEIGHBORS; n++){
-				if(print)
-					_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] Checking neighbor X:%.2lf Y:%.2lf"),
-					Utils_NewSubLine(),
-					nlNodesQueue->itemList[i]->xyPosition.x,
-					nlNodesQueue->itemList[i]->xyPosition.y,
-					neighbors4[n].x,
-					neighbors4[n].y);
-
-				if(neighbors4[n].x == -1 || neighbors4[n].y == -1){ //Invalid neighbor (out of bounds or structure)
-					if(print)
-						_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Invalid neighbor"),
-						Utils_NewSubLine(),
-						nlNodesQueue->itemList[i]->xyPosition.x,
-						nlNodesQueue->itemList[i]->xyPosition.y,
-						neighbors4[n].x,
-						neighbors4[n].y);
+				if(neighbors4[n].x == -1 || neighbors4[n].y == -1) //Invalid neighbor (out of bounds or structure)
 					continue;
-				}
 
 				newNode = malloc(sizeof(Node));
 				if(newNode == NULL){
-					if(print)
-						_tprintf(TEXT("%s newNode malloc failed! GLE: %d"), Utils_NewSubLine(), GetLastError());
-					return NULL;
+					keepRunning = false;
+					break;
 				}
 				newNode->xyPosition = neighbors4[n];
 				newNode->parent = nlNodesQueue->itemList[i];
@@ -321,27 +271,11 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 
 				//Skip already seen positions
 				if(List_Contains(nlNodesSeen, newNode)){
-					if(print)
-						_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Already seen cell"),
-						Utils_NewLine(),
-						nlNodesQueue->itemList[i]->xyPosition.x,
-						nlNodesQueue->itemList[i]->xyPosition.y,
-						neighbors4[n].x,
-						neighbors4[n].y);
-
 					free(newNode);
 					continue;
 				}
 
 				if(List_Contains(nlNodesNewQueue, newNode)){
-					if(print)
-						_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Already in queue cell"),
-						Utils_NewLine(),
-						nlNodesQueue->itemList[i]->xyPosition.x,
-						nlNodesQueue->itemList[i]->xyPosition.y,
-						neighbors4[n].x,
-						neighbors4[n].y);
-
 					free(newNode);
 					continue;
 				}
@@ -349,78 +283,63 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 				//Found PointB
 				if(newNode->xyPosition.x == pointB.x &&
 					newNode->xyPosition.y == pointB.y){
-					if(print)
-						_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Found PointB! (X:%.2lf Y:%.2lf)"),
-						Utils_NewSubLine(),
-						nlNodesQueue->itemList[i]->xyPosition.x,
-						nlNodesQueue->itemList[i]->xyPosition.y,
-						neighbors4[n].x,
-						neighbors4[n].y,
-						pointB.x,
-						pointB.y);
-
 					finalNode = newNode;
 					keepRunning = false;
 					break;
 				}
 
 				if(!List_Add(nlNodesNewQueue, newNode)){
-					if(print)
-						_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Adding failed"),
-						Utils_NewSubLine(),
-						nlNodesQueue->itemList[i]->xyPosition.x,
-						nlNodesQueue->itemList[i]->xyPosition.y,
-						neighbors4[n].x,
-						neighbors4[n].y);
-					return NULL;
+					keepRunning = false;
+					break;
 				}
-				if(print)
-					_tprintf(TEXT("%s[X:%.2lf Y:%.2lf] (X:%.2lf Y:%.2lf) Added to new queue list"),
-					Utils_NewSubLine(),
-					nlNodesQueue->itemList[i]->xyPosition.x,
-					nlNodesQueue->itemList[i]->xyPosition.y,
-					neighbors4[n].x,
-					neighbors4[n].y);
 			}
+
+			if(!keepRunning)//If keep running was set to false while inside cycle, break the while cycle aswell
+				break;
 		}
+		
+		if(!keepRunning)//If keep running was set to false while inside cycle, break the while cycle aswell
+			break;
 
 		if(nlNodesSeen->quantItems > (map->height * map->width) || nlNodesQueue->quantItems <= 0)
-			keepRunning = false;
-
-		if(print)
-			_tprintf(TEXT("%sBEFORE Quant items%snlNS:%d%snlNQ:%d%snlNNQ:%d\n"),
-			Utils_NewSubLine(),
-			Utils_NewSubLine(),
-			nlNodesSeen->quantItems,
-			Utils_NewSubLine(),
-			nlNodesQueue->quantItems,
-			Utils_NewSubLine(),
-			nlNodesNewQueue->quantItems);
+			break;
 
 		List_Close(nlNodesQueue);
 		nlNodesQueue = nlNodesNewQueue;
 		nlNodesNewQueue = List_Init(DEFAULT_QUEUE_SIZE);
-
-		if(print)
-			if(print)
-				_tprintf(TEXT("%sAFTER Quant items%snlNS:%d%snlNQ:%d%snlNNQ:%d\n"),
-			Utils_NewSubLine(),
-			Utils_NewSubLine(),
-			nlNodesSeen->quantItems,
-			Utils_NewSubLine(),
-			nlNodesQueue->quantItems,
-			Utils_NewSubLine(),
-			nlNodesNewQueue->quantItems);
 	}
 
-	if(finalNode != NULL)
-		_tprintf(TEXT("%sWE FOUND IT with depth of %d"), Utils_NewSubLine(), finalNode->depth);
+	if(finalNode != NULL){
+		Path* newPath = malloc(sizeof(Path));
+		if(newPath != NULL){
+			newPath->path = calloc(finalNode->depth, sizeof(XY));
+			if(newPath->path != NULL){
+				newPath->steps = finalNode->depth;
 
-	if(nlNodesSeen->quantItems > (map->height * map->width))
-		_tprintf(TEXT("%sUtils_GetPath Seen quantItems > %d"), Utils_NewSubLine(), (map->height * map->width));
+				Node* nodeIt = finalNode;
+				for(int i = finalNode->depth-1; i >= 0; i--){
+					newPath->path[i] = nodeIt->xyPosition;
 
-	if(nlNodesQueue->quantItems <= 0)
-		_tprintf(TEXT("%sUtils_GetPath Queue quantItems <= 0"), Utils_NewSubLine());
+					if(nodeIt == NULL || //Something went wrong
+						(nodeIt->xyPosition.x == pointA.x && //Do not add pointA has a path step
+							nodeIt->xyPosition.y == pointA.y))
+						break;
 
-	return NULL;
+					nodeIt = nodeIt->parent;
+				}
+
+				returnPath = newPath;
+			}
+		}
+	}
+
+	//Free all nodes and lists
+	List_Clear(nlNodesSeen);
+	List_Clear(nlNodesQueue);
+	List_Clear(nlNodesNewQueue);
+	List_Close(nlNodesSeen);
+	List_Close(nlNodesQueue);
+	List_Close(nlNodesNewQueue);
+
+	return returnPath;
 }

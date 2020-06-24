@@ -21,5 +21,5 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 401;
 }

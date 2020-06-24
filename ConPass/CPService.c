@@ -5,35 +5,29 @@ bool Setup_Application(Application* app){
 	ZeroMemory(app, sizeof(Application));
 	app->keepRunning = true;
 
-	bool ret = true;
 
-	ret = ret && Setup_OpenNamedPipeHandles(&app->namedPipeHandles);
-	if(!ret)
+	if(!Setup_OpenNamedPipeHandles(&app->namedPipeHandles))
 		return false;
 
-	ret = ret && Setup_OpenThreadHandles(app);
-	if(!ret)
+	if(!Setup_OpenThreadHandles(app))
 		return false;
 
-	ret = ret && Setup_OpenSyncHandles(&app->syncHandles);
-	if(!ret)
+	if(!Setup_OpenSyncHandles(&app->syncHandles))
 		return false;
 
 	app->maxPass = -1;
 	Service_GetMaxPass(app);
-	ret = ret && (app->maxPass > 0 && app->maxPass <= TOPMAX_PASSENGERS);
-	if(!ret)
+	if(app->maxPass <= 0 || app->maxPass > TOPMAX_PASSENGERS)
 		return false;
 
 	app->passengerList = calloc(app->maxPass, sizeof(Passenger));
-	ret = ret && app->passengerList != NULL;
-	if(!ret)
+	if(app->passengerList == NULL)
 		return false;
 
 	for(int i = 0; i < app->maxPass; i++)
 		app->passengerList[i].passengerInfo.empty = true;
 
-	return ret;
+	return true;
 }
 
 bool Setup_OpenNamedPipeHandles(NamedPipeHandles* namedPipeHandles){

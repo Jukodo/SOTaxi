@@ -14,7 +14,7 @@ int _tmain(int argc, LPTSTR argv[]) {
 	if(GetLastError() == ERROR_ALREADY_EXISTS){
 		_tprintf(TEXT("%sError!%sThere is already and instance of this application running...%sOnly one instance is allowed!"), Utils_NewLine(), Utils_NewSubLine(), Utils_NewSubLine());
 		_gettchar();
-		return 0;
+		return false;
 	}
 	Utils_DLL_Register(NAME_MUTEX_OneInstance_CEN, DLL_TYPE_MUTEX);
 	#pragma endregion
@@ -151,5 +151,5 @@ int _tmain(int argc, LPTSTR argv[]) {
 
 	_tprintf(TEXT("%sEverything is now closed! Press ENTER to leave..."), Utils_NewLine());
 	_gettchar();
-	return 0;
+	return true;
 }

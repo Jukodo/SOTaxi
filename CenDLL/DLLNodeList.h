@@ -18,4 +18,5 @@ bool List_Increase(NodeList* list);
 bool List_Add(NodeList* list, Node* node);
 bool List_Remove(NodeList* list, int index);
 bool List_Contains(NodeList* list, Node* node);
+void List_Clear(NodeList* list);
 void List_Close(NodeList* list);

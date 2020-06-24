@@ -46,7 +46,7 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 201;
 }
 
 DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
@@ -65,7 +65,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	);
 	Utils_DLL_Register(TEXT("UnnamedWTimer:line41:cenThreads.c"), DLL_TYPE_WAITABLETIMER);
 	if(hAssignTimeout == NULL)
-		return -1;
+		return -202;
 
 	LARGE_INTEGER liTime;
 	liTime.QuadPart = -10000000LL * param->app->settings.secAssignmentTimeout;
@@ -102,7 +102,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	Service_AssignTaxi2Passenger(param->app, chosenTaxiIndex, param->myIndex);
 	
 	free(param);
-	return 1;
+	return 202;
 }
 
 DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
@@ -174,7 +174,7 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 203;
 }
 
 DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
@@ -202,7 +202,7 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 				continue;
 			} else
 				_tprintf(TEXT("%sCreateNamedPipe failed! Error: %d"), Utils_NewSubLine(), GetLastError());
-			return -1;
+			return -204;
 		}
 
 		//The taxi connection failed, hence, closing the pipe
@@ -223,14 +223,14 @@ DWORD WINAPI Thread_ConnectingTaxiPipes(LPVOID _param){
 		if(taxiIndex == -1){ //Taxi is not listed on the central
 			Utils_CloseNamedPipe(hPipe);
 			_tprintf(TEXT("%sA non logged in taxi (%s) tried to connect"), Utils_NewSubLine(), taxiIdentity.licensePlate);
-			return -1;
+			return -204;
 		}
 
 		param->app->taxiList[taxiIndex].taxiNamedPipe = hPipe;
 	}
 
 	free(param);
-	return 1;
+	return 204;
 }
 
 DWORD WINAPI Thread_ReadConPassNPQnA(LPVOID _param){
@@ -271,7 +271,7 @@ DWORD WINAPI Thread_ReadConPassNPQnA(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 205;
 }
 
 DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
@@ -315,5 +315,5 @@ DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
 	_tprintf(TEXT("%sClosing Thread"), Utils_NewSubLine());
 
 	free(param);
-	return 1;
+	return 206;
 }

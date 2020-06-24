@@ -16,11 +16,6 @@ NodeList* List_Init(int baseSize){
 }
 
 bool List_Increase(NodeList* list){
-	_tprintf(TEXT("%sTrying to increase from %d to %d"), 
-		Utils_NewLine(),
-		list->maxItems,
-		list->maxItems + list->baseSize);
-
 	list->maxItems += list->baseSize;
 
 
@@ -80,6 +75,26 @@ bool List_Contains(NodeList* list, Node* node){
 	}
 
 	return false;
+}
+
+void List_Clear(NodeList* list){
+	if(list == NULL)
+		return;
+
+	if(list->quantItems <= 0)
+		return;
+
+	if(list->itemList == NULL)
+		return;
+
+	for(int i = 0; i < list->quantItems; i++){
+		if(list->itemList[i] == NULL ||
+			list->itemList[i]->xyPosition.x < 0 || 
+			list->itemList[i]->xyPosition.y < 0)
+			break;
+
+		free(list->itemList[i]);
+	}
 }
 
 void List_Close(NodeList* list){

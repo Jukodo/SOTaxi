@@ -35,17 +35,24 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 			app->transportList[i].interestedTaxis[a] = -1;
 	}
 
-	bool ret = true;
-	ret = ret && (app->passengerList != NULL);
-	ret = ret && (app->taxiList != NULL); 
-	ret = ret && (app->transportList != NULL);
-	ret = ret && Setup_OpenSyncHandles(app);
-	ret = ret && Setup_OpenShmHandles(app);
-	ret = ret && Setup_OpenMap(app);
-	ret = ret && Setup_OpenNamedPipes(&app->namedPipeHandles);
-	ret = ret && Setup_OpenThreadHandles(app); //Has to be called at the end, because it will use Sync and SMH
+	if((app->passengerList == NULL))
+		return false;
+	if((app->taxiList == NULL))
+		return false;
+	if((app->transportList == NULL))
+		return false;
+	if(!Setup_OpenSyncHandles(app))
+		return false;
+	if(!Setup_OpenShmHandles(app))
+		return false;
+	if(!Setup_OpenMap(app))
+		return false;
+	if(!Setup_OpenNamedPipes(&app->namedPipeHandles))
+		return false;
+	if(!Setup_OpenThreadHandles(app)) //Has to be called at the end, because it will use Sync and SMH
+		return false;
 
-	return ret;
+	return true;
 }
 
 bool Setup_OpenNamedPipes(NamedPipeHandles* namedPipeHandles){
@@ -1193,7 +1200,22 @@ void Temp_CreatePath(Application* app){
 	xyDestination.x = 48;
 	xyDestination.y = 48;
 
-	if(Utils_GetPath(&app->map, xyStartingPosition, xyDestination)==NULL){
-		_tprintf(TEXT("THIING FAILED"));
+	Path* path = Utils_GetPath(&app->map, xyStartingPosition, xyDestination);
+
+	if(path == NULL){
+		_tprintf(TEXT("%sFailed to get a path from (%.2lf, %.2lf) to (%.2lf, %.2lf)"), 
+			Utils_NewSubLine(), 
+			xyStartingPosition.x,
+			xyStartingPosition.y,
+			xyDestination.x,
+			xyDestination.y);
+
+		return;
+	}
+
+
+	_tprintf(TEXT("%sReceived following path: "), Utils_NewSubLine());
+	for(int i = 0; i < path->steps; i++){
+		_tprintf(TEXT("%sStep %d: Goes to (%.2lf, %.2lf)"), Utils_NewSubLine(), i, path->path[i].x, path->path[i].y);
 	}
 }

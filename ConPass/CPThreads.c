@@ -35,7 +35,7 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 	}
 
 	free(param);
-	return 1;
+	return 301;
 }
 
 DWORD WINAPI Thread_SendCommQnA(LPVOID _param){
@@ -97,7 +97,7 @@ DWORD WINAPI Thread_SendCommQnA(LPVOID _param){
 	ReleaseMutex(param->app->syncHandles.hMutex_QnA);
 	
 	free(param);
-	return 1;
+	return 302;
 }
 
 DWORD WINAPI Thread_SendCommToss(LPVOID _param){
@@ -115,5 +115,5 @@ DWORD WINAPI Thread_SendCommToss(LPVOID _param){
 	ReleaseMutex(param->app->syncHandles.hMutex_Toss);
 
 	free(param);
-	return 1;
+	return 303;
 }
