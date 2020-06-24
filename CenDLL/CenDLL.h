@@ -17,6 +17,7 @@
 #define ALLOW_PROF_DLL true
 
 #define MAX_NEIGHBORS 4
+#define DEFAULT_SPEED 1.0
 
 #define NTBUFFER_MAX 5
 #define TOSSBUFFER_MAX 20
@@ -60,6 +61,9 @@
 #include <stdbool.h>
 //SRand time
 #include <time.h>
+//Ceil
+#include <math.h>
+#include <stdlib.h>
 //Unicode
 #include <windows.h>
 #include <tchar.h>

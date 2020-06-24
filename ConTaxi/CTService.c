@@ -50,17 +50,21 @@ bool Service_PosLoginSetup(Application* app){
 	ResumeThread(app->threadHandles.hNotificationReceiver_NamedPipe); //Allows NamedPipe notifications to start popping up
 	app->loggedInTaxi.taxiInfo.object.speed.x = 1;
 	app->loggedInTaxi.taxiInfo.object.speed.y = 0;
-	
-	//TParam_StepRoutine* srParam = (TParam_StepRoutine*) malloc(sizeof(TParam_StepRoutine));
-	//srParam->app = app;
-	//app->threadHandles.hStepRoutine = CreateThread(
-	//	NULL,								//Security Attributes
-	//	0,									//Stack Size (0 = default)
-	//	Thread_StepRoutine,					//Function
-	//	(LPVOID) srParam,					//Param
-	//	0,									//Creation Flag
-	//	&app->threadHandles.dwIdStepRoutine //Thread ID
-	//);
+	app->stepRoutine.hStepRoutine = NULL;
+
+	TParam_DestinationChanger* dgParam = (TParam_DestinationChanger*) malloc(sizeof(TParam_DestinationChanger));
+	dgParam->app = app;
+	app->threadHandles.hDestinationChanger = CreateThread(
+		NULL,										//Security Attributes
+		0,											//Stack Size (0 = default)
+		Thread_DestinationChanger,					//Function
+		(LPVOID) dgParam,							//Param
+		0,											//Creation Flag
+		&app->threadHandles.dwIdDestinationChanger	//Thread ID
+	);
+
+	if(app->threadHandles.hDestinationChanger == NULL)
+		return false;
 
 	return true;
 }
@@ -157,26 +161,26 @@ void Service_CloseApp(Application* app){
 	*/
 }
 void Service_NewPosition(Application* app, XY xyNewPosition){
-	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
+	if(app->loggedInTaxi.taxiInfo.empty ||
+		(xyNewPosition.x < 0 || xyNewPosition.x >= app->map.width) &&
+		(xyNewPosition.y < 0 || xyNewPosition.y >= app->map.height))
+		return;
 
+	app->loggedInTaxi.taxiInfo.object.xyPosition = xyNewPosition;
+
+	TossRequest tossRequest;
 	TossPosition tossPosition;
 	_tcscpy_s(tossPosition.licensePlate, _countof(tossPosition.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
 	tossPosition.xyNewPosition = xyNewPosition;
 
-	param->app = app;
-	param->tossRequest.tossPosition = tossPosition;
-	param->tossRequest.tossType = TRT_TAXI_POSITION;
+	tossRequest.tossPosition = tossPosition;
+	tossRequest.tossType = TRT_TAXI_POSITION;
 
-	app->threadHandles.hTossRequests = CreateThread(
-		NULL,								//Security Attributes
-		0,									//Stack Size (0 = default)
-		Thread_TossRequest,				//Function
-		(LPVOID) param,					//Param
-		0,									//Creation Flag
-		&app->threadHandles.dwIdTossRequests //Thread ID
-	);
+	Communication_SendTossRequest(app, tossRequest);
 }
 void Service_NewState(Application* app, TaxiState newState){
+	app->loggedInTaxi.taxiInfo.state = newState;
+
 	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
 
 	TossState tossState;
@@ -193,8 +197,44 @@ void Service_NewState(Application* app, TaxiState newState){
 		Thread_TossRequest,						//Function
 		(LPVOID) param,							//Param
 		0,										//Creation Flag
-		&app->threadHandles.dwIdTossRequests	//Thread ID
-	);
+		&app->threadHandles.dwIdTossRequests);	//Thread ID
+}
+
+bool Service_NewDestination(Application* app, XY xyDestination){
+	if(app->loggedInTaxi.taxiInfo.empty)
+		return false;
+
+	WaitForSingleObject(app->syncHandles.hMutex_StepRoutine, INFINITE);
+
+	if(app->stepRoutine.path != NULL){
+		free(app->stepRoutine.path->path);
+		free(app->stepRoutine.path);
+	}
+
+	app->stepRoutine.path = Utils_GetPath(&app->map, app->loggedInTaxi.taxiInfo.object.xyPosition, xyDestination);
+	app->stepRoutine.currentStep = 0;
+
+	/*Check if thread isn't alive
+	**If not, create a thread for the routine
+	*/
+	if(app->stepRoutine.hStepRoutine == NULL || WaitForSingleObject(app->stepRoutine.hStepRoutine, 0) == WAIT_OBJECT_0){
+		TParam_StepRoutine* param = malloc(sizeof(TParam_StepRoutine));
+		param->app = app;
+
+		app->stepRoutine.hStepRoutine = CreateThread(
+			NULL,									//Security Attributes
+			0,										//Stack Size (0 = default)
+			Thread_StepRoutine,						//Function
+			(LPVOID) param,							//Param
+			0,										//Creation Flag
+			&app->stepRoutine.dwIdStepRoutine);		//Thread ID
+
+		if(app->stepRoutine.hStepRoutine == NULL)
+			return false;
+	}
+
+	ReleaseMutex(app->syncHandles.hMutex_StepRoutine);
+	return true;
 }
 
 bool Command_DefineCDN(Application* app, TCHAR* value){
@@ -231,6 +271,25 @@ bool Command_Speed(Application* app, bool speedUp){
 		_tprintf(TEXT("%sYour speed has been decreased by %.2lf!%sYour current speed is %.2lf..."), Utils_NewSubLine(), SPEED_CHANGEBY, Utils_NewSubLine(), app->loggedInTaxi.taxiInfo.object.speedMultiplier);
 	}
 
+	//Send new Speed to CenTaxi
+	TParam_TossRequest* param = (TParam_TossRequest*) malloc(sizeof(TParam_TossRequest));
+	TossRequest tossRequest;
+	tossRequest.tossType = TRT_TAXI_SPEED;
+	_tcscpy_s(tossRequest.tossSpeed.licensePlate, _countof(tossRequest.tossLogout.licensePlate), app->loggedInTaxi.taxiInfo.LicensePlate);
+	tossRequest.tossSpeed.newSpeed = app->loggedInTaxi.taxiInfo.object.speedMultiplier;
+
+	param->app = app;
+	param->tossRequest = tossRequest;
+
+	app->threadHandles.hTossRequests = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_TossRequest,					//Function
+		(LPVOID) param,						//Param
+		0,									//Creation Flag
+		NULL								//Thread ID
+	);
+
 	return true;
 }
 void Command_AutoResp(Application* app, bool autoResp){
@@ -242,29 +301,33 @@ void Command_AutoResp(Application* app, bool autoResp){
 		_tprintf(TEXT("%sAutomatic interest requests is now OFF!"), Utils_NewSubLine());
 }
 
-bool Movement_NextRandomStep(Application* app, XYObject* object){
+XY Movement_NextRandomStep(Application* app, XYObject* object){
+	XY returnXY;
+	returnXY.x = -1;
+	returnXY.y = -1;
+
 	if((object->speed.x * object->speed.y) != 0){ //Doesn't allow diagonal movement
 		_tprintf(TEXT("%sTrying to move diagonally SpeedX:%.2lf SpeedY:%.2lf"), 
 			Utils_NewSubLine(),
 			object->speed.x, 
 			object->speed.y);
-		return false;
+		return returnXY;
 	}
 
 	double nextX = object->xyPosition.x + (object->speed.x * object->speedMultiplier);
 	double nextY = object->xyPosition.y + (object->speed.y * object->speedMultiplier);
 	if(nextX < 0 || nextX >= app->map.width){
 		_tprintf(TEXT("%sX out of bounds X:%.2lf MaxX:%d"), Utils_NewSubLine(), nextX, app->map.width-1);
-		return false;
+		return returnXY;
 	}
 	if(nextY < 0 || nextY >= app->map.height){
 		_tprintf(TEXT("%sY out of bounds Y:%.2lf MaxY:%d"), Utils_NewSubLine(), nextY, app->map.height-1);
-		return false;
+		return returnXY;
 	}
 
-	object->xyPosition.x = nextX;
-	object->xyPosition.y = nextY;
-	return true;
+	returnXY.x = nextX;
+	returnXY.y = nextY;
+	return returnXY;
 }
 
 /* ToDo (TAG_REMOVE)

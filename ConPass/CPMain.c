@@ -69,22 +69,22 @@ int _tmain(int argc, LPTSTR argv[]){
 				Utils_GetRandomLetter(),
 				rand()%10,
 				rand()%10);
-			TCHAR xAt[3];
-			swprintf(xAt, 3, TEXT("%d%d"),
-				rand()%50,
-				rand()%50);
-			TCHAR yAt[3];
-			swprintf(yAt, 3, TEXT("%d%d"),
-				rand()%50,
-				rand()%50);
-			TCHAR xDestiny[3];
-			swprintf(xDestiny, 3, TEXT("%d%d"),
-				rand()%50,
-				rand()%50);
-			TCHAR yDestiny[3];
-			swprintf(yDestiny, 3, TEXT("%d%d"),
-				rand()%50,
-				rand()%50);
+			TCHAR xAt[3] = TEXT("48");
+			//swprintf(xAt, 3, TEXT("%d%d"),
+			//	rand()%50,
+			//	rand()%50);
+			TCHAR yAt[3] = TEXT("48");
+			//swprintf(yAt, 3, TEXT("%d%d"),
+			//	rand()%50,
+			//	rand()%50);
+			TCHAR xDestiny[3] = TEXT("48");
+			//swprintf(xDestiny, 3, TEXT("%d%d"),
+			//	rand()%50,
+			//	rand()%50);
+			TCHAR yDestiny[3] = TEXT("1");
+			//swprintf(yDestiny, 3, TEXT("%d%d"),
+			//	rand()%50,
+			//	rand()%50);
 			TCHAR opt[2];
 			bool flagLoginFailed = true;
 			do{

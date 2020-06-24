@@ -42,6 +42,19 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 		NAME_MUTEX_Connecting2Central	//Mutex name
 	);
 	Utils_DLL_Register(NAME_MUTEX_Connecting2Central, DLL_TYPE_MUTEX);
+	syncHandles->hMutex_StepRoutine = CreateMutex(//This mutex is only created on and for ConTaxi
+		NULL,							//Security attributes
+		FALSE,							//Initial owner (TRUE = Locked from the creation)
+		NAME_MUTEX_StepRoutine			//Mutex name
+	);
+	Utils_DLL_Register(NAME_MUTEX_StepRoutine, DLL_TYPE_MUTEX);
+	syncHandles->hEvent_DestinationChanged = CreateEvent(//This event is only created on and for ConTaxi
+		NULL,							//Security attributes
+		FALSE,							//Manual reset
+		FALSE,							//Initial state
+		NAME_EVENT_DestinationChanged	//Mutex name
+	);
+	Utils_DLL_Register(NAME_EVENT_DestinationChanged, DLL_TYPE_MUTEX);
 	syncHandles->hEvent_QnARequest_Read = OpenEvent(//This event is already created with CenTaxi
 		EVENT_ALL_ACCESS,				//Desired access flag
 		FALSE,							//Inherit handle (child processes can inherit the handle)(?)
@@ -79,6 +92,8 @@ bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	return !(syncHandles->hMutex_QnARequest_CanAccess == NULL ||
 		syncHandles->hMutex_TossRequest_CanAccess == NULL ||
 		syncHandles->hMutex_CommsTaxiCentral_CanAccess == NULL ||
+		syncHandles->hMutex_StepRoutine == NULL ||
+		syncHandles->hEvent_DestinationChanged == NULL ||
 		syncHandles->hEvent_QnARequest_Read == NULL ||
 		syncHandles->hEvent_QnARequest_Write == NULL ||
 		syncHandles->hEvent_Notify_T_NewTranspReq == NULL ||
@@ -309,8 +324,41 @@ bool Service_GetMap(Application* app){
 	return true;
 }
 
-void Service_SetNewDestination(Application* app, XY xyDestination){
-	/*ToDo (TAG_TODO)
-	**Set destination of taxi to passenger location
-	*/
+//The need for this method was only in order for StepRoutine to avoid a new thread creation every time the taxi sends a new position to central
+void Communication_SendTossRequest(Application* app, TossRequest tossRequest){
+	TossRequestsBuffer* buffer = (TossRequestsBuffer*)app->shmHandles.lpSHM_TossReqBuffer;
+
+	WaitForSingleObject(app->syncHandles.hMutex_TossRequest_CanAccess, INFINITE);
+
+	buffer->tossRequests[buffer->head] = tossRequest;
+	buffer->head = (buffer->head + 1) % TOSSBUFFER_MAX;
+
+	TCHAR state[STRING_SMALL];
+	ZeroMemory(state, STRING_SMALL*sizeof(TCHAR));
+	switch(app->loggedInTaxi.taxiInfo.state){
+	case TS_EMPTY:
+		_tcscpy_s(state, _countof(state), TEXT("empty"));
+		break;
+	case TS_OTW_PASS:
+		_tcscpy_s(state, _countof(state), TEXT("otwPass"));
+		break;
+	case TS_WITH_PASS:
+		_tcscpy_s(state, _countof(state), TEXT("withPass"));
+		break;
+	case TS_STATIONARY:
+		_tcscpy_s(state, _countof(state), TEXT("stationary"));
+		break;
+	}
+	TCHAR log[STRING_XXL];
+	swprintf(log, STRING_XXL, TEXT("Taxi changed position... LicensePlate: %s | X: %.2lf | Y: %.2lf | Passenger: ToDo | State: %s | Speed: %.2lf | CDN: %d"),
+		app->loggedInTaxi.taxiInfo.LicensePlate,
+		app->loggedInTaxi.taxiInfo.object.xyPosition.x,
+		app->loggedInTaxi.taxiInfo.object.xyPosition.y,
+		state,
+		app->loggedInTaxi.taxiInfo.object.speedMultiplier,
+		app->settings.CDN);
+	Utils_DLL_Log(log);
+
+	ReleaseSemaphore(app->syncHandles.hSemaphore_HasTossRequest, 1, NULL);
+	ReleaseMutex(app->syncHandles.hMutex_TossRequest_CanAccess);
 }

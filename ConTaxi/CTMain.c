@@ -40,8 +40,8 @@ int _tmain(int argc, LPTSTR argv[]) {
 		rand()%10,
 		Utils_GetRandomLetter(),
 		Utils_GetRandomLetter());
-	TCHAR sCoordinates_X[3] = TEXT("0");
-	TCHAR sCoordinates_Y[3] = TEXT("48");
+	TCHAR sCoordinates_X[3] = TEXT("1");
+	TCHAR sCoordinates_Y[3] = TEXT("1");
 	TCHAR opt[2];
 	bool flagLoginFailed = true;
 	do{

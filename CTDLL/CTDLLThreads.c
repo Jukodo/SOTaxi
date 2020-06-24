@@ -121,41 +121,8 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 
 DWORD WINAPI Thread_TossRequest(LPVOID _param){
 	TParam_TossRequest* param = (TParam_TossRequest*) _param;
-	TossRequestsBuffer* buffer = (TossRequestsBuffer*) param->app->shmHandles.lpSHM_TossReqBuffer;
-
-	WaitForSingleObject(param->app->syncHandles.hMutex_TossRequest_CanAccess, INFINITE);
-
-	buffer->tossRequests[buffer->head] = param->tossRequest;
-	buffer->head = (buffer->head + 1) % TOSSBUFFER_MAX;
-
-	TCHAR state[STRING_SMALL];
-	ZeroMemory(state, STRING_SMALL*sizeof(TCHAR));
-	switch(param->app->loggedInTaxi.taxiInfo.state){
-		case TS_EMPTY:
-			_tcscpy_s(state, _countof(state), TEXT("empty"));
-			break;
-		case TS_OTW_PASS:
-			_tcscpy_s(state, _countof(state), TEXT("otwPass"));
-			break;
-		case TS_WITH_PASS:
-			_tcscpy_s(state, _countof(state), TEXT("withPass"));
-			break;
-		case TS_STATIONARY:
-			_tcscpy_s(state, _countof(state), TEXT("stationary"));
-			break;
-	}
-	TCHAR log[STRING_XXL];
-	swprintf(log, STRING_XXL, TEXT("Taxi changed position... LicensePlate: %s | X: %.2lf | Y: %.2lf | Passenger: ToDo | State: %s | Speed: %.2lf | CDN: %d"),
-		param->app->loggedInTaxi.taxiInfo.LicensePlate,
-		param->app->loggedInTaxi.taxiInfo.object.xyPosition.x,
-		param->app->loggedInTaxi.taxiInfo.object.xyPosition.y,
-		state,
-		param->app->loggedInTaxi.taxiInfo.object.speedMultiplier,
-		param->app->settings.CDN);
-	Utils_DLL_Log(log);
-
-	ReleaseSemaphore(param->app->syncHandles.hSemaphore_HasTossRequest, 1, NULL);
-	ReleaseMutex(param->app->syncHandles.hMutex_TossRequest_CanAccess);
+	
+	Communication_SendTossRequest(param->app, param->tossRequest);
 
 	free(param);
 	return 103;
@@ -177,13 +144,16 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 			case C2T_ASSIGNED:
 				_tprintf(TEXT("%s[CenTaxi] You have been assigned to transport %s from (%.2lf, %.2lf) to (%.2lf, %.2lf)!"), 
 					Utils_NewSubLine(), 
-					notificationReceived.assignComm.passId, 
-					notificationReceived.assignComm.xyStartingPosition.x, 
-					notificationReceived.assignComm.xyStartingPosition.y,
-					notificationReceived.assignComm.xyDestination.x,
-					notificationReceived.assignComm.xyDestination.y);
+					notificationReceived.assignComm.transportInfo.passId, 
+					notificationReceived.assignComm.transportInfo.xyStartingPosition.x,
+					notificationReceived.assignComm.transportInfo.xyStartingPosition.y,
+					notificationReceived.assignComm.transportInfo.xyDestination.x,
+					notificationReceived.assignComm.transportInfo.xyDestination.y);
 
-				Service_SetNewDestination(param->app, notificationReceived.assignComm.xyDestination);
+				param->app->loggedInTaxi.taxiInfo.state = TS_OTW_PASS;
+				param->app->loggedInTaxi.transportInfo = notificationReceived.assignComm.transportInfo;
+				SetEvent(param->app->syncHandles.hEvent_DestinationChanged);
+
 				break;
 			case C2T_SHUTDOWN:
 				_tprintf(TEXT("%sI've been ordered to shutdown!"), Utils_NewLine());

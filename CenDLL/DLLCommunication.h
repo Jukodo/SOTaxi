@@ -18,6 +18,7 @@ typedef enum QnARequestType QnARequestType;
 
 //TossRequest Variants
 typedef struct TossPosition TossPosition;
+typedef struct TossSpeed TossSpeed;
 typedef struct TossState TossState;
 typedef struct TossLogout TossLogout;
 
@@ -116,6 +117,10 @@ struct TossPosition{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	XY xyNewPosition;
 };
+struct TossSpeed{
+	TCHAR licensePlate[STRING_LICENSEPLATE];
+	double newSpeed;
+};
 struct TossState{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	TaxiState newState;
@@ -127,6 +132,7 @@ struct TossLogout{
 //TossRequest Types Enums
 enum TossRequestType{ //Types of Toss requests 
 	TRT_TAXI_POSITION, //Taxi new position
+	TRT_TAXI_SPEED, //Taxi new speed
 	TRT_TAXI_STATE, //Taxi new state
 	TRT_TAXI_LOGOUT //Taxi logout
 };
@@ -146,6 +152,7 @@ struct QnARequest{
 struct TossRequest{
 	union{
 		TossPosition tossPosition;
+		TossSpeed tossSpeed;
 		TossState tossState;
 		TossLogout tossLogout;
 	};
@@ -175,9 +182,7 @@ struct TossRequestsBuffer{
 #pragma region Named Pipe - Structs/Enums Definement
 //CommsC2T Variants
 struct CommsC2T_Assign{
-	TCHAR passId[STRING_SMALL];
-	XY xyStartingPosition;
-	XY xyDestination;
+	TransportRequest transportInfo;
 };
 struct CommsC2T_Shutdown{
 	ShutdownType shutdownType;

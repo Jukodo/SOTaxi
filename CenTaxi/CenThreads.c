@@ -116,21 +116,36 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 			buffer->tossRequests[buffer->tail];
 			switch(buffer->tossRequests[buffer->tail].tossType){
 				case TRT_TAXI_POSITION:
-					{
-						TCHAR log[STRING_XXL];
-						swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewX: %.2lf | NewY: %.2lf"),
-							buffer->tossRequests[buffer->tail].tossPosition.licensePlate,
-							buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.x,
-							buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.y);
-						Utils_DLL_Log(log);
+				{
+					TCHAR log[STRING_XXL];
+					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewX: %.2lf | NewY: %.2lf"),
+						buffer->tossRequests[buffer->tail].tossPosition.licensePlate,
+						buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.x,
+						buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition.y);
+					Utils_DLL_Log(log);
 
-						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
-						
-						if(updatingTaxi != NULL){
-							updatingTaxi->taxiInfo.object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
-						}
+					CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+
+					if(updatingTaxi != NULL){
+						updatingTaxi->taxiInfo.object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
 					}
-					break;
+				}
+				break;
+				case TRT_TAXI_SPEED:
+				{
+					TCHAR log[STRING_XXL];
+					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiSpeed, sending: LicensePlate: %s | NewSpeed: %.2lf"),
+						buffer->tossRequests[buffer->tail].tossSpeed.licensePlate,
+						buffer->tossRequests[buffer->tail].tossSpeed.newSpeed);
+					Utils_DLL_Log(log);
+
+					CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+
+					if(updatingTaxi != NULL){
+						updatingTaxi->taxiInfo.object.speedMultiplier = buffer->tossRequests[buffer->tail].tossSpeed.newSpeed;
+					}
+				}
+				break;
 				case TRT_TAXI_STATE:
 				{
 					TCHAR state[STRING_MEDIUM];
@@ -253,13 +268,22 @@ DWORD WINAPI Thread_ReadConPassNPQnA(LPVOID _param){
 			case P2C_LOGIN:
 				sendResponse.loginRespComm = Service_LoginPass(param->app, &receivedComm.loginComm);
 				sendResponse.commType = C2P_RESP_LOGIN;
+				receivedComm.commType = -1; //Avoid looping
 				break;
 			case P2C_REQMAXPASS:
 				sendResponse.maxPassRespComm.maxPass = param->app->maxPassengers;
 				sendResponse.commType = C2P_RESP_MAXPASS;
+				receivedComm.commType = -1; //Avoid looping
 				break;
 			default:
-				_tprintf(TEXT("%s[ConPass] QnA - Wtf is this"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[ConPass] QnA Lost connection... Disconnected!"), Utils_NewSubLine());
+
+				/*Both QnA and Toss Threads have no use now and will end
+				*/
+				DWORD exitCode;
+				GetExitCodeThread(param->app->threadHandles.hReadConPassNPToss, &exitCode);
+				ExitThread(exitCode);
+				return 1;
 		}
 
 		WriteFile(
@@ -294,11 +318,14 @@ DWORD WINAPI Thread_ReadConPassNPToss(LPVOID _param){
 			NULL,									//Quantity of bytes read
 			NULL);									//Overlapped IO
 
+		bool printedError = false;
 		switch(receivedComm.commType){
 			default:
-				_tprintf(TEXT("%s[ConPass] Lost connection... Disconnecting!"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[ConPass] Toss Lost connection... Disconnected!"), Utils_NewSubLine());
+				printedError = true;
 			case P2C_DISCONNECT:
-				_tprintf(TEXT("%s[ConPass] Disconnected!"), Utils_NewSubLine());
+				if(!printedError)
+					_tprintf(TEXT("%s[ConPass] Disconnected!"), Utils_NewSubLine());
 				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPQnA);
 				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPRead);
 				Utils_CloseNamedPipe(param->app->namedPipeHandles.hCPWrite);

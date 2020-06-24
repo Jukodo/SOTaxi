@@ -6,4 +6,5 @@ typedef struct CTTaxi CTTaxi;
 struct CTTaxi{
 	Taxi taxiInfo;
 	HANDLE centralNamedPipe;
+	TransportRequest transportInfo;
 };

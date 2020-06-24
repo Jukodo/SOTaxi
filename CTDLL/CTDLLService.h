@@ -5,6 +5,7 @@ typedef struct Application Application;
 typedef struct ThreadHandles ThreadHandles;
 typedef struct SyncHandles SyncHandles;
 typedef struct ShmHandles ShmHandles;
+typedef struct StepRoutine StepRoutine;
 
 typedef enum TaxiCommands TaxiCommands;
 
@@ -17,14 +18,16 @@ struct ThreadHandles{
 	DWORD dwIdNotificationReceiver_NamedPipe;
 	HANDLE hTossRequests;
 	DWORD dwIdTossRequests;
-	HANDLE hStepRoutine;
-	DWORD dwIdStepRoutine;
+	HANDLE hDestinationChanger;
+	DWORD dwIdDestinationChanger;
 };
 
 struct SyncHandles{
 	HANDLE hMutex_QnARequest_CanAccess;
 	HANDLE hMutex_TossRequest_CanAccess;
 	HANDLE hMutex_CommsTaxiCentral_CanAccess;
+	HANDLE hMutex_StepRoutine;
+	HANDLE hEvent_DestinationChanged;
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
@@ -43,6 +46,13 @@ struct ShmHandles{
 	LPVOID lpSHM_TossReqBuffer;
 };
 
+struct StepRoutine{
+	Path* path;
+	double currentStep; //Double because each step can move by X.5
+	HANDLE hStepRoutine;
+	DWORD dwIdStepRoutine;
+};
+
 struct Application{
 	Settings settings;
 	CTTaxi loggedInTaxi;
@@ -51,6 +61,7 @@ struct Application{
 	ThreadHandles threadHandles;
 	SyncHandles syncHandles;
 	ShmHandles shmHandles;
+	StepRoutine stepRoutine;
 	int maxTaxis;
 	int maxPassengers;
 	int NTBuffer_Tail; //Used as a tail for the new transport request buffer (each taxi has a tail)
@@ -95,4 +106,5 @@ CTDLL_API void Setup_CloseSmhHandles(ShmHandles* shmHandles);
 
 CTDLL_API bool Service_ConnectToCentralNamedPipe(Application* app);
 CTDLL_API bool Service_GetMap(Application* app);
-CTDLL_API void Service_SetNewDestination(Application* app, XY xyDestination);
+
+CTDLL_API void Communication_SendTossRequest(Application* app, TossRequest tossRequest);

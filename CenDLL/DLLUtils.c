@@ -148,11 +148,37 @@ void Utils_DLL_Test(){
 }
 
 void Utils_GenerateNewRand(){
-	srand(time(NULL));
+	srand((unsigned int) time(NULL));
 }
 
 TCHAR Utils_GetRandomLetter(){
 	return 'A' + (rand() % 26);
+}
+
+int Utils_GetEstimatedTime(Map* map, XY pointA, XY pointB, double speed){
+	Path* path = Utils_GetPath(map, pointA, pointB);
+	if(path == NULL){
+		_tprintf(TEXT("%sCould not get a path"), Utils_NewSubLine());
+		return -1;
+	}
+
+	if(speed <= 0){
+		_tprintf(TEXT("%sSpeed is invalid"), Utils_NewSubLine());
+		return -1;
+	}
+
+	int timeEstimated = (int) ceil(path->steps / speed);
+
+	if(path != NULL){
+		if(path->path != NULL){
+			free(path->path);
+			path->path = NULL;
+		}
+		free(path);
+		path = NULL;
+	}
+
+	return timeEstimated;
 }
 
 XY* Utils_GetNeighbors4(Map* map, XY pointA){
@@ -212,7 +238,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 			pointA.y,
 			pointB.x,
 			pointB.y);
-		return;
+		return NULL;
 	}
 
 	//PointA and PointB cannot be the same
@@ -232,7 +258,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 
 	Node* root = malloc(sizeof(Node));
 	root->xyPosition = pointA;
-	root->depth = 0;
+	root->depth = 1;
 	List_Add(nlNodesQueue, root);
 
 	XY* neighbors4;
@@ -314,7 +340,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 		if(newPath != NULL){
 			newPath->path = calloc(finalNode->depth, sizeof(XY));
 			if(newPath->path != NULL){
-				newPath->steps = finalNode->depth;
+				newPath->steps = finalNode->depth-1;
 
 				Node* nodeIt = finalNode;
 				for(int i = finalNode->depth-1; i >= 0; i--){

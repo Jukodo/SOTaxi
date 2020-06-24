@@ -139,7 +139,7 @@ CenPassenger* Get_Passenger(Application* app, int index);
 int Get_TransportIndex(Application* app, TCHAR* idPassenger);
 TransportRequest Get_TransportRequest(Application* app, int index);
 
-bool isValid_ObjectPosition(Application* app, XY position);
+bool isValid_ObjectPosition(Application* app, XY position, bool ignoreStructures);
 
 CentralCommands Service_UseCommand(Application* app, TCHAR* command);
 
@@ -149,7 +149,7 @@ bool Service_NewTransportRequest(Application* app, TransportRequest transportReq
 TransportInterestResponse Service_RegisterInterest(Application* app, NTInterestRequest* ntiRequest);
 void Service_NotifyTaxisNewTransport(Application* app); 
 void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passengerIndex);
-void Service_NotifyTaxi(Application* app, TransportRequest* myRequestInfo, int taxiIndex);
+void Service_NotifyTaxi(Application* app, TransportRequest* requestInfo, int taxiIndex);
 void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, int taxiIndex);
 bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global);
 void Service_CloseApp(Application* app);

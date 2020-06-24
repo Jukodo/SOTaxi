@@ -14,11 +14,16 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 
 		switch(receivedComm.commType){
 			case C2P_ASSIGNED:
-				_tprintf(TEXT("%s[Taxi Assignment] Passenger %s has been assigned to Taxi %s and is estimated to take %d seconds till arrival..."), 
+				_tprintf(TEXT("%s[Taxi Assignment] Passenger %s has been assigned to Taxi %s and is estimated to take %d seconds till arrival..."),
 					Utils_NewSubLine(),
 					receivedComm.assignComm.passId,
 					receivedComm.assignComm.licensePlate,
 					receivedComm.assignComm.estimatedWaitTime);
+				break;
+			case C2P_ASSIGNED_FAILED:
+				_tprintf(TEXT("%s[Taxi Assignment] Passenger %s transport request had no taxis interested, logging out..."),
+					Utils_NewSubLine(),
+					receivedComm.assignComm.passId);
 				break;
 			case C2P_PASS_REMOVAL:
 				Delete_Passenger(param->app, Get_PassengerIndex(param->app, receivedComm.removeComm.passId));
@@ -78,6 +83,9 @@ DWORD WINAPI Thread_SendCommQnA(LPVOID _param){
 				break;
 			case PLR_INVALID_POSITION:
 				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe position chosen is invalid!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
+				break;
+			case PLR_INVALID_DESTINY:
+				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe destination position chosen is invalid!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());
 				break;
 			case PLR_INVALID_EXISTS:
 				_tprintf(TEXT("%sError... [%s] login has been rejected!%sThe id chosen is already exists!"), Utils_NewSubLine(), param->commPC.loginComm.id, Utils_NewSubLine());

@@ -20,6 +20,7 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	for(i = 0; i < maxTaxis; i++){
 		ZeroMemory(&app->taxiList[i], sizeof(Taxi));
 		app->taxiList[i].taxiInfo.empty = true;
+		app->taxiList[i].taxiInfo.object.speedMultiplier = DEFAULT_SPEED;
 	}
 
 	for(i = 0; i < maxPassengers; i++){
@@ -728,8 +729,12 @@ TransportRequest Get_TransportRequest(Application* app, int index){
 	return buffer->transportRequests[index];
 }
 
-bool isValid_ObjectPosition(Application* app, XY xyPosition){
-	if(xyPosition.x < 0 || xyPosition.x >= app->map.width || xyPosition.y < 0 || xyPosition.y >= app->map.height)
+bool isValid_ObjectPosition(Application* app, XY xyPosition, bool ignoreStructures){
+	if(xyPosition.x < 0 || 
+		xyPosition.x >= app->map.width || 
+		xyPosition.y < 0 || 
+		xyPosition.y >= app->map.height || 
+		(!ignoreStructures && app->map.cellArray[(int) (xyPosition.y * app->map.width) + (int) xyPosition.x] == MAP_STRUCTURE_CHAR))
 		return false;
 
 	return true;
@@ -782,7 +787,7 @@ TaxiLoginResponseType Service_LoginTaxi(Application* app, TaxiLoginRequest* logi
 	if(!app->settings.allowTaxiLogins)
 		return TLR_INVALID_CLOSED;
 
-	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition))
+	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition, false))
 		return TLR_INVALID_POSITION;
 
 	if(Get_TaxiIndex(app, loginRequest->licensePlate) != -1)
@@ -807,13 +812,15 @@ CommsC2P_Resp_Login Service_LoginPass(Application* app, CommsP2C_Login* loginReq
 		Utils_StringIsEmpty(loginRequest->id))
 		return PLR_INVALID_UNDEFINED;
 
-	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition)) //Current position is an invalid cell
+	if(!isValid_ObjectPosition(app, loginRequest->xyStartingPosition, false)){ //Current position is an invalid cell
 		return PLR_INVALID_POSITION;
+	}
 
-	if(!isValid_ObjectPosition(app, loginRequest->xyDestination) || //Destiny has an invalid cell
-		(loginRequest->xyStartingPosition.x == loginRequest->xyDestination.x && 
-			loginRequest->xyStartingPosition.y == loginRequest->xyDestination.y)) //Destiny is same as actual position
+	if((!isValid_ObjectPosition(app, loginRequest->xyDestination, false)) || //Destiny has an invalid cell
+		(loginRequest->xyStartingPosition.x == loginRequest->xyDestination.x &&
+			loginRequest->xyStartingPosition.y == loginRequest->xyDestination.y)){ //Destiny is same as actual position
 		return PLR_INVALID_DESTINY;
+	}
 
 	if(Get_PassengerIndex(app, loginRequest->id) != -1)
 		return PLR_INVALID_EXISTS;
@@ -930,14 +937,11 @@ void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int transport
 		myRequestInfo->empty = true;
 	}
 }
-void Service_NotifyTaxi(Application* app, TransportRequest* myRequestInfo, int taxiIndex){
+void Service_NotifyTaxi(Application* app, TransportRequest* requestInfo, int taxiIndex){
 	CommsC2T sendTaxiNotification;
 	CommsC2T_Assign assignTaxiComms;
 
-	_tcscpy_s(assignTaxiComms.passId, _countof(assignTaxiComms.passId), myRequestInfo->passId);
-	assignTaxiComms.xyStartingPosition = myRequestInfo->xyStartingPosition;
-	assignTaxiComms.xyDestination = myRequestInfo->xyDestination;
-
+	assignTaxiComms.transportInfo = *requestInfo;
 	sendTaxiNotification.assignComm = assignTaxiComms;
 	sendTaxiNotification.commType = C2T_ASSIGNED;
 
@@ -969,7 +973,11 @@ void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, 
 	/*ToDo (TAG_TODO)
 	**Calculate estimated time for taxi to arrive to passenger and set to var
 	**assignPassComms.estimatedWaitTime = X;
-	*/assignPassComms.estimatedWaitTime = 420;
+	*/assignPassComms.estimatedWaitTime = Utils_GetEstimatedTime(
+											&app->map,
+											app->taxiList[taxiIndex].taxiInfo.object.xyPosition, 
+											myRequestInfo->xyStartingPosition, 
+											app->taxiList[taxiIndex].taxiInfo.object.speedMultiplier);
 	sendPassNotification.assignComm = assignPassComms;
 
 	WriteFile(
