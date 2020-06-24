@@ -320,6 +320,9 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 				}
 			}
 
+			free(neighbors4);
+			neighbors4 = NULL;
+
 			if(!keepRunning)//If keep running was set to false while inside cycle, break the while cycle aswell
 				break;
 		}
