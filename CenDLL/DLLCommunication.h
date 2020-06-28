@@ -12,6 +12,7 @@ typedef struct NTInterestRequest NTInterestRequest;
 typedef struct TaxiLoginResponse TaxiLoginResponse;
 typedef enum TaxiLoginResponseType TaxiLoginResponseType;
 typedef enum TransportInterestResponse TransportInterestResponse;
+typedef struct MaxVarsResponse MaxVarsResponse;
 
 //QnARequest Types Enums
 typedef enum QnARequestType QnARequestType;
@@ -105,11 +106,18 @@ enum NTInterestResponse{
 	NTIR_INVALID_ID,
 	NTIR_INVALID_CLOSED
 };
+struct MaxVarsResponse{
+	int maxTaxis;
+	int maxPassengers;
+	int mapWidth;
+	int mapHeight;
+};
 
 //QnARequest Types Enums
 enum QnARequestType{ //Types of QnA requests 
 	QnART_LOGIN, //Taxi login
-	QnART_NT_INTEREST //Taxi interest in a transport request
+	QnART_NT_INTEREST, //Taxi interest in a transport request
+	QnART_MAX_VARS //MapInfo requests max taxi and max passenger to create taxi/pass list map view of file
 };
 
 //TossRequest Variants
@@ -147,6 +155,7 @@ struct QnARequest{
 	union{
 		TaxiLoginResponse taxiLoginResponse;
 		TransportInterestResponse ntIntResponse;
+		MaxVarsResponse maxVarsResponse;
 	};
 };
 struct TossRequest{

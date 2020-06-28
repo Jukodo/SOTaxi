@@ -27,9 +27,15 @@
     <ClInclude Include="MapInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MIService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MapInfo.cpp">
+    <ClCompile Include="MIService.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
