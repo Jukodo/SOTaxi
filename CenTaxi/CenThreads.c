@@ -8,7 +8,6 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 		WaitForSingleObject(param->app->syncHandles.hEvent_QnARequest_Read, INFINITE);
 
 		QnARequest* shm = param->app->shmHandles.lpSHM_QnARequest;
-		_tprintf(TEXT("%sI Received a request"), Utils_NewSubLine());
 
 		switch(shm->requestType){
 			case QnART_LOGIN:
@@ -42,8 +41,6 @@ DWORD WINAPI Thread_ReceiveQnARequests(LPVOID _param){
 				break;
 			}
 			case QnART_MAX_VARS:
-				_tprintf(TEXT("%sI Received a request to send maxVars... sending %d %d %d %d"), Utils_NewSubLine(), param->app->maxTaxis, param->app->maxPassengers, param->app->map.width, param->app->map.height);
-
 				Utils_DLL_Log(TEXT("MapInfo sent a request to CenTaxi to send maxTaxi and maxPassenger"));
 				shm->maxVarsResponse.maxTaxis = param->app->maxTaxis;
 				shm->maxVarsResponse.maxPassengers = param->app->maxPassengers;

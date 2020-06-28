@@ -68,7 +68,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
     HWND hWindow = CreateWindowW(   //Creates a new window (overlapped, pop-up or child window)
         APP_NAME,                   //String to the title of the window
         WINDOW_TITLE,               //String to the title of the window
-        WS_OVERLAPPEDWINDOW,        //Window style values (More info at: https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles)
+        (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX),    //Window style values (More info at: https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles)
         CW_USEDEFAULT,              //Initial X position of window
         0,                          //Initial Y position of window
         maxScreenWidth,             //Width value of the window
@@ -146,15 +146,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
             }
             int cellWidth = (width / app.map.width)+1;
             int cellHeight = (height / app.map.height)+1;
-            int xOffset = 22; //Let initial space on left side for coordinates indicators
-            int yOffset = 22; //Let initial space on top side for coordinates indicators
+            int xOffset = 20; //Let initial space on left side for coordinates indicators
+            int yOffset = 20; //Let initial space on top side for coordinates indicators
+
+            RECT drawingRect;
             for(int w = 0; w < app.map.width; w++){
-                if(w == app.map.width-2)
-                    break;
                 for(int h = 0; h < app.map.height; h++){
-                    if(h == app.map.height-2)
-                        break;
-                    Rectangle(hdc, ((cellWidth)*w)-w + xOffset, (cellHeight*h)-h + yOffset, (cellWidth*(w+1))-w + xOffset, (cellHeight*(h+1))-h + yOffset);
+                    drawingRect.left = ((cellWidth) *w)-w + xOffset;
+                    drawingRect.top = (cellHeight*h)-h + yOffset;
+                    drawingRect.right = (cellWidth*(w+1))-w + xOffset;
+                    drawingRect.bottom = (cellHeight*(h+1))-h + yOffset;
+                    if(app.map.cellArray[((int)h * app.map.height) + (int) w] == MAP_STRUCTURE_CHAR)
+                        FillRect(hdc, &drawingRect, CreateSolidBrush(RGB(30, 30, 30)));
+                    else
+                        FillRect(hdc, &drawingRect, CreateSolidBrush(RGB(200, 200, 200)));
+                    //Rectangle(hdc, ((cellWidth)*w)-w + xOffset, (cellHeight*h)-h + yOffset, (cellWidth*(w+1))-w + xOffset, (cellHeight*(h+1))-h + yOffset);
                 }
             }
             // TODO: Add any drawing code that uses hdc here...
