@@ -30,12 +30,18 @@
     <ClInclude Include="MIService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MIThreads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MIService.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Main.c">
+    <ClCompile Include="MIThreads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MIMain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

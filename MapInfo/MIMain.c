@@ -12,26 +12,19 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-Application app;
+Application* app;
+
+HBRUSH roadBrush;
+HBRUSH structureBrush;
+HBRUSH cellBorderBrush;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow){
-    //Used UNREFERENCED_PARAMETER to avoid warnings towards unused parameters
-    //UNREFERENCED_PARAMETER(hPrevInstance);
-    //UNREFERENCED_PARAMETER(lpCmdLine);
-
+    #pragma region Setup Window
     Sleep(1000);
-
-    if(!Setup_Application(&app)){
-        TCHAR message[100];
-        swprintf_s(message, 100, TEXT("%sError trying to set up central..."), Utils_NewLine());
-        OutputDebugString(message);
-        _gettchar();
-        return false;
-    }
 
     //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
     WNDCLASSEXW windowInfo;
@@ -80,19 +73,36 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 
     if(!hWindow)
         return false;
+    #pragma endregion
+
+    app = malloc(sizeof(Application));
+    if(!Setup_Application(app, hWindow)){
+        TCHAR message[100];
+        swprintf_s(message, 100, TEXT("%sError trying to set up central..."), Utils_NewLine());
+        OutputDebugString(message);
+        _gettchar();
+        return false;
+    }
+
+    roadBrush = CreateSolidBrush(RGB(200, 200, 200));
+    structureBrush = CreateSolidBrush(RGB(30, 30, 30));
+    cellBorderBrush = CreateSolidBrush(RGB(15, 15, 15));
 
     //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
     ShowWindow(     //Changes the window's display state
         hWindow,    //Handle of the window
         nCmdShow);  //Value of new display state (first execution should always be nCmdShow)
 
-    //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatewindow
-    UpdateWindow(   //Sends WM_PAINT to the window, forcing the paint command
-        hWindow);   //Handle to the window being updated
+    ////More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatewindow
+    //UpdateWindow(   //Sends WM_PAINT to the window, forcing the paint command
+    //    hWindow);   //Handle to the window being updated
 
-    //Sleep(1000);
+    //Start Refresh Routine
+    if(!Setup_OpenThreadHandles_RefreshRoutine(&app->threadHandles, hWindow)){
+        return false;
+    }
 
-    //SetWindowPos(hWindow, HWND_TOP, 0, 0, 400, 400, SWP_SHOWWINDOW);
+    
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MAPINFO));
     MSG msg;
@@ -137,30 +147,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
 
-            int height = (int) round(GetSystemMetrics(SM_CYSCREEN) * 0.8);
-            int width = height;
-            RECT windowSize;
-            if(GetClientRect(hWnd, &windowSize)){
-                height = windowSize.bottom - windowSize.top;
-                width = height;
-            }
-            int cellWidth = (width / app.map.width)+1;
-            int cellHeight = (height / app.map.height)+1;
-            int xOffset = 20; //Let initial space on left side for coordinates indicators
-            int yOffset = 20; //Let initial space on top side for coordinates indicators
-
             RECT drawingRect;
-            for(int w = 0; w < app.map.width; w++){
-                for(int h = 0; h < app.map.height; h++){
-                    drawingRect.left = ((cellWidth) *w)-w + xOffset;
-                    drawingRect.top = (cellHeight*h)-h + yOffset;
-                    drawingRect.right = (cellWidth*(w+1))-w + xOffset;
-                    drawingRect.bottom = (cellHeight*(h+1))-h + yOffset;
-                    if(app.map.cellArray[((int)h * app.map.height) + (int) w] == MAP_STRUCTURE_CHAR)
-                        FillRect(hdc, &drawingRect, CreateSolidBrush(RGB(30, 30, 30)));
-                    else
-                        FillRect(hdc, &drawingRect, CreateSolidBrush(RGB(200, 200, 200)));
-                    //Rectangle(hdc, ((cellWidth)*w)-w + xOffset, (cellHeight*h)-h + yOffset, (cellWidth*(w+1))-w + xOffset, (cellHeight*(h+1))-h + yOffset);
+            for(int w = 0; w < app->map.width; w++){
+                for(int h = 0; h < app->map.height; h++){
+                    drawingRect.left = ((app->refreshRoutine.cellWidth) *w)-w + app->refreshRoutine.xMapOffset;
+                    drawingRect.top = (app->refreshRoutine.cellHeight*h)-h + app->refreshRoutine.yMapOffset;
+                    drawingRect.right = (app->refreshRoutine.cellWidth*(w+1))-w + app->refreshRoutine.xMapOffset;
+                    drawingRect.bottom = (app->refreshRoutine.cellHeight*(h+1))-h + app->refreshRoutine.yMapOffset;
+                    if(app->map.cellArray[((int) h * app->map.height) + (int) w] == MAP_STRUCTURE_CHAR){
+                        FillRect(hdc, &drawingRect, structureBrush);
+                    } else{
+                        FillRect(hdc, &drawingRect, roadBrush);
+                    }
+
+                    FrameRect(hdc, &drawingRect, cellBorderBrush);
                 }
             }
             // TODO: Add any drawing code that uses hdc here...

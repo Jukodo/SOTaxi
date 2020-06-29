@@ -1,7 +1,7 @@
 #pragma once
 #include "MIService.h"
 
-bool Setup_Application(Application* app){
+bool Setup_Application(Application* app, HWND hWnd){
 	ZeroMemory(app, sizeof(Application));
 	srand((unsigned int) time(NULL));
 
@@ -15,13 +15,46 @@ bool Setup_Application(Application* app){
 		return false;
 	}
 
+	app->refreshRoutine.mapRelativeHeight = (int) round(GetSystemMetrics(SM_CYSCREEN) * 0.8);
+	app->refreshRoutine.mapRelativeWidth = app->refreshRoutine.mapRelativeHeight;
+
+	app->refreshRoutine.xMapOffset = 25; //Let initial space on left side for coordinates indicators
+	app->refreshRoutine.yMapOffset = 25; //Let initial space on top side for coordinates indicators
+
+	RECT windowSize;
+	if(GetClientRect(hWnd, &windowSize)){
+		app->refreshRoutine.mapRelativeHeight = windowSize.bottom - windowSize.top - app->refreshRoutine.yMapOffset;
+		app->refreshRoutine.mapRelativeWidth = app->refreshRoutine.mapRelativeHeight;
+	}
+
+	app->refreshRoutine.cellWidth = (app->refreshRoutine.mapRelativeWidth / app->map.width)+1;
+	app->refreshRoutine.cellHeight = (app->refreshRoutine.mapRelativeHeight /app->map.height)+1;
+
 	return true;
 }
 
 bool Setup_OpenThreadHandles(Application* app){
-
 	return true;
 }
+
+bool Setup_OpenThreadHandles_RefreshRoutine(ThreadHandles* threadHandles, HANDLE hWnd){
+	#pragma region Refresh Routine
+	TParam_RefreshRoutine* rrParam = (TParam_RefreshRoutine*) malloc(sizeof(TParam_RefreshRoutine));
+	rrParam->hWnd = hWnd;
+
+	threadHandles->hRefreshRoutine = CreateThread(
+		NULL,								//Security Attributes
+		0,									//Stack Size (0 = default)
+		Thread_RefreshRoutine,				//Function
+		(LPVOID) rrParam,					//Param
+		0,									//Creation flags
+		&threadHandles->dwIdRefreshRoutine	//Thread Id
+	);
+	#pragma endregion
+
+	return !(threadHandles->hRefreshRoutine == NULL);
+}
+
 bool Setup_OpenSyncHandles(SyncHandles* syncHandles){
 	syncHandles->hMutex_QnARequest_CanAccess = CreateMutex(//This mutex is only created on and for ConTaxi
 		NULL,							//Security attributes
@@ -153,6 +186,15 @@ bool Service_RequestMaxVars(Application* app){
 		app->map.height < 0){
 		return false;
 	}
+
+	return true;
+}
+
+bool Service_UpdateTaxiList(Application* app){
+
+	return true;
+}
+bool Service_UpdatePassengerList(Application* app){
 
 	return true;
 }

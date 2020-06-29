@@ -156,12 +156,14 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="MapInfo.h" />
     <ClInclude Include="MIService.h" />
+    <ClInclude Include="MIThreads.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c" />
+    <ClCompile Include="MIMain.c" />
     <ClCompile Include="MIService.c" />
+    <ClCompile Include="MIThreads.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MapInfo.rc" />
