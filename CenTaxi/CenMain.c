@@ -80,33 +80,34 @@ int _tmain(int argc, LPTSTR argv[]) {
 				_tprintf(TEXT("%s%s:\tSave registry [temp]"), Utils_NewSubLine(), CMD_SAVE_REGISTRY);
 				_tprintf(TEXT("%s%s:\tLoad registry [temp]"), Utils_NewSubLine(), CMD_LOAD_REGISTRY);
 				_tprintf(TEXT("%s%s:\tCreate DLL log [temp]"), Utils_NewSubLine(), CMD_DLL_LOG);
-				_tprintf(TEXT("%s%s:\tCreate a path from A to B [temp]"), Utils_NewSubLine(), CMD_CREATE_PATH);
 				_tprintf(TEXT("%s%s:\tCloses the application"), Utils_NewSubLine(), CMD_CLOSEAPP);
 				break;
 			case CC_LIST_TAXIS:
 				_tprintf(TEXT("%sLogged Taxis List:"), Utils_NewSubLine());
+
 				for(int i = 0; i < app.maxTaxis; i++){
-					if(!app.taxiList[i].taxiInfo.empty)
+					if(!app.taxiList[i].taxiInfo->empty)
 						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf)"),
 							Utils_NewSubLine(),
 							i+1,
-							app.taxiList[i].taxiInfo.LicensePlate,
-							app.taxiList[i].taxiInfo.object.xyPosition.x,
-							app.taxiList[i].taxiInfo.object.xyPosition.y);
+							app.taxiList[i].taxiInfo->LicensePlate,
+							app.taxiList[i].taxiInfo->object.xyPosition.x,
+							app.taxiList[i].taxiInfo->object.xyPosition.y);
 					else
 						_tprintf(TEXT("%s[%02d] - Empty slot"), Utils_NewSubLine(), i+1);
 				}
+
 				break;
 			case CC_LIST_PASS:
 				_tprintf(TEXT("%sLogged Passengers List:"), Utils_NewSubLine());
 				for(int i = 0; i < app.maxPassengers; i++){
-					if(!app.passengerList[i].passengerInfo.empty)
+					if(!app.passengerList[i].passengerInfo->empty)
 						_tprintf(TEXT("%s[%02d] - %s located at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
 							Utils_NewSubLine(),
 							i+1,
-							app.passengerList[i].passengerInfo.Id,
-							app.passengerList[i].passengerInfo.object.xyPosition.x,
-							app.passengerList[i].passengerInfo.object.xyPosition.y,
+							app.passengerList[i].passengerInfo->Id,
+							app.passengerList[i].passengerInfo->object.xyPosition.x,
+							app.passengerList[i].passengerInfo->object.xyPosition.y,
 							app.passengerList[i].xyDestination.x,
 							app.passengerList[i].xyDestination.y);
 					else

@@ -19,12 +19,18 @@ struct ThreadHandles{
 };
 
 struct SyncHandles{
+	HANDLE hEvent_TaxiList;
+	HANDLE hEvent_PassengerList;
 	HANDLE hMutex_QnARequest_CanAccess;
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 };
 
 struct ShmHandles{
+	HANDLE hSHM_TaxiList;
+	LPVOID lpSHM_TaxiList;
+	HANDLE hSHM_PassengerList;
+	LPVOID lpSHM_PassengerList;
 	HANDLE hSHM_QnARequest;
 	HANDLE lpSHM_QnARequest;
 	HANDLE hSHM_Map;
@@ -61,3 +67,13 @@ void Setup_CloseSyncHandles(SyncHandles* syncHandles);
 void Setup_CloseShmHandles(ShmHandles* shmHandles);
 
 bool Service_RequestMaxVars(Application* app);
+
+void Paint_DrawMap(Application* app, HDC hdc, HBRUSH roadBrush, HBRUSH structureBrush, HBRUSH  cellBorderBrush);
+void Paint_MapCoordinates(Application* app, HDC hdc, HBRUSH borderBrush);
+void Paint_Taxis(Application* app, HDC hdc, HBRUSH taxiBrush);
+void Paint_Passengers(Application* app, HDC hdc, HBRUSH passengerBrush);
+
+void Get_RectFromXY(Application* app, RECT* rRect, int x, int y);
+
+Taxi* Get_TaxiAt(Application* app, int X, int Y, int* taxiIndex);
+Passenger* Get_PassengerAt(Application* app, int X, int Y, int* passengerIndex);

@@ -169,10 +169,6 @@ void Service_CloseApp(Application* app){
 		&app->threadHandles.dwIdTossRequests //Thread ID
 	);
 	WaitForSingleObject(app->threadHandles.hTossRequests, INFINITE);
-	/*ToDo (TAG_TODO)
-	**Notify central about this shutdown, in order to logout taxi from central
-	**Close handles
-	*/
 }
 void Service_NewPosition(Application* app, XY xyNewPosition){
 	if(app->loggedInTaxi.taxiInfo.empty ||

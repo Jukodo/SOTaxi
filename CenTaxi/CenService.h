@@ -33,6 +33,8 @@ struct ThreadHandles{
 };
 
 struct SyncHandles{
+	HANDLE hEvent_TaxiList;
+	HANDLE hEvent_PassengerList;
 	HANDLE hEvent_QnARequest_Read;
 	HANDLE hEvent_QnARequest_Write;
 	HANDLE hEvent_Notify_T_NewTranspReq;
@@ -42,6 +44,10 @@ struct SyncHandles{
 };
 
 struct ShmHandles{
+	HANDLE hSHM_TaxiList;
+	LPVOID lpSHM_TaxiList;
+	HANDLE hSHM_PassengerList;
+	LPVOID lpSHM_PassengerList;
 	HANDLE hSHM_QnARequest;
 	LPVOID lpSHM_QnARequest;
 	HANDLE hSHM_NTBuffer;
@@ -85,7 +91,6 @@ struct Application{
 #define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
 #define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
 #define CMD_DLL_LOG TEXT("/createDllLog")
-#define CMD_CREATE_PATH TEXT("/createPath")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 #define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
@@ -102,7 +107,6 @@ enum CentralCommands{
 	CC_SAVE_REGISTRY,
 	CC_LOAD_REGISTRY,
 	CC_DLL_LOG,
-	CC_CREATE_PATH,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };
@@ -164,4 +168,3 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);
-void Temp_CreatePath(Application* app);

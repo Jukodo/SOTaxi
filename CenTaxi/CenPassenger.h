@@ -4,6 +4,6 @@
 typedef struct CenPassenger CenPassenger;
 
 struct CenPassenger{
-	Passenger passengerInfo;
+	Passenger* passengerInfo;
 	XY xyDestination;
 };

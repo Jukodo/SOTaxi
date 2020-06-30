@@ -37,11 +37,15 @@
 #define SHUTDOWN_REASON_Undefined TEXT("Undefined Reason")
 #define SHUTDOWN_REASON_Global TEXT("Application is closing")
 
+#define NAME_SHM_TaxiList TEXT("JUSO2TAXI_SHM_TL")
+#define NAME_SHM_PassengerList TEXT("JUSO2TAXI_SHM_PL")
 #define NAME_SHM_QnARequest TEXT("JUSO2TAXI_SMH_QNAR")
 #define NAME_SHM_TransportRequestBuffer TEXT("JUSO2TAXI_SMH_TRB")
 #define NAME_SHM_Map TEXT("JUSO2TAXI_SMH_MAP")
 #define NAME_SHM_TossRequestBuffer TEXT("JUSO2TAXI_SMH_TOSSRB")
 
+#define NAME_EVENT_TaxiList TEXT("JUSO2TAXI_EVENT_TL")
+#define NAME_EVENT_PassengerList TEXT("JUSO2TAXI_EVENT_PL")
 #define NAME_EVENT_QnARequest_Read TEXT("JUSO2TAXI_EVENT_QNAR_R")
 #define NAME_EVENT_QnARequest_Write TEXT("JUSO2TAXI_EVENT_QNAR_W")
 #define NAME_EVENT_NewTransportRequest TEXT("JUSO2TAXI_EVENT_NTR")

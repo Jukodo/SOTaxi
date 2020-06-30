@@ -12,36 +12,10 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	app->maxTaxis = maxTaxis;
 	app->maxPassengers = maxPassengers;
 
-	app->taxiList = calloc(maxTaxis, sizeof(Taxi));
+	app->taxiList = calloc(maxTaxis, sizeof(CenTaxi));
 	app->passengerList = calloc(maxPassengers, sizeof(CenPassenger));
 	app->transportList = calloc(NTBUFFER_MAX, sizeof(CenTransportRequest));
-	
-	int i;
-	for(i = 0; i < maxTaxis; i++){
-		ZeroMemory(&app->taxiList[i], sizeof(Taxi));
-		app->taxiList[i].taxiInfo.empty = true;
-		app->taxiList[i].taxiInfo.object.speedMultiplier = DEFAULT_SPEED;
-	}
 
-	for(i = 0; i < maxPassengers; i++){
-		ZeroMemory(&app->passengerList[i], sizeof(CenPassenger));
-		app->passengerList[i].passengerInfo.empty = true;
-	}
-
-	for(i = 0; i < NTBUFFER_MAX; i++){
-		ZeroMemory(&app->transportList[i], sizeof(CenTransportRequest));
-		app->transportList[i].interestedTaxis = calloc(maxTaxis, sizeof(int));
-
-		for(int a = 0; a < maxTaxis; a++)
-			app->transportList[i].interestedTaxis[a] = -1;
-	}
-
-	if((app->passengerList == NULL))
-		return false;
-	if((app->taxiList == NULL))
-		return false;
-	if((app->transportList == NULL))
-		return false;
 	if(!Setup_OpenSyncHandles(app))
 		return false;
 	if(!Setup_OpenShmHandles(app))
@@ -52,6 +26,36 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 		return false;
 	if(!Setup_OpenThreadHandles(app)) //Has to be called at the end, because it will use Sync and SMH
 		return false;
+
+	if((app->passengerList == NULL))
+		return false;
+	if((app->taxiList == NULL))
+		return false;
+	if((app->transportList == NULL))
+		return false;
+
+	int i;
+	for(i = 0; i < maxTaxis; i++){
+		ZeroMemory(&app->taxiList[i], sizeof(CenTaxi));
+		app->taxiList[i].taxiInfo = &((Taxi*) app->shmHandles.lpSHM_TaxiList)[i];
+
+		_tprintf(TEXT("%s %d"), Utils_NewSubLine(), app->taxiList[i].taxiInfo);
+	}
+
+	for(i = 0; i < maxPassengers; i++){
+		ZeroMemory(&app->passengerList[i], sizeof(CenPassenger));
+		app->passengerList[i].passengerInfo = &((Passenger*) app->shmHandles.lpSHM_PassengerList)[i];
+
+		_tprintf(TEXT("%s %d"), Utils_NewSubLine(), app->passengerList[i].passengerInfo);
+	}
+
+	for(i = 0; i < NTBUFFER_MAX; i++){
+		ZeroMemory(&app->transportList[i], sizeof(CenTransportRequest));
+		app->transportList[i].interestedTaxis = calloc(maxTaxis, sizeof(int));
+
+		for(int a = 0; a < maxTaxis; a++)
+			app->transportList[i].interestedTaxis[a] = -1;
+	}
 
 	return true;
 }
@@ -204,14 +208,30 @@ bool Setup_OpenThreadHandles(Application* app){
 		app->threadHandles.hReadConPassNPToss == NULL);
 }
 bool Setup_OpenSyncHandles(Application* app){
+	app->syncHandles.hEvent_TaxiList = CreateEvent(
+		NULL,						//Security Attributes
+		FALSE,						//Manual Reset
+		TRUE,						//Initial State
+		NAME_EVENT_TaxiList			//Event Name
+	);
+	Utils_DLL_Register(NAME_EVENT_TaxiList, DLL_TYPE_EVENT);
+
+	app->syncHandles.hEvent_PassengerList = CreateEvent(
+		NULL,						//Security Attributes
+		FALSE,						//Manual Reset
+		TRUE,						//Initial State
+		NAME_EVENT_PassengerList	//Event Name
+	);
+	Utils_DLL_Register(NAME_EVENT_PassengerList, DLL_TYPE_EVENT);
+
 	app->syncHandles.hEvent_QnARequest_Read = CreateEvent(
 		NULL,						//Security Attributes
 		FALSE,						//Manual Reset
 		FALSE,						//Initial State
 		NAME_EVENT_QnARequest_Read	//Event Name
 	);
-
 	Utils_DLL_Register(NAME_EVENT_QnARequest_Read, DLL_TYPE_EVENT);
+
 	app->syncHandles.hEvent_QnARequest_Write = CreateEvent(
 		NULL,						//Security Attributes
 		FALSE,						//Manual Reset
@@ -260,6 +280,65 @@ bool Setup_OpenSyncHandles(Application* app){
 		app->syncHandles.hSemaphore_TaxiNPSpots == NULL);
 }
 bool Setup_OpenShmHandles(Application* app){
+	#pragma region TaxiList
+	app->shmHandles.hSHM_TaxiList = CreateFileMapping(
+		INVALID_HANDLE_VALUE,			//File handle
+		NULL,							//Security Attributes
+		PAGE_READWRITE,					//Protection flags
+		0,								//DWORD high-order max size
+		sizeof(Taxi) * app->maxTaxis,	//DWORD low-order max size
+		NAME_SHM_TaxiList);				//File mapping object name
+	Utils_DLL_Register(NAME_SHM_TaxiList, DLL_TYPE_FILEMAPPING);
+	if(app->shmHandles.hSHM_TaxiList == NULL)
+		return false;
+	app->shmHandles.lpSHM_TaxiList = MapViewOfFile(
+		app->shmHandles.hSHM_TaxiList,	//File mapping object handle
+		FILE_MAP_ALL_ACCESS,			//Desired access flag
+		0,								//DWORD high-order of the file offset where the view begins
+		0,								//DWORD low-order of the file offset where the view begins
+		sizeof(Taxi) * app->maxTaxis);	//Number of bytes to map
+	Utils_DLL_Register(NAME_SHM_TaxiList, DLL_TYPE_MAPVIEWOFFILE);
+	if(app->shmHandles.lpSHM_TaxiList == NULL)
+		return false;
+
+	for(int i = 0; i < app->maxTaxis; i++){
+		((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].empty = true;
+		((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].object.speedMultiplier = DEFAULT_SPEED;
+	}
+	for(int i = 0; i < app->maxTaxis; i++){
+		if(((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].empty == true)
+			_tprintf(TEXT("%s Taxi %d is empty"), Utils_NewSubLine(), i);
+	}
+	#pragma endregion
+
+	#pragma region PassengerList
+	app->shmHandles.hSHM_PassengerList = CreateFileMapping(
+		INVALID_HANDLE_VALUE,					//File handle
+		NULL,									//Security Attributes
+		PAGE_READWRITE,							//Protection flags
+		0,										//DWORD high-order max size
+		sizeof(Passenger) * app->maxPassengers,	//DWORD low-order max size
+		NAME_SHM_PassengerList					//File mapping object name
+	);
+	Utils_DLL_Register(NAME_SHM_PassengerList, DLL_TYPE_FILEMAPPING);
+	if(app->shmHandles.hSHM_PassengerList == NULL)
+		return false;
+	app->shmHandles.lpSHM_PassengerList = MapViewOfFile(
+		app->shmHandles.hSHM_PassengerList,		//File mapping object handle
+		FILE_MAP_ALL_ACCESS,					//Desired access flag
+		0,										//DWORD high-order of the file offset where the view begins
+		0,										//DWORD low-order of the file offset where the view begins
+		sizeof(Passenger) * app->maxPassengers	//Number of bytes to map
+	);
+	Utils_DLL_Register(NAME_SHM_PassengerList, DLL_TYPE_MAPVIEWOFFILE);
+	if(app->shmHandles.lpSHM_PassengerList == NULL)
+		return false;
+
+	for(int i = 0; i < app->maxPassengers; i++){
+		((Passenger*) app->shmHandles.lpSHM_PassengerList)[i].empty = true;
+	}
+	#pragma endregion
+
 	#pragma region QnARequest
 	app->shmHandles.hSHM_QnARequest = CreateFileMapping(
 		INVALID_HANDLE_VALUE,	//File handle
@@ -514,9 +593,12 @@ bool Add_Taxi(Application* app, TCHAR* licensePlate, XY xyStartingPosition){
 		xyStartingPosition.x,
 		xyStartingPosition.y);
 
-	anchorTaxi->taxiInfo.empty = false;
-	_tcscpy_s(anchorTaxi->taxiInfo.LicensePlate, _countof(anchorTaxi->taxiInfo.LicensePlate), licensePlate);
-	anchorTaxi->taxiInfo.object.xyPosition = xyStartingPosition;
+	WaitForSingleObject(app->syncHandles.hEvent_TaxiList, INFINITE);
+	anchorTaxi->taxiInfo->empty = false;
+	_tcscpy_s(anchorTaxi->taxiInfo->LicensePlate, _countof(anchorTaxi->taxiInfo->LicensePlate), licensePlate);
+	anchorTaxi->taxiInfo->object.xyPosition = xyStartingPosition;
+	SetEvent(app->syncHandles.hEvent_TaxiList);
+
 	return true;
 }
 bool Delete_Taxi(Application* app, int index){
@@ -529,15 +611,17 @@ bool Delete_Taxi(Application* app, int index){
 
 	_tprintf(TEXT("%s[Taxi Logout] %s at (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
-		anchorTaxi->taxiInfo.LicensePlate,
-		anchorTaxi->taxiInfo.object.xyPosition.x,
-		anchorTaxi->taxiInfo.object.xyPosition.y);
+		anchorTaxi->taxiInfo->LicensePlate,
+		anchorTaxi->taxiInfo->object.xyPosition.x,
+		anchorTaxi->taxiInfo->object.xyPosition.y);
 
-	anchorTaxi->taxiInfo.empty = true;
+	WaitForSingleObject(app->syncHandles.hEvent_TaxiList, INFINITE);
+	anchorTaxi->taxiInfo->empty = true;
+	SetEvent(app->syncHandles.hEvent_TaxiList);
 	if(anchorTaxi->taxiNamedPipe != NULL){
-		ReleaseSemaphore(app->syncHandles.hSemaphore_TaxiNPSpots, 1, NULL);
 		Utils_CloseNamedPipe(anchorTaxi->taxiNamedPipe);
 	}
+	ReleaseSemaphore(app->syncHandles.hSemaphore_TaxiNPSpots, 1, NULL);
 	SetEvent(app->syncHandles.hEvent_NewTaxiSpot);
 
 	return true;
@@ -546,7 +630,7 @@ int Get_QuantLoggedInTaxis(Application* app){
 	int quantLoggedInTaxis = 0;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty)
+		if(!app->taxiList[i].taxiInfo->empty)
 			quantLoggedInTaxis++;
 	}
 
@@ -560,7 +644,7 @@ int Get_FreeIndexTaxiList(Application* app){
 		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(app->taxiList[i].taxiInfo.empty)
+		if(app->taxiList[i].taxiInfo->empty)
 			return i;
 	}
 
@@ -571,7 +655,7 @@ int Get_TaxiIndex(Application* app, TCHAR* licensePlate){
 		return -1;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(_tcscmp(app->taxiList[i].taxiInfo.LicensePlate, licensePlate) == 0 && !app->taxiList[i].taxiInfo.empty)
+		if(_tcscmp(app->taxiList[i].taxiInfo->LicensePlate, licensePlate) == 0 && !app->taxiList[i].taxiInfo->empty)
 			return i;
 	}
 
@@ -581,7 +665,7 @@ CenTaxi* Get_Taxi(Application* app, int index){
 	if(app->taxiList == NULL)
 		return NULL;
 
-	if(!app->taxiList[index].taxiInfo.empty)
+	if(!app->taxiList[index].taxiInfo->empty)
 		return &app->taxiList[index];
 
 	return NULL;
@@ -591,9 +675,9 @@ CenTaxi* Get_TaxiAt(Application* app, XY xyPosition){
 		return NULL;
 
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(!app->taxiList[i].taxiInfo.empty &&
-			((int) app->taxiList[i].taxiInfo.object.xyPosition.x) == xyPosition.x &&
-			((int) app->taxiList[i].taxiInfo.object.xyPosition.y) == xyPosition.y)
+		if(!app->taxiList[i].taxiInfo->empty &&
+			((int) app->taxiList[i].taxiInfo->object.xyPosition.x) == xyPosition.x &&
+			((int) app->taxiList[i].taxiInfo->object.xyPosition.y) == xyPosition.y)
 			return &app->taxiList[i];
 	}
 
@@ -626,9 +710,9 @@ bool Add_Passenger(Application* app, TCHAR* id, XY xyStartingPosition, XY xyDest
 		xyDestination.x,
 		xyDestination.y);
 
-	anchorPass->passengerInfo.empty = false;
-	_tcscpy_s(anchorPass->passengerInfo.Id, _countof(anchorPass->passengerInfo.Id), id);
-	anchorPass->passengerInfo.object.xyPosition = xyStartingPosition;
+	anchorPass->passengerInfo->empty = false;
+	_tcscpy_s(anchorPass->passengerInfo->Id, _countof(anchorPass->passengerInfo->Id), id);
+	anchorPass->passengerInfo->object.xyPosition = xyStartingPosition;
 	anchorPass->xyDestination = xyDestination;
 
 	return true;
@@ -643,18 +727,18 @@ bool Delete_Passenger(Application* app, int index){
 
 	_tprintf(TEXT("%s[Passenger Logout] %s at (%.2lf, %.2lf) with intent of going to (%.2lf, %.2lf)"),
 		Utils_NewSubLine(),
-		anchorPassenger->passengerInfo.Id,
-		anchorPassenger->passengerInfo.object.xyPosition.x,
-		anchorPassenger->passengerInfo.object.xyPosition.y,
+		anchorPassenger->passengerInfo->Id,
+		anchorPassenger->passengerInfo->object.xyPosition.x,
+		anchorPassenger->passengerInfo->object.xyPosition.y,
 		anchorPassenger->xyDestination.x,
 		anchorPassenger->xyDestination.y);
 
-	anchorPassenger->passengerInfo.empty = true;
+	anchorPassenger->passengerInfo->empty = true;
 
 	CommsC2P sendPassNotification;
 	CommsC2P_PassRemoval removalPassComms;
 	sendPassNotification.commType = C2P_PASS_REMOVAL;
-	_tcscpy_s(removalPassComms.passId, _countof(removalPassComms.passId), anchorPassenger->passengerInfo.Id);
+	_tcscpy_s(removalPassComms.passId, _countof(removalPassComms.passId), anchorPassenger->passengerInfo->Id);
 	sendPassNotification.removeComm = removalPassComms;
 
 	WriteFile(
@@ -669,7 +753,7 @@ int Get_QuantLoggedInPassengers(Application* app){
 	int quantLoggedInPassengers = 0;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(!app->passengerList[i].passengerInfo.empty)
+		if(!app->passengerList[i].passengerInfo->empty)
 			quantLoggedInPassengers++;
 	}
 
@@ -683,7 +767,7 @@ int Get_FreeIndexPassengerList(Application* app){
 		return -1;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(app->passengerList[i].passengerInfo.empty)
+		if(app->passengerList[i].passengerInfo->empty)
 			return i;
 	}
 
@@ -694,7 +778,7 @@ int Get_PassengerIndex(Application* app, TCHAR* Id){
 		return -1;
 
 	for(int i = 0; i < app->maxPassengers; i++){
-		if(_tcscmp(app->passengerList[i].passengerInfo.Id, Id) == 0 && !app->passengerList[i].passengerInfo.empty)
+		if(_tcscmp(app->passengerList[i].passengerInfo->Id, Id) == 0 && !app->passengerList[i].passengerInfo->empty)
 			return i;
 	}
 
@@ -704,7 +788,7 @@ CenPassenger* Get_Passenger(Application* app, int index){
 	if(app->passengerList == NULL)
 		return NULL;
 
-	if(!app->passengerList[index].passengerInfo.empty)
+	if(!app->passengerList[index].passengerInfo->empty)
 		return &app->passengerList[index];
 
 	return NULL;
@@ -769,9 +853,6 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
 		Utils_DLL_Test();
 		return CC_DLL_LOG;
-	} else if(_tcscmp(command, CMD_CREATE_PATH) == 0){
-		Temp_CreatePath(app);
-		return CC_CREATE_PATH;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -893,7 +974,7 @@ TransportInterestResponse Service_RegisterInterest(Application* app, NTInterestR
 
 	_tprintf(TEXT("%s[ConPass] Taxi (%s) has shown interest to transport Passenger (%s)"), 
 		Utils_NewSubLine(),
-		Get_Taxi(app, taxiIndex)->taxiInfo.LicensePlate,
+		Get_Taxi(app, taxiIndex)->taxiInfo->LicensePlate,
 		Get_TransportRequest(app, transportIndex).passId);
 
 	return NTIR_SUCCESS;
@@ -922,7 +1003,7 @@ void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int transport
 			Delete_Passenger(app, Get_PassengerIndex(app, myRequestInfo->passId));
 		} else if(taxiIndex < 0 ||
 			taxiIndex >= app->maxTaxis ||
-			app->taxiList[taxiIndex].taxiInfo.empty ||
+			app->taxiList[taxiIndex].taxiInfo->empty ||
 			myRequestInfo->empty){
 			_tprintf(TEXT("%s[Taxi Assignment] Cannot notify both parties since one of them seems to be invalid!"), Utils_NewSubLine());
 		} else{
@@ -966,18 +1047,15 @@ void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, 
 		sendPassNotification.commType = C2P_ASSIGNED_FAILED;
 	else{
 		sendPassNotification.commType = C2P_ASSIGNED;
-		_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo.LicensePlate);
+		_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo->LicensePlate);
 	}
 	_tcscpy_s(assignPassComms.passId, _countof(assignPassComms.passId), myRequestInfo->passId);
 	
-	/*ToDo (TAG_TODO)
-	**Calculate estimated time for taxi to arrive to passenger and set to var
-	**assignPassComms.estimatedWaitTime = X;
-	*/assignPassComms.estimatedWaitTime = Utils_GetEstimatedTime(
+	assignPassComms.estimatedWaitTime = Utils_GetEstimatedTime(
 											&app->map,
-											app->taxiList[taxiIndex].taxiInfo.object.xyPosition, 
+											app->taxiList[taxiIndex].taxiInfo->object.xyPosition, 
 											myRequestInfo->xyStartingPosition, 
-											app->taxiList[taxiIndex].taxiInfo.object.speedMultiplier);
+											app->taxiList[taxiIndex].taxiInfo->object.speedMultiplier);
 	sendPassNotification.assignComm = assignPassComms;
 
 	WriteFile(
@@ -1001,7 +1079,7 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 		return false;
 
 	//Doesn't allow taxis carrying passengers to be kicked
-	if(anchorTaxi->taxiInfo.state == TS_WITH_PASS)
+	if(anchorTaxi->taxiInfo->state == TS_WITH_PASS)
 		return false;
 
 	CommsC2T sendNotification;
@@ -1034,10 +1112,10 @@ void Service_CloseApp(Application* app){
 	app->keepRunning = false;
 	
 	for(int i = 0; i < app->maxTaxis; i++){
-		if(app->taxiList[i].taxiInfo.empty)
+		if(app->taxiList[i].taxiInfo->empty)
 			continue;
 
-		Service_KickTaxi(app, app->taxiList[i].taxiInfo.LicensePlate, SHUTDOWN_REASON_Global, true);
+		Service_KickTaxi(app, app->taxiList[i].taxiInfo->LicensePlate, SHUTDOWN_REASON_Global, true);
 	}
 
 	CommsC2P sendPassNotification;
@@ -1054,9 +1132,6 @@ void Service_CloseApp(Application* app){
 		NULL);							//Overlapped IO
 
 	Setup_CloseAllHandles(app);
-	/*ToDo (TAG_TODO)
-	**Close threads and handles properly
-	*/
 }
 
 bool Command_SetAssignmentTimeout(Application* app, TCHAR* value){
@@ -1175,55 +1250,4 @@ void Temp_LoadRegistry(Application* app){
 
 	RegCloseKey(hRegKey);
 
-}
-
-void Temp_CreatePath(Application* app){
-	//TCHAR xAt[3];
-	//swprintf(xAt, 3, TEXT("%d%d"),
-	//	rand()%50,
-	//	rand()%50);
-	//TCHAR yAt[3];
-	//swprintf(yAt, 3, TEXT("%d%d"),
-	//	rand()%50,
-	//	rand()%50);
-	//TCHAR xDestiny[3];
-	//swprintf(xDestiny, 3, TEXT("%d%d"),
-	//	rand()%50,
-	//	rand()%50);
-	//TCHAR yDestiny[3];
-	//swprintf(yDestiny, 3, TEXT("%d%d"),
-	//	rand()%50,
-	//	rand()%50);
-
-	XY xyStartingPosition;
-	XY xyDestination;
-
-	//xyStartingPosition.x = _ttoi(xAt);
-	//xyStartingPosition.y = _ttoi(yAt);
-	//xyDestination.x = _ttoi(xDestiny);
-	//xyDestination.y = _ttoi(yDestiny);
-
-	xyStartingPosition.x = 1;
-	xyStartingPosition.y = 1;
-	xyDestination.x = 48;
-	xyDestination.y = 48;
-
-	Path* path = Utils_GetPath(&app->map, xyStartingPosition, xyDestination);
-
-	if(path == NULL){
-		_tprintf(TEXT("%sFailed to get a path from (%.2lf, %.2lf) to (%.2lf, %.2lf)"), 
-			Utils_NewSubLine(), 
-			xyStartingPosition.x,
-			xyStartingPosition.y,
-			xyDestination.x,
-			xyDestination.y);
-
-		return;
-	}
-
-
-	_tprintf(TEXT("%sReceived following path: "), Utils_NewSubLine());
-	for(int i = 0; i < path->steps; i++){
-		_tprintf(TEXT("%sStep %d: Goes to (%.2lf, %.2lf)"), Utils_NewSubLine(), i, path->path[i].x, path->path[i].y);
-	}
 }

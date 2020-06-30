@@ -4,6 +4,6 @@
 typedef struct CenTaxi CenTaxi;
 
 struct CenTaxi{
-	Taxi taxiInfo;
+	Taxi* taxiInfo;
 	HANDLE taxiNamedPipe;
 };

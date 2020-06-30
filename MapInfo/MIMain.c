@@ -5,8 +5,8 @@
 #include "MIService.h"
 
 #define MAX_LOADSTRING 100
-#define APP_NAME TEXT("Testing some crazy shit my dude")
-#define WINDOW_TITLE TEXT("Testing some crazy shit my dude")
+#define APP_NAME TEXT("Base")
+#define WINDOW_TITLE TEXT("MapInfo")
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
@@ -17,6 +17,8 @@ Application* app;
 HBRUSH roadBrush;
 HBRUSH structureBrush;
 HBRUSH cellBorderBrush;
+HBRUSH taxiBrush;
+HBRUSH passengerBrush;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -24,7 +26,6 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow){
     #pragma region Setup Window
-    Sleep(1000);
 
     //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
     WNDCLASSEXW windowInfo;
@@ -77,16 +78,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 
     app = malloc(sizeof(Application));
     if(!Setup_Application(app, hWindow)){
-        TCHAR message[100];
         swprintf_s(message, 100, TEXT("%sError trying to set up central..."), Utils_NewLine());
         OutputDebugString(message);
         _gettchar();
         return false;
     }
 
-    roadBrush = CreateSolidBrush(RGB(200, 200, 200));
+    roadBrush = CreateSolidBrush(RGB(220, 220, 220));
     structureBrush = CreateSolidBrush(RGB(30, 30, 30));
     cellBorderBrush = CreateSolidBrush(RGB(15, 15, 15));
+    taxiBrush = CreateSolidBrush(RGB(240, 80, 80));
+    passengerBrush = CreateSolidBrush(RGB(80, 80, 240));
 
     //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
     ShowWindow(     //Changes the window's display state
@@ -101,8 +103,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
     if(!Setup_OpenThreadHandles_RefreshRoutine(&app->threadHandles, hWindow)){
         return false;
     }
-
-    
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MAPINFO));
     MSG msg;
@@ -147,22 +147,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
 
-            RECT drawingRect;
-            for(int w = 0; w < app->map.width; w++){
-                for(int h = 0; h < app->map.height; h++){
-                    drawingRect.left = ((app->refreshRoutine.cellWidth) *w)-w + app->refreshRoutine.xMapOffset;
-                    drawingRect.top = (app->refreshRoutine.cellHeight*h)-h + app->refreshRoutine.yMapOffset;
-                    drawingRect.right = (app->refreshRoutine.cellWidth*(w+1))-w + app->refreshRoutine.xMapOffset;
-                    drawingRect.bottom = (app->refreshRoutine.cellHeight*(h+1))-h + app->refreshRoutine.yMapOffset;
-                    if(app->map.cellArray[((int) h * app->map.height) + (int) w] == MAP_STRUCTURE_CHAR){
-                        FillRect(hdc, &drawingRect, structureBrush);
-                    } else{
-                        FillRect(hdc, &drawingRect, roadBrush);
-                    }
-
-                    FrameRect(hdc, &drawingRect, cellBorderBrush);
-                }
-            }
+            Paint_DrawMap(app, hdc, roadBrush, structureBrush, cellBorderBrush);
+            Paint_MapCoordinates(app, hdc, cellBorderBrush);
+            Paint_Taxis(app, hdc, taxiBrush);
+            Paint_Passengers(app, hdc, passengerBrush);
+            
             // TODO: Add any drawing code that uses hdc here...
             EndPaint(hWnd, &ps);
         }

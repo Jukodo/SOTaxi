@@ -103,7 +103,7 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 	} else{
 		int chosenTaxi = (rand() % numIntTaxis);
 		_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
-		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo.LicensePlate);
+		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo->LicensePlate);
 		chosenTaxiIndex = myRequestTech->interestedTaxis[chosenTaxi];
 	}
 	Service_AssignTaxi2Passenger(param->app, chosenTaxiIndex, param->myIndex);
@@ -134,7 +134,9 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 					CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
 
 					if(updatingTaxi != NULL){
-						updatingTaxi->taxiInfo.object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
+						WaitForSingleObject(param->app->syncHandles.hEvent_TaxiList, INFINITE);
+						updatingTaxi->taxiInfo->object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
+						SetEvent(param->app->syncHandles.hEvent_TaxiList);
 					}
 				}
 				break;
@@ -149,7 +151,9 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 					CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
 
 					if(updatingTaxi != NULL){
-						updatingTaxi->taxiInfo.object.speedMultiplier = buffer->tossRequests[buffer->tail].tossSpeed.newSpeed;
+						WaitForSingleObject(param->app->syncHandles.hEvent_TaxiList, INFINITE);
+						updatingTaxi->taxiInfo->object.speedMultiplier = buffer->tossRequests[buffer->tail].tossSpeed.newSpeed;
+						SetEvent(param->app->syncHandles.hEvent_TaxiList);
 					}
 				}
 				break;
