@@ -14,6 +14,9 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 Application* app;
 
+RECT rectWindowProp;
+HDC memDC = NULL;  //double buffering
+HBITMAP hBit = NULL;
 HBRUSH roadBrush;
 HBRUSH structureBrush;
 HBRUSH cellBorderBrush;
@@ -129,7 +132,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 //
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
+    HDC hdc;
+    PAINTSTRUCT ps;
+    
     switch(message){
+    case WM_CREATE:
+        GetClientRect(hWnd, &rectWindowProp);
+        hdc = GetDC(hWnd);
+        memDC = CreateCompatibleDC(hdc);
+        hBit = CreateCompatibleBitmap(hdc, rectWindowProp.right, rectWindowProp.bottom);
+        SelectObject(memDC, hBit);
+        DeleteObject(hBit);
+
+        PatBlt(memDC, 0, 0, rectWindowProp.right, rectWindowProp.bottom, PATCOPY);
+
+        ReleaseDC(hWnd, hdc);
+
+        break;
         case WM_COMMAND:
             switch(LOWORD(wParam)){
             case IDM_ABOUT:
@@ -144,18 +163,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
             break;
         case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
+            Paint_DrawMap(app, memDC, roadBrush, structureBrush, cellBorderBrush);
+            Paint_MapCoordinates(app, memDC, cellBorderBrush);
+            Paint_Taxis(app, memDC, taxiBrush);
+            Paint_Passengers(app, memDC, passengerBrush);
 
-            Paint_DrawMap(app, hdc, roadBrush, structureBrush, cellBorderBrush);
-            Paint_MapCoordinates(app, hdc, cellBorderBrush);
-            Paint_Taxis(app, hdc, taxiBrush);
-            Paint_Passengers(app, hdc, passengerBrush);
+            hdc = BeginPaint(hWnd, &ps);
+            BitBlt(hdc, 0, 0, rectWindowProp.right, rectWindowProp.bottom, memDC, 0, 0, SRCCOPY);
             
-            // TODO: Add any drawing code that uses hdc here...
             EndPaint(hWnd, &ps);
         }
         break;
+        case WM_ERASEBKGND: //Prevent flickering effect by disabling erase background
+            return(1);
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
             break;

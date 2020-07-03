@@ -1,2 +1,5 @@
-taxi login queue - use event "canLogin" when new spots are available (?)
-taxi named pipe notifications - might try to send notification to taxis that only have first login stage complete
+move passenger together with taxi
+make a way for MapInfo to know if a taxi is transporting a passenger and whom
+make bitmap for empty taxis
+make bitmap for full taxis
+make bitmap for passenger

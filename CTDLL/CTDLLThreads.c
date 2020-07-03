@@ -151,7 +151,9 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 					notificationReceived.assignComm.transportInfo.xyDestination.y);
 
 				param->app->loggedInTaxi.taxiInfo.state = TS_OTW_PASS;
-				param->app->loggedInTaxi.transportInfo = notificationReceived.assignComm.transportInfo;
+				swprintf_s(param->app->loggedInTaxi.taxiInfo.transporting.passId, _countof(param->app->loggedInTaxi.taxiInfo.transporting.passId), notificationReceived.assignComm.transportInfo.passId);
+				param->app->loggedInTaxi.taxiInfo.transporting.xyStartingPosition = notificationReceived.assignComm.transportInfo.xyStartingPosition;
+				param->app->loggedInTaxi.taxiInfo.transporting.xyDestination = notificationReceived.assignComm.transportInfo.xyDestination;
 				SetEvent(param->app->syncHandles.hEvent_DestinationChanged);
 
 				break;

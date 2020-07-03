@@ -38,15 +38,11 @@ bool Setup_Application(Application* app, int maxTaxis, int maxPassengers){
 	for(i = 0; i < maxTaxis; i++){
 		ZeroMemory(&app->taxiList[i], sizeof(CenTaxi));
 		app->taxiList[i].taxiInfo = &((Taxi*) app->shmHandles.lpSHM_TaxiList)[i];
-
-		_tprintf(TEXT("%s %d"), Utils_NewSubLine(), app->taxiList[i].taxiInfo);
 	}
 
 	for(i = 0; i < maxPassengers; i++){
 		ZeroMemory(&app->passengerList[i], sizeof(CenPassenger));
 		app->passengerList[i].passengerInfo = &((Passenger*) app->shmHandles.lpSHM_PassengerList)[i];
-
-		_tprintf(TEXT("%s %d"), Utils_NewSubLine(), app->passengerList[i].passengerInfo);
 	}
 
 	for(i = 0; i < NTBUFFER_MAX; i++){
@@ -304,10 +300,6 @@ bool Setup_OpenShmHandles(Application* app){
 	for(int i = 0; i < app->maxTaxis; i++){
 		((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].empty = true;
 		((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].object.speedMultiplier = DEFAULT_SPEED;
-	}
-	for(int i = 0; i < app->maxTaxis; i++){
-		if(((Taxi*) app->shmHandles.lpSHM_TaxiList)[i].empty == true)
-			_tprintf(TEXT("%s Taxi %d is empty"), Utils_NewSubLine(), i);
 	}
 	#pragma endregion
 
@@ -1022,12 +1014,20 @@ void Service_NotifyTaxi(Application* app, TransportRequest* requestInfo, int tax
 	CommsC2T sendTaxiNotification;
 	CommsC2T_Assign assignTaxiComms;
 
+	//Write transport info into taxi struct
+	CenTaxi* taxi = Get_Taxi(app, taxiIndex);
+	if(taxi == NULL)
+		return;
+	swprintf_s(taxi->taxiInfo->transporting.passId, _countof(taxi->taxiInfo->transporting.passId), requestInfo->passId);
+	taxi->taxiInfo->transporting.xyStartingPosition = requestInfo->xyStartingPosition;
+	taxi->taxiInfo->transporting.xyDestination = requestInfo->xyDestination;
+
 	assignTaxiComms.transportInfo = *requestInfo;
 	sendTaxiNotification.assignComm = assignTaxiComms;
 	sendTaxiNotification.commType = C2T_ASSIGNED;
 
 	WriteFile(
-		app->taxiList[taxiIndex].taxiNamedPipe,	//Named pipe handle
+		taxi->taxiNamedPipe,	//Named pipe handle
 		&sendTaxiNotification,					//Write from 
 		sizeof(CommsC2T),						//Size being written
 		NULL,									//Quantity Bytes written
@@ -1108,6 +1108,29 @@ bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool
 	Delete_Taxi(app, taxiIndex);
 	return true;
 }
+
+void Servive_PassengerArrived(Application* app, int passId){
+	CenPassenger* passenger = Get_Passenger(app, passId);
+	if(passenger == NULL)
+		return;
+
+	CommsC2P sendNotification;
+	CommsC2P_PassArrived arrivedComms;
+	swprintf_s(arrivedComms.passId, _countof(arrivedComms.passId), passenger->passengerInfo->Id);
+	sendNotification.arrivedComm = arrivedComms;
+	sendNotification.commType = C2P_PASS_ARRIVED;
+
+	WriteFile(
+		app->namedPipeHandles.hCPWrite,	//Named pipe handle
+		&sendNotification,			//Write from 
+		sizeof(CommsC2P),			//Size being written
+		NULL,						//Quantity Bytes written
+		NULL);						//Overlapped IO
+
+	//Delete_Passenger will inform ConPass about the removal
+	Delete_Passenger(app, passId);
+}
+
 void Service_CloseApp(Application* app){
 	app->keepRunning = false;
 	
@@ -1249,5 +1272,4 @@ void Temp_LoadRegistry(Application* app){
 	}
 
 	RegCloseKey(hRegKey);
-
 }

@@ -317,85 +317,110 @@ XY Movement_NextRandomStep(Application* app, XYObject* object){
 	returnXY.y = -1;
 
 	if((object->speed.x * object->speed.y) != 0){ //Doesn't allow diagonal movement
-		_tprintf(TEXT("%sTrying to move diagonally or stopped SpeedX:%.2lf SpeedY:%.2lf"), 
+		_tprintf(TEXT("%sTrying to move diagonally or stopped SpeedX:%.2lf SpeedY:%.2lf"),
 			Utils_NewSubLine(),
-			object->speed.x, 
+			object->speed.x,
 			object->speed.y);
 		object->speed.x = 1;
 		object->speed.y = 0;
 		return returnXY;
 	}
 
-	XY tempXY;
-	tempXY.x = object->xyPosition.x;
-	tempXY.y = object->xyPosition.y;
-	XY* neighbors4 = Utils_GetNeighbors4(&app->map, tempXY);
 	XY* allowedList = NULL;
-
+	XY* neighbors4 = NULL;
 	int allowedNeighbors;
 
-	for(int i = 0; i < 2; i++){
-		allowedNeighbors = 0;
-		for(int n = 0; n < MAX_NEIGHBORS; n++){
-			if(neighbors4[n].x == -1 || neighbors4[n].y == -1) //Invalid neighbor (out of bounds or structure)
-				continue;
+	double dif;
+	int steps;
 
-			//Check if neighbor is the cell before the actual one, avoiding looping back and forth
-			if(ceil(neighbors4[n].x) == ceil(object->xyPosition.x - (object->speed.x * object->speedMultiplier)) &&
-				ceil(neighbors4[n].y) == ceil(object->xyPosition.y - (object->speed.y * object->speedMultiplier)))
-				continue;
+	if(object->speed.x != 0){
+		dif = (object->xyPosition.x - ((int) object->xyPosition.x)) + (object->speedMultiplier - ((int) object->speedMultiplier));
 
+		steps = (int) floor(object->speedMultiplier);
+		if(dif >= 1){
+			steps++;
+			object->xyPosition.x = floor(object->xyPosition.x);
+		} else if(dif != 0){
+			object->xyPosition.x += (object->speedMultiplier - ((int) object->speedMultiplier));
+		}
+	} else{
+		dif = (object->xyPosition.y - ((int) object->xyPosition.y)) + (object->speedMultiplier - ((int) object->speedMultiplier));
 
-			if(allowedList != NULL)
-				allowedList[allowedNeighbors] = neighbors4[n];
+		steps = (int) floor(object->speedMultiplier);
+		if(dif >= 1){
+			steps++;
+			object->xyPosition.y = floor(object->xyPosition.y);
+		} else if(dif != 0){
+			object->xyPosition.y += (object->speedMultiplier - ((int) object->speedMultiplier));
+		}
+	}
+	XYObject xyObjBeingChecked = *object;
 
-			allowedNeighbors++;
+	for(; steps > 0; steps--){
+		neighbors4 = Utils_GetNeighbors4(&app->map, xyObjBeingChecked.xyPosition);
+		for(int i = 0; i < 2; i++){
+			allowedNeighbors = 0;
+			for(int n = 0; n < MAX_NEIGHBORS; n++){
+				if(neighbors4[n].x == -1 || neighbors4[n].y == -1) //Invalid neighbor (out of bounds or structure)
+					continue;
+
+				//Check if neighbor is the cell before the actual one, avoiding looping back and forth
+				if(ceil(neighbors4[n].x) == ceil(xyObjBeingChecked.xyPosition.x - (xyObjBeingChecked.speed.x * 1)) &&
+					ceil(neighbors4[n].y) == ceil(xyObjBeingChecked.xyPosition.y - (xyObjBeingChecked.speed.y * 1)))
+					continue;
+
+				if(allowedList != NULL)
+					allowedList[allowedNeighbors] = neighbors4[n];
+
+				allowedNeighbors++;
+			}
+
+			if(i == 0 && allowedNeighbors > 0){
+				allowedList = calloc(allowedNeighbors, sizeof(XY));
+				if(allowedList == NULL)
+					return returnXY;
+			}
 		}
 
-		if(i == 0 && allowedNeighbors > 0){
-			allowedList = calloc(allowedNeighbors, sizeof(XY));
-			if(allowedList == NULL)
-				return returnXY;
+		if(allowedNeighbors > 0){
+			returnXY = allowedList[rand()%allowedNeighbors];
 		}
+
+		if(allowedList != NULL){
+			free(allowedList);
+			allowedList = NULL;
+		}
+
+		if(neighbors4 != NULL){
+			free(neighbors4);
+			neighbors4 = NULL;
+		}
+
+		if(returnXY.x < 0 || returnXY.x >= app->map.width){
+			return returnXY;
+		}
+		if(returnXY.y < 0 || returnXY.y >= app->map.height){
+			return returnXY;
+		}
+
+		if(xyObjBeingChecked.xyPosition.x - returnXY.x < 0)//New X is farther to the right
+			xyObjBeingChecked.speed.x = 1;
+		else if(xyObjBeingChecked.xyPosition.x - returnXY.x > 0)//New X is farther to the left
+			xyObjBeingChecked.speed.x = -1;
+		else
+			xyObjBeingChecked.speed.x = 0;
+		if(xyObjBeingChecked.xyPosition.y - returnXY.y < 0)//New Y is farther to the bottom
+			xyObjBeingChecked.speed.y = 1;
+		else if(xyObjBeingChecked.xyPosition.y - returnXY.y > 0)//New Y is farther to the top
+			xyObjBeingChecked.speed.y = -1;
+		else
+			xyObjBeingChecked.speed.y = 0;
+
+		xyObjBeingChecked.xyPosition = returnXY;
+		object->speed = xyObjBeingChecked.speed;
 	}
 
-	if(allowedNeighbors > 0){
-		returnXY = allowedList[rand()%allowedNeighbors];
-	}
-
-	if(allowedList != NULL){
-		free(allowedList);
-		allowedList = NULL;
-	}
-
-	if(neighbors4 != NULL){
-		free(neighbors4);
-		neighbors4 = NULL;
-	}
-
-	if(returnXY.x < 0 || returnXY.x >= app->map.width){
-		_tprintf(TEXT("%sX out of bounds X:%.2lf MaxX:%d"), Utils_NewSubLine(), returnXY.x, app->map.width-1);
-		return returnXY;
-	}
-	if(returnXY.y < 0 || returnXY.y >= app->map.height){
-		_tprintf(TEXT("%sY out of bounds Y:%.2lf MaxY:%d"), Utils_NewSubLine(), returnXY.y, app->map.height-1);
-		return returnXY;
-	}
-
-	if(object->xyPosition.x - returnXY.x < 0)//New X is farther to the right
-		object->speed.x = 1;
-	else if(object->xyPosition.x - returnXY.x > 0)//New X is farther to the left
-		object->speed.x = -1;
-	else
-		object->speed.x = 0;
-	if(object->xyPosition.y - returnXY.y < 0)//New Y is farther to the bottom
-		object->speed.y = 1;
-	else if(object->xyPosition.y - returnXY.y > 0)//New Y is farther to the top
-		object->speed.y = -1;
-	else
-		object->speed.y = 0;
-
-	return returnXY;
+	return xyObjBeingChecked.xyPosition;
 }
 
 /* ToDo (TAG_REMOVE)

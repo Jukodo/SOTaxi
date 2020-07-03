@@ -132,11 +132,31 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 					Utils_DLL_Log(log);
 
 					CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
-
 					if(updatingTaxi != NULL){
 						WaitForSingleObject(param->app->syncHandles.hEvent_TaxiList, INFINITE);
 						updatingTaxi->taxiInfo->object.xyPosition = buffer->tossRequests[buffer->tail].tossPosition.xyNewPosition;
 						SetEvent(param->app->syncHandles.hEvent_TaxiList);
+
+						//If is transporting passenger, also update his position
+						if(updatingTaxi->taxiInfo->state == TS_WITH_PASS){
+							CenPassenger* updatingPass = Get_Passenger(param->app, Get_PassengerIndex(param->app, updatingTaxi->taxiInfo->transporting.passId));
+							if(updatingPass != NULL){
+								WaitForSingleObject(param->app->syncHandles.hEvent_PassengerList, INFINITE);
+								updatingPass->passengerInfo->object.xyPosition = updatingTaxi->taxiInfo->object.xyPosition;
+								SetEvent(param->app->syncHandles.hEvent_PassengerList);
+
+								//Check if new position is the destination
+								if(updatingPass->passengerInfo->object.xyPosition.x == updatingPass->xyDestination.x &&
+									updatingPass->passengerInfo->object.xyPosition.y == updatingPass->xyDestination.y){
+									Servive_PassengerArrived(param->app, Get_PassengerIndex(param->app, updatingPass->passengerInfo->Id));
+									_tprintf(TEXT("%s[Passenger Arrival] Passenger %s has arrived to its destination (%.2lf, %.2lf)! Logging out passenger and informing ConPass..."),
+										Utils_NewSubLine(), 
+										updatingPass->passengerInfo->Id, 
+										updatingPass->xyDestination.x, 
+										updatingPass->xyDestination.y);
+								}
+							}
+						}
 					}
 				}
 				break;
@@ -160,6 +180,8 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 				case TRT_TAXI_STATE:
 				{
 					TCHAR state[STRING_MEDIUM];
+					ZeroMemory(state, STRING_MEDIUM * sizeof(TCHAR));
+
 					switch(buffer->tossRequests[buffer->tail].tossState.newState){
 					case TS_EMPTY:
 						_tcscpy_s(state, _countof(state), TEXT("Empty"));
@@ -174,8 +196,18 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 						_tcscpy_s(state, _countof(state), TEXT("Stationary"));
 						break;
 					default:
-						return -1;
+						_tprintf(TEXT("%s[Taxi State] %s changed tried to change to UNDEFINED"), Utils_NewSubLine(), buffer->tossRequests[buffer->tail].tossState.licensePlate);
 					}
+
+					if(!Utils_StringIsEmpty(state)){
+						_tprintf(TEXT("%s[Taxi] %s changed its status to %s"), Utils_NewSubLine(), buffer->tossRequests[buffer->tail].tossState.licensePlate, state);
+						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
+						if(updatingTaxi == NULL)
+							break;
+
+						updatingTaxi->taxiInfo->state = buffer->tossRequests[buffer->tail].tossState.newState;
+					}
+					
 					TCHAR log[STRING_XXL];
 					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of TaxiPosition, sending: LicensePlate: %s | NewStateType: %d (%s)"),
 						buffer->tossRequests[buffer->tail].tossState.licensePlate,

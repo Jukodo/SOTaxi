@@ -46,15 +46,16 @@ DWORD WINAPI Thread_StepRoutine(LPVOID _param){
 					case TS_OTW_PASS:
 						_tprintf(TEXT("%s[Taxi Movement] Arrived at passenger location! Picking Passenger %s up..."), 
 							Utils_NewSubLine(), 
-							param->app->loggedInTaxi.transportInfo.passId);
+							param->app->loggedInTaxi.taxiInfo.transporting.passId);
 						Service_NewState(param->app, TS_WITH_PASS);
-						Service_NewDestination(param->app, param->app->loggedInTaxi.transportInfo.xyDestination);
+						Service_NewDestination(param->app, param->app->loggedInTaxi.taxiInfo.transporting.xyDestination);
 						break;
 					case TS_WITH_PASS:
 						_tprintf(TEXT("%s[Taxi Movement] Arrived at passenger destination! Dropping Passenger %s..."), 
 							Utils_NewSubLine(),
-							param->app->loggedInTaxi.transportInfo.passId);
-						Service_NewState(param->app, TS_WITH_PASS);
+							param->app->loggedInTaxi.taxiInfo.transporting.passId);
+						Service_NewState(param->app, TS_EMPTY);
+						ZeroMemory(param->app->loggedInTaxi.taxiInfo.transporting.passId, STRING_ID * sizeof(TCHAR));
 						if(param->app->stepRoutine.path != NULL){
 							if(param->app->stepRoutine.path->path != NULL){
 								free(param->app->stepRoutine.path->path);
@@ -82,7 +83,11 @@ DWORD WINAPI Thread_DestinationChanger(LPVOID _param){
 
 	while(param->app->keepRunning){
 		WaitForSingleObject(param->app->syncHandles.hEvent_DestinationChanged, INFINITE);
-		Service_NewDestination(param->app, param->app->loggedInTaxi.transportInfo.xyStartingPosition);
+
+		if(Utils_StringIsEmpty(param->app->loggedInTaxi.taxiInfo.transporting.passId))
+			continue;
+
+		Service_NewDestination(param->app, param->app->loggedInTaxi.taxiInfo.transporting.xyStartingPosition);
 	}
 
 	free(param);
