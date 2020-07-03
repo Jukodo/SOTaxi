@@ -12,5 +12,4 @@ typedef struct Settings Settings;
 struct Settings{
 	int CDN; //Cell Distance Number (Taxi has to be CDN cells close to the passenger to send automatic interest)
 	bool automaticInterest; //Send automatic interest requests for close passengers
-	bool automaticDriving; //Drive automatically through the city
 };

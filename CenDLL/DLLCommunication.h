@@ -20,6 +20,7 @@ typedef enum QnARequestType QnARequestType;
 //TossRequest Variants
 typedef struct TossPosition TossPosition;
 typedef struct TossSpeed TossSpeed;
+typedef struct TossInterest TossInterest;
 typedef struct TossState TossState;
 typedef struct TossLogout TossLogout;
 
@@ -78,12 +79,12 @@ enum Shutdown_Type{
 #pragma region Shared Memory - Structs/Enums Definement
 //QnARequest Requests Variants
 struct TaxiLoginRequest{
-	TCHAR licensePlate[STRING_SMALL];
+	TCHAR licensePlate[STRING_LICENSEPLATE];
 	XY xyStartingPosition;
 };
 struct NTInterestRequest{
-	TCHAR licensePlate[STRING_SMALL];
-	TCHAR idPassenger[STRING_SMALL];
+	TCHAR licensePlate[STRING_LICENSEPLATE];
+	TCHAR idPassenger[STRING_ID];
 };
 
 //QnARequest Responses Variants
@@ -133,6 +134,10 @@ struct TossState{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 	TaxiState newState;
 };
+struct TossInterest{
+	TCHAR licensePlate[STRING_LICENSEPLATE];
+	TCHAR idPassenger[STRING_ID];
+};
 struct TossLogout{
 	TCHAR licensePlate[STRING_LICENSEPLATE];
 };
@@ -142,6 +147,7 @@ enum TossRequestType{ //Types of Toss requests
 	TRT_TAXI_POSITION, //Taxi new position
 	TRT_TAXI_SPEED, //Taxi new speed
 	TRT_TAXI_STATE, //Taxi new state
+	TRT_TAXI_INTEREST, //Taxi transport interest
 	TRT_TAXI_LOGOUT //Taxi logout
 };
 
@@ -163,6 +169,7 @@ struct TossRequest{
 		TossPosition tossPosition;
 		TossSpeed tossSpeed;
 		TossState tossState;
+		TossInterest tossInterest;
 		TossLogout tossLogout;
 	};
 	TossRequestType tossType;

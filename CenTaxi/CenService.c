@@ -1047,15 +1047,15 @@ void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, 
 		sendPassNotification.commType = C2P_ASSIGNED_FAILED;
 	else{
 		sendPassNotification.commType = C2P_ASSIGNED;
-		_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo->LicensePlate);
+		_tcscpy_s(assignPassComms.licensePlate, _countof(assignPassComms.licensePlate), app->taxiList[taxiIndex].taxiInfo->LicensePlate); 
+		assignPassComms.estimatedWaitTime = Utils_GetEstimatedTime(
+			&app->map,
+			app->taxiList[taxiIndex].taxiInfo->object.xyPosition,
+			myRequestInfo->xyStartingPosition,
+			app->taxiList[taxiIndex].taxiInfo->object.speedMultiplier);
 	}
 	_tcscpy_s(assignPassComms.passId, _countof(assignPassComms.passId), myRequestInfo->passId);
 	
-	assignPassComms.estimatedWaitTime = Utils_GetEstimatedTime(
-											&app->map,
-											app->taxiList[taxiIndex].taxiInfo->object.xyPosition, 
-											myRequestInfo->xyStartingPosition, 
-											app->taxiList[taxiIndex].taxiInfo->object.speedMultiplier);
 	sendPassNotification.assignComm = assignPassComms;
 
 	WriteFile(

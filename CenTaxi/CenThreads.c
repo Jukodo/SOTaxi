@@ -95,17 +95,33 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		}
 	}
 
-	int chosenTaxiIndex;
 	_tprintf(TEXT("%s[Taxi Assignment] Analysis:"), Utils_NewSubLine());
-	if(numIntTaxis == 0){//No interested taxis
-		_tprintf(TEXT("%s\tNo taxi has shown interest towards %s's transport!"), Utils_NewSubLine(), myRequestInfo->passId);
-		chosenTaxiIndex = -1;
-	} else{
+	int chosenTaxiIndex = -1;
+	while(numIntTaxis > 0){
 		int chosenTaxi = (rand() % numIntTaxis);
-		_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
-		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo->LicensePlate);
+
+		if(Utils_StringIsEmpty(Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo->transporting.passId)){
+			for(int i = chosenTaxi; i < param->app->maxTaxis-1; i++){
+				myRequestTech->interestedTaxis[chosenTaxi] = myRequestTech->interestedTaxis[chosenTaxi+1];
+			}
+			myRequestTech->interestedTaxis[param->app->maxTaxis-1] = -1;
+
+			numIntTaxis--;
+			continue;
+		}
+
 		chosenTaxiIndex = myRequestTech->interestedTaxis[chosenTaxi];
 	}
+		
+
+	if(chosenTaxiIndex == -1)
+		_tprintf(TEXT("%s\tNo taxi has shown interest towards %s's transport!"), Utils_NewSubLine(), myRequestInfo->passId);
+	else{
+		_tprintf(TEXT("%s\tQuantity of valid interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
+
+		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, chosenTaxiIndex)->taxiInfo->LicensePlate);
+	}
+
 	Service_AssignTaxi2Passenger(param->app, chosenTaxiIndex, param->myIndex);
 	
 	free(param);
@@ -160,6 +176,19 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 					}
 				}
 				break;
+				case TRT_TAXI_INTEREST:
+				{
+					TCHAR log[STRING_XXL];
+					swprintf(log, STRING_XXL, TEXT("ConTaxi sent a toss request to CenTaxi of Interest, sending: LicensePlate: %s | PassengerId: %s"),
+						buffer->tossRequests[buffer->tail].tossInterest.licensePlate,
+						buffer->tossRequests[buffer->tail].tossInterest.idPassenger);
+					Utils_DLL_Log(log);
+
+					NTInterestRequest req;
+					swprintf_s(req.licensePlate, _countof(req.licensePlate), buffer->tossRequests[buffer->tail].tossInterest.licensePlate);
+					swprintf_s(req.idPassenger, _countof(req.idPassenger), buffer->tossRequests[buffer->tail].tossInterest.idPassenger);
+					Service_RegisterInterest(param->app, &req);
+				}
 				case TRT_TAXI_SPEED:
 				{
 					TCHAR log[STRING_XXL];

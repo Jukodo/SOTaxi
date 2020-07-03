@@ -156,6 +156,7 @@ void Service_AssignTaxi2Passenger(Application* app, int taxiIndex, int passenger
 void Service_NotifyTaxi(Application* app, TransportRequest* requestInfo, int taxiIndex);
 void Service_NotifyPassenger(Application* app, TransportRequest* myRequestInfo, int taxiIndex);
 bool Service_KickTaxi(Application* app, TCHAR* licensePlate, TCHAR* reason, bool global);
+void Servive_PassengerArrived(Application* app, int passId);
 void Service_CloseApp(Application* app);
 
 bool Command_SetAssignmentTimeout(Application* app, TCHAR* value);

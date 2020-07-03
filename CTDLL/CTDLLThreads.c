@@ -98,18 +98,50 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 			if(!buffer->transportRequests[param->app->NTBuffer_Tail].empty){
 				Utils_DLL_Log(TEXT("ConTaxi received a notification from CenTaxi using Manual Event triggered on CenService.c (Service_NotifyTaxisNewTransport)"));
 
-				_tprintf(TEXT("%sA new transport request has been submited!%s%s is waiting at (%.2lf, %.2lf) for a taxi to transport them to (%.2lf, %.2lf)!%sPlease use \"%s\" if you are interested!%s"),
-					Utils_NewSubLine(),
-					Utils_NewSubLine(),
-					buffer->transportRequests[param->app->NTBuffer_Tail].passId,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.x,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.y,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.x,
-					buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.y,
-					Utils_NewSubLine(),
-					CMD_REQUEST_INTEREST,
-					Utils_NewSubLine());
+				_tprintf(TEXT("%sA new transport request has been submited!"), Utils_NewSubLine());
+
+				Path* path = NULL;
+				if(param->app->settings.automaticInterest){
+					path = Utils_GetPath(&param->app->map, param->app->loggedInTaxi.taxiInfo.object.xyPosition, buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition);
+					_tprintf(TEXT("%s%s is %d positions away (CDN = %d)!"),
+						Utils_NewSubLine(),
+						buffer->transportRequests[param->app->NTBuffer_Tail].passId,
+						path->steps,
+						param->app->settings.CDN);
+				}
+				if(path != NULL && path->steps <= param->app->settings.CDN){
+					_tprintf(TEXT("%sAutomatic Interest has been sent!"),
+						Utils_NewSubLine());
+
+					TossRequest requestToss;
+					requestToss.tossType = TRT_TAXI_INTEREST;
+					swprintf_s(requestToss.tossInterest.licensePlate, _countof(requestToss.tossInterest.licensePlate), param->app->loggedInTaxi.taxiInfo.LicensePlate);
+					swprintf_s(requestToss.tossInterest.idPassenger, _countof(requestToss.tossInterest.idPassenger), buffer->transportRequests[param->app->NTBuffer_Tail].passId);
+					Communication_SendTossRequest(param->app, requestToss);
+				} else{
+					_tprintf(TEXT("%s%s is waiting at (%.2lf, %.2lf) for a taxi to transport them to (%.2lf, %.2lf)!%sPlease use \"%s\" if you are interested!%s"),
+						Utils_NewSubLine(),
+						buffer->transportRequests[param->app->NTBuffer_Tail].passId,
+						buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.x,
+						buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition.y,
+						buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.x,
+						buffer->transportRequests[param->app->NTBuffer_Tail].xyDestination.y,
+						Utils_NewSubLine(),
+						CMD_REQUEST_INTEREST,
+						Utils_NewSubLine());
+				}
+
+				if(path != NULL){
+					if(path->path != NULL){
+						free(path->path);
+						path->path = NULL;
+					}
+					free(path);
+					path = NULL;
+				}
 			}
+
+
 
 			param->app->NTBuffer_Tail = (param->app->NTBuffer_Tail + 1) % NTBUFFER_MAX;
 		}

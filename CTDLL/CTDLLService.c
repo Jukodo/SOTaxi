@@ -7,6 +7,7 @@ bool Setup_Application(Application* app){
 	app->loggedInTaxi.taxiInfo.empty = true;
 	app->loggedInTaxi.taxiInfo.object.speedMultiplier = DEFAULT_SPEED;
 	app->settings.CDN = DEFAULT_CDN;
+	app->settings.automaticInterest = true;
 
 	app->taxiMovementRoutine = CreateWaitableTimer(NULL, FALSE, NULL);
 	Utils_DLL_Register(TEXT("UnnamedWTimer:line4:CTDLLService.c"), DLL_TYPE_WAITABLETIMER);
