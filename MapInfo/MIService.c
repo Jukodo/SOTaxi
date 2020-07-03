@@ -277,7 +277,7 @@ void Paint_MapCoordinates(Application* app, HDC hdc, HBRUSH borderBrush){
 		drawingRect.bottom = app->refreshRoutine.yMapOffset;
 		FrameRect(hdc, &drawingRect, borderBrush);
 
-		swprintf_s(cellPlaceholder, 3, TEXT("%d\0"), i+1);
+		swprintf_s(cellPlaceholder, 3, TEXT("%d\0"), i);
 		SetBkMode(hdc, TRANSPARENT);
 		DrawText(hdc, cellPlaceholder, -1, &drawingRect, DT_CENTER | DT_NOCLIP | DT_VCENTER | DT_SINGLELINE);
 		SetBkMode(hdc, OPAQUE);
@@ -311,7 +311,12 @@ void Paint_Taxis(Application* app, HDC hdc, HBRUSH taxiBrush){
 
 		Get_RectFromXY(app, &drawingRect, (int) taxiList[i].object.xyPosition.x, (int) taxiList[i].object.xyPosition.y);
 
-		swprintf_s(mapId, 3, TEXT("T%d\0"), i+1);
+		if(Utils_StringIsEmpty(taxiList[i].transporting.passId))
+			swprintf_s(mapId, 3, TEXT("T%d\0"), i+1);
+		else if(!Utils_StringIsEmpty(taxiList[i].transporting.passId) && taxiList[i].state == TS_OTW_PASS)
+			swprintf_s(mapId, 3, TEXT("Y%d\0"), i+1);
+		else
+			swprintf_s(mapId, 3, TEXT("B%d\0"), i+1);
 		FillRect(hdc, &drawingRect, taxiBrush);
 		SetBkMode(hdc, TRANSPARENT);
 		DrawText(hdc, mapId, -1, &drawingRect, DT_CENTER | DT_NOCLIP | DT_VCENTER | DT_SINGLELINE);

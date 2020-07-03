@@ -1,5 +1,3 @@
-move passenger together with taxi
-make a way for MapInfo to know if a taxi is transporting a passenger and whom
 make bitmap for empty taxis
 make bitmap for full taxis
 make bitmap for passenger

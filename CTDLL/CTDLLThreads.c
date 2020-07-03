@@ -183,6 +183,12 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 					notificationReceived.assignComm.transportInfo.xyDestination.y);
 
 				param->app->loggedInTaxi.taxiInfo.state = TS_OTW_PASS;
+				TossRequest tossRequest;
+				tossRequest.tossType = TRT_TAXI_STATE;
+				swprintf_s(tossRequest.tossState.licensePlate, _countof(tossRequest.tossState.licensePlate), param->app->loggedInTaxi.taxiInfo.LicensePlate);
+				tossRequest.tossState.newState = TS_OTW_PASS;
+				Communication_SendTossRequest(param->app, tossRequest);
+
 				swprintf_s(param->app->loggedInTaxi.taxiInfo.transporting.passId, _countof(param->app->loggedInTaxi.taxiInfo.transporting.passId), notificationReceived.assignComm.transportInfo.passId);
 				param->app->loggedInTaxi.taxiInfo.transporting.xyStartingPosition = notificationReceived.assignComm.transportInfo.xyStartingPosition;
 				param->app->loggedInTaxi.taxiInfo.transporting.xyDestination = notificationReceived.assignComm.transportInfo.xyDestination;

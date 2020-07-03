@@ -165,8 +165,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam){
         {
             Paint_DrawMap(app, memDC, roadBrush, structureBrush, cellBorderBrush);
             Paint_MapCoordinates(app, memDC, cellBorderBrush);
-            Paint_Taxis(app, memDC, taxiBrush);
             Paint_Passengers(app, memDC, passengerBrush);
+            Paint_Taxis(app, memDC, taxiBrush);
 
             hdc = BeginPaint(hWnd, &ps);
             BitBlt(hdc, 0, 0, rectWindowProp.right, rectWindowProp.bottom, memDC, 0, 0, SRCCOPY);

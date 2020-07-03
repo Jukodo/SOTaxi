@@ -95,31 +95,16 @@ DWORD WINAPI Thread_TaxiAssignment(LPVOID _param){
 		}
 	}
 
+	int chosenTaxiIndex;
 	_tprintf(TEXT("%s[Taxi Assignment] Analysis:"), Utils_NewSubLine());
-	int chosenTaxiIndex = -1;
-	while(numIntTaxis > 0){
-		int chosenTaxi = (rand() % numIntTaxis);
-
-		if(Utils_StringIsEmpty(Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo->transporting.passId)){
-			for(int i = chosenTaxi; i < param->app->maxTaxis-1; i++){
-				myRequestTech->interestedTaxis[chosenTaxi] = myRequestTech->interestedTaxis[chosenTaxi+1];
-			}
-			myRequestTech->interestedTaxis[param->app->maxTaxis-1] = -1;
-
-			numIntTaxis--;
-			continue;
-		}
-
-		chosenTaxiIndex = myRequestTech->interestedTaxis[chosenTaxi];
-	}
-		
-
-	if(chosenTaxiIndex == -1)
+	if(numIntTaxis == 0){//No interested taxis
 		_tprintf(TEXT("%s\tNo taxi has shown interest towards %s's transport!"), Utils_NewSubLine(), myRequestInfo->passId);
-	else{
-		_tprintf(TEXT("%s\tQuantity of valid interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
-
-		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, chosenTaxiIndex)->taxiInfo->LicensePlate);
+		chosenTaxiIndex = -1;
+	} else{
+		int chosenTaxi = (rand() % numIntTaxis);
+		_tprintf(TEXT("%s\tQuantity of interested taxis: %d"), Utils_NewSubLine(), numIntTaxis);
+		_tprintf(TEXT("%s\tChosen taxi: %s"), Utils_NewSubLine(), Get_Taxi(param->app, myRequestTech->interestedTaxis[chosenTaxi])->taxiInfo->LicensePlate);
+		chosenTaxiIndex = myRequestTech->interestedTaxis[chosenTaxi];
 	}
 
 	Service_AssignTaxi2Passenger(param->app, chosenTaxiIndex, param->myIndex);
@@ -233,6 +218,9 @@ DWORD WINAPI Thread_ConsumeTossRequests(LPVOID _param){
 						CenTaxi* updatingTaxi = Get_Taxi(param->app, Get_TaxiIndex(param->app, buffer->tossRequests[buffer->tail].tossPosition.licensePlate));
 						if(updatingTaxi == NULL)
 							break;
+
+						if(buffer->tossRequests[buffer->tail].tossState.newState == TS_EMPTY)
+							ZeroMemory(updatingTaxi->taxiInfo->transporting.passId, sizeof(TCHAR) * STRING_ID);
 
 						updatingTaxi->taxiInfo->state = buffer->tossRequests[buffer->tail].tossState.newState;
 					}
