@@ -36,3 +36,4 @@ CENDLL_API TCHAR Utils_GetRandomLetter();
 CENDLL_API int Utils_GetEstimatedTime(Map* map, XY pointA, XY pointB, double speed);
 CENDLL_API XY* Utils_GetNeighbors4(Map* map, XY pointA);
 CENDLL_API Path* Utils_GetPath(Map* map, XY pointA, XY pointB);
+CENDLL_API int Utils_GetCDN(XY pointA, XY pointB);

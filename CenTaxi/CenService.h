@@ -87,10 +87,6 @@ struct Application{
 #define CMD_TAXI_LOGIN_ON TEXT("/taxiLoginOn")
 #define CMD_TAXI_LOGIN_OFF TEXT("/taxiLoginOff")
 #define CMD_KICK_TAXI TEXT("/kickTaxi")
-#define CMD_SHOW_MAP TEXT("/showMap")
-#define CMD_SAVE_REGISTRY TEXT("/saveRegistry")
-#define CMD_LOAD_REGISTRY TEXT("/loadRegistry")
-#define CMD_DLL_LOG TEXT("/createDllLog")
 #define CMD_CLOSEAPP TEXT("/closeApp")
 
 #define NAME_MUTEX_OneInstance_CEN TEXT("JUSO2TAXI_MUTEX_OI_CEN")
@@ -103,10 +99,6 @@ enum CentralCommands{
 	CC_TAXI_LOGIN_ON,
 	CC_TAXI_LOGIN_OFF,
 	CC_KICK_TAXI,
-	CC_SHOW_MAP,
-	CC_SAVE_REGISTRY,
-	CC_LOAD_REGISTRY,
-	CC_DLL_LOG,
 	CC_CLOSEAPP,
 	CC_UNDEFINED
 };
@@ -166,6 +158,5 @@ void Command_AllowTaxiLogins(Application* app, bool allow);
 ** Remove the following after
 ** Only used to develop and test few features
 */
-void Temp_ShowMap(Application* app);
 void Temp_SaveRegistry(Application* app);
 void Temp_LoadRegistry(Application* app);

@@ -3,7 +3,6 @@
 #include "MIThreads.h"
 
 #define NAME_MUTEX_QnARequest TEXT("JUSO2TAXI_MUTEX_QNAR")
-#define NAME_WTIMER_REFRESH_RATE TEXT("JUSO2TAXI_WTIMER_RR")
 
 #define REFRESH_RATE 1
 

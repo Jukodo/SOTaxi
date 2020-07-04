@@ -34,9 +34,13 @@ DWORD WINAPI Thread_NotificationReceiver_NamedPipe(LPVOID _param){
 					receivedComm.arrivedComm.passId);
 				break;
 			case C2P_SHUTDOWN:
-				_tprintf(TEXT("%sReceived a Shutdown Comm"), Utils_NewSubLine());
+				_tprintf(TEXT("%s[Shutdown] Received a Shutdown Comm"), Utils_NewSubLine());
+				param->app->keepRunning = false;
 				break;
+			default:
+				return -1;
 		}
+		receivedComm.commType = -1;
 	}
 
 	free(param);

@@ -100,16 +100,18 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 
 				_tprintf(TEXT("%sA new transport request has been submited!"), Utils_NewSubLine());
 
-				Path* path = NULL;
+				//Path* path = NULL;
+				int cdn = TOPMAX_CDN + 1;
 				if(param->app->settings.automaticInterest){
-					path = Utils_GetPath(&param->app->map, param->app->loggedInTaxi.taxiInfo.object.xyPosition, buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition);
+					//path = Utils_GetPath(&param->app->map, param->app->loggedInTaxi.taxiInfo.object.xyPosition, buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition);
+					cdn = Utils_GetCDN(param->app->loggedInTaxi.taxiInfo.object.xyPosition, buffer->transportRequests[param->app->NTBuffer_Tail].xyStartingPosition);
 					_tprintf(TEXT("%s%s is %d positions away (CDN = %d)!"),
 						Utils_NewSubLine(),
 						buffer->transportRequests[param->app->NTBuffer_Tail].passId,
-						path->steps,
+						cdn,
 						param->app->settings.CDN);
 				}
-				if(path != NULL && path->steps <= param->app->settings.CDN){
+				if(cdn <= param->app->settings.CDN){
 					_tprintf(TEXT("%sAutomatic Interest has been sent!"),
 						Utils_NewSubLine());
 
@@ -131,14 +133,14 @@ DWORD WINAPI Thread_NotificationReceiver_NewTransport(LPVOID _param){
 						Utils_NewSubLine());
 				}
 
-				if(path != NULL){
+				/*if(path != NULL){
 					if(path->path != NULL){
 						free(path->path);
 						path->path = NULL;
 					}
 					free(path);
 					path = NULL;
-				}
+				}*/
 			}
 
 

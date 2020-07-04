@@ -790,7 +790,7 @@ int Get_TransportIndex(Application* app, TCHAR* idPassenger){
 	TransportBuffer* buffer = app->shmHandles.lpSHM_NTBuffer;
 
 	for(int i = 0; i < NTBUFFER_MAX; i++){
-		if(buffer->transportRequests[0].empty)
+		if(buffer->transportRequests[i].empty)
 			continue;
 
 		if(_tcscmp(buffer->transportRequests[i].passId, idPassenger) == 0)
@@ -833,18 +833,6 @@ CentralCommands Service_UseCommand(Application* app, TCHAR* command){
 		return CC_TAXI_LOGIN_OFF;
 	} else if(_tcscmp(command, CMD_KICK_TAXI) == 0){ //Continues on Main (asking for value argument)
 		return CC_KICK_TAXI;
-	} else if(_tcscmp(command, CMD_SHOW_MAP) == 0){
-		Temp_ShowMap(app);
-		return CC_SHOW_MAP;
-	} else if(_tcscmp(command, CMD_SAVE_REGISTRY) == 0){
-		Temp_SaveRegistry(app);
-		return CC_SAVE_REGISTRY;
-	} else if(_tcscmp(command, CMD_LOAD_REGISTRY) == 0){
-		Temp_LoadRegistry(app);
-		return CC_LOAD_REGISTRY;
-	} else if(_tcscmp(command, CMD_DLL_LOG) == 0){
-		Utils_DLL_Test();
-		return CC_DLL_LOG;
 	} else if(_tcscmp(command, CMD_CLOSEAPP) == 0){
 		Service_CloseApp(app);
 		return CC_CLOSEAPP;
@@ -1184,30 +1172,6 @@ void Command_AllowTaxiLogins(Application* app, bool allow){
 ** Remove the following after
 ** Only used to develop and test few features
 */
-
-void Temp_ShowMap(Application* app){
-	int iLine = 0;
-	int iColumn = 0;
-	for(int i = 0; i < (app->map.height * app->map.width); i++){
-		iColumn = i % app->map.width;
-		iLine = i / app->map.height;
-
-		if(iColumn == 0)
-			_tprintf(TEXT("\n"));
-
-		XY tempPos;
-		tempPos.x = iColumn;
-		tempPos.y = iLine;
-		CenTaxi* taxiFound = Get_TaxiAt(app, tempPos);
-		if(taxiFound != NULL){
-			_tprintf(TEXT("T"));
-			continue;
-		}
-
-		_tprintf(TEXT("%c"), app->map.cellArray[i]);
-	}
-}
-
 void Temp_SaveRegistry(Application* app){
 	HKEY hRegKey;
 	DWORD createState;

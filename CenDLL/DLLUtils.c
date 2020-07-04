@@ -372,3 +372,7 @@ Path* Utils_GetPath(Map* map, XY pointA, XY pointB){
 
 	return returnPath;
 }
+
+int Utils_GetCDN(XY pointA, XY pointB){
+	return (abs((int)(pointA.x - pointB.x)) + abs((int)(pointA.y - pointB.y)));
+}
