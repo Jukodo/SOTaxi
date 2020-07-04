@@ -10,22 +10,20 @@ bool Setup_Application(Application* app, HWND hWnd){
 	}
 	if(!Setup_OpenShmHandles(app)){
 		return false;
-}
+	}
 	if(!Setup_OpenThreadHandles(app)){
 		return false;
 	}
 
-	app->refreshRoutine.mapRelativeHeight = (int) round(GetSystemMetrics(SM_CYSCREEN) * 0.8);
-	app->refreshRoutine.mapRelativeWidth = app->refreshRoutine.mapRelativeHeight;
-
 	app->refreshRoutine.xMapOffset = 25; //Let initial space on left side for coordinates indicators
 	app->refreshRoutine.yMapOffset = 25; //Let initial space on top side for coordinates indicators
 
-	RECT windowSize;
-	if(GetClientRect(hWnd, &windowSize)){
-		app->refreshRoutine.mapRelativeHeight = windowSize.bottom - windowSize.top - app->refreshRoutine.yMapOffset;
-		app->refreshRoutine.mapRelativeWidth = app->refreshRoutine.mapRelativeHeight;
-	}
+	RECT clientSize;
+	if(!GetClientRect(hWnd, &clientSize))
+		return false;
+
+	app->refreshRoutine.mapRelativeHeight = clientSize.bottom - clientSize.top;
+	app->refreshRoutine.mapRelativeWidth = app->refreshRoutine.mapRelativeHeight;
 
 	app->refreshRoutine.cellWidth = (app->refreshRoutine.mapRelativeWidth / app->map.width)+1;
 	app->refreshRoutine.cellHeight = (app->refreshRoutine.mapRelativeHeight /app->map.height)+1;
@@ -290,7 +288,7 @@ void Paint_MapCoordinates(Application* app, HDC hdc, HBRUSH borderBrush){
 		drawingRect.bottom = (app->refreshRoutine.cellHeight*(i+1)) - i + app->refreshRoutine.yMapOffset;
 		FrameRect(hdc, &drawingRect, borderBrush);
 
-		swprintf_s(cellPlaceholder, 3, TEXT("%d\0"), i+1);
+		swprintf_s(cellPlaceholder, 3, TEXT("%d\0"), i);
 		SetBkMode(hdc, TRANSPARENT);
 		DrawText(hdc, cellPlaceholder, -1, &drawingRect, DT_CENTER | DT_NOCLIP | DT_VCENTER | DT_SINGLELINE);
 		SetBkMode(hdc, OPAQUE);

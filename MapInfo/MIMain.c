@@ -53,13 +53,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
     if(!RegisterClassEx(&windowInfo))
         return false;
 
-    int maxScreenWidth = (int) round(GetSystemMetrics(SM_CXSCREEN) * 0.9); //Only fill 80% of the screen
-    int maxScreenHeight = (int) round(GetSystemMetrics(SM_CYSCREEN) * 0.9); //Only fill 80% of the screen
-    TCHAR message[100];
-    swprintf_s(message, 100, TEXT("%s80%% of screen size is %dx%d\n"), Utils_NewLine(), maxScreenWidth, maxScreenHeight);
-    OutputDebugString(message);
-
-
+    int maxScreenWidth = 1000; //Square
+    int maxScreenHeight = maxScreenWidth + 43;
 
     //More info at: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindoww
     HWND hWindow = CreateWindowW(   //Creates a new window (overlapped, pop-up or child window)
@@ -81,6 +76,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 
     app = malloc(sizeof(Application));
     if(!Setup_Application(app, hWindow)){
+        TCHAR message[100];
         swprintf_s(message, 100, TEXT("%sError trying to set up central..."), Utils_NewLine());
         OutputDebugString(message);
         _gettchar();
